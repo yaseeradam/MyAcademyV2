@@ -53,7 +53,9 @@ class User extends Authenticatable
             return null;
         }
 
-        return asset('uploads/'.$this->profile_photo);
+        $path = str_replace('\\', '/', $this->profile_photo);
+
+        return asset('uploads/'.$path);
     }
 
     public function isAdmin(): bool

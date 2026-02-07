@@ -76,6 +76,12 @@
                 </div>
             @endisset
         </div>
+
+        @isset($after)
+            <div class="mt-6">
+                {{ $after }}
+            </div>
+        @endisset
     </div>
     
     <!-- Bottom shadow effect -->

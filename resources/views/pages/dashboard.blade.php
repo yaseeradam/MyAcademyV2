@@ -81,50 +81,78 @@
 @section('content')
     <div class="space-y-6">
         <section class="space-y-4">
-            <div class="card overflow-hidden">
-                <div class="relative h-72 w-full sm:h-80">
-                    <img
-                        src="{{ asset('images/kid-pencil.svg') }}"
-                        alt="School banner"
-                        class="absolute inset-0 h-full w-full object-cover"
-                    />
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/65 via-slate-900/25 to-transparent"></div>
-
-                    <div class="absolute inset-0 flex flex-col justify-end p-6">
-                        <div class="max-w-xl">
-                            <div class="text-base font-semibold text-white sm:text-lg">{{ $schoolName }}</div>
-                            <div class="mt-1 text-sm text-white/80">
-                                {{ config('myacademy.current_term', 'Term 1') }} · {{ config('myacademy.current_week', 'Week 1') }}
+            <div class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-2xl transition-all duration-500 hover:shadow-indigo-500/50">
+                <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+                <div class="absolute right-0 top-0 h-96 w-96 -translate-y-32 translate-x-32 rounded-full bg-white/10"></div>
+                <div class="absolute left-0 bottom-0 h-64 w-64 -translate-x-24 translate-y-24 rounded-full bg-black/10"></div>
+                
+                <div class="relative h-48 w-full sm:h-56">
+                    <div class="absolute inset-0 flex flex-col justify-end p-8">
+                        <div class="max-w-3xl">
+                            <div class="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 backdrop-blur-md">
+                                <div class="h-2 w-2 animate-pulse rounded-full bg-green-400"></div>
+                                <span class="text-sm font-bold text-white">Live System</span>
                             </div>
-                            <div class="mt-3 text-sm text-white/80">
-                                Manage classes, subjects, allocations, and academic setup.
+                            
+                            <div class="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">
+                                {{ $schoolName }}
                             </div>
-                        </div>
+                            
+                            <div class="mt-3 flex flex-wrap items-center gap-3">
+                                <div class="inline-flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 backdrop-blur-md">
+                                    <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                        <line x1="16" y1="2" x2="16" y2="6"/>
+                                        <line x1="8" y1="2" x2="8" y2="6"/>
+                                        <line x1="3" y1="10" x2="21" y2="10"/>
+                                    </svg>
+                                    <span class="text-sm font-bold text-white">{{ config('myacademy.current_term', 'Term 1') }}</span>
+                                </div>
+                                <div class="inline-flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 backdrop-blur-md">
+                                    <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12 6 12 12 16 14"/>
+                                    </svg>
+                                    <span class="text-sm font-bold text-white">{{ config('myacademy.current_week', 'Week 1') }}</span>
+                                </div>
+                                <div class="inline-flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 backdrop-blur-md">
+                                    <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                    </svg>
+                                    <span class="text-sm font-bold text-white">{{ number_format((int) $studentsTotal) }} Students</span>
+                                </div>
+                            </div>
 
-                        <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <a href="{{ route('attendance') }}" class="btn-primary w-full justify-center sm:w-auto">
-                                Take Attendance
-                            </a>
-                            <a href="{{ route('institute') }}" class="btn-primary w-full justify-center sm:w-auto">
-                                Open Institute
-                            </a>
-                            <a href="{{ route('students.index') }}" class="btn-outline w-full justify-center sm:w-auto">
-                                View Students
-                            </a>
-                            <a href="{{ route('teachers') }}" class="btn-outline w-full justify-center sm:w-auto">
-                                View Teachers
-                            </a>
-                            <a href="{{ route('results.entry') }}" class="btn-outline w-full justify-center sm:w-auto">
-                                Enter Results
-                            </a>
-                            <a href="{{ route('billing.index') }}" class="btn-outline w-full justify-center sm:w-auto">
-                                Record Payment
-                            </a>
+                            <div class="mt-6 flex flex-wrap gap-3">
+                                <a href="{{ route('attendance') }}" class="group/btn inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-indigo-600 shadow-lg transition-all hover:scale-105 hover:shadow-xl">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 11l3 3L22 4"/>
+                                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                                    </svg>
+                                    Take Attendance
+                                </a>
+                                <a href="{{ route('results.entry') }}" class="inline-flex items-center gap-2 rounded-xl bg-white/20 px-5 py-3 font-bold text-white backdrop-blur-md transition-all hover:bg-white/30">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <line x1="16" y1="13" x2="8" y2="13"/>
+                                        <line x1="16" y1="17" x2="8" y2="17"/>
+                                    </svg>
+                                    Enter Results
+                                </a>
+                                <a href="{{ route('billing.index') }}" class="inline-flex items-center gap-2 rounded-xl bg-white/20 px-5 py-3 font-bold text-white backdrop-blur-md transition-all hover:bg-white/30">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="1" x2="12" y2="23"/>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                    </svg>
+                                    Record Payment
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </section>
 
         <section class="space-y-3">

@@ -1,12 +1,68 @@
 <div class="space-y-6">
     <x-page-header title="All Students" subtitle="Manage, search and filter student records." accent="students">
         <x-slot:actions>
-            <x-search placeholder="Search students by name, admission number..." />
             <x-export type="students" />
             @if (auth()->user()?->role === 'admin')
                 <a href="{{ route('students.create') }}" class="btn-primary">Add Student</a>
             @endif
         </x-slot:actions>
+
+        <x-slot:after>
+            <div class="rounded-2xl bg-white/60 p-4 ring-1 ring-inset ring-white/70">
+                <div class="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-center">
+                    <div class="lg:col-span-2">
+                        <select
+                            wire:model.live="classFilter"
+                            class="select"
+                        >
+                            <option value="all">All Classes</option>
+                            @foreach ($this->classes as $class)
+                                <option value="{{ $class->id }}">{{ $class->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="lg:col-span-2">
+                        <select
+                            wire:model.live="sectionFilter"
+                            class="select"
+                        >
+                            <option value="all">All Sections</option>
+                            @foreach ($this->sections as $section)
+                                @if ($this->classFilter === 'all')
+                                    <option value="{{ $section }}">{{ $section }}</option>
+                                @else
+                                    <option value="{{ $section->id }}">{{ $section->name }}</option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="lg:col-span-2">
+                        <select
+                            wire:model.live="statusFilter"
+                            class="select"
+                        >
+                            <option value="all">Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Graduated">Graduated</option>
+                            <option value="Expelled">Expelled</option>
+                        </select>
+                    </div>
+
+                    <div class="lg:col-span-6">
+                        <div class="relative">
+                            <input
+                                wire:model.live.debounce.300ms="search"
+                                type="text"
+                                placeholder="Search by name, admission number, class, parent..."
+                                class="input"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </x-slot:after>
     </x-page-header>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -78,61 +134,6 @@
                 </svg>
             </x-slot:icon>
         </x-stat-card>
-    </div>
-
-    <div class="card p-4">
-        <div class="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-center">
-            <div class="lg:col-span-2">
-                <select
-                    wire:model.live="classFilter"
-                    class="select"
-                >
-                    <option value="all">All Classes</option>
-                    @foreach ($this->classes as $class)
-                        <option value="{{ $class->id }}">{{ $class->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="lg:col-span-2">
-                <select
-                    wire:model.live="sectionFilter"
-                    class="select"
-                >
-                    <option value="all">All Sections</option>
-                    @foreach ($this->sections as $section)
-                        @if ($this->classFilter === 'all')
-                            <option value="{{ $section }}">{{ $section }}</option>
-                        @else
-                            <option value="{{ $section->id }}">{{ $section->name }}</option>
-                        @endif
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="lg:col-span-2">
-                <select
-                    wire:model.live="statusFilter"
-                    class="select"
-                >
-                    <option value="all">Status</option>
-                    <option value="Active">Active</option>
-                    <option value="Graduated">Graduated</option>
-                    <option value="Expelled">Expelled</option>
-                </select>
-            </div>
-
-            <div class="lg:col-span-6">
-                <div class="relative">
-                    <input
-                        wire:model.live.debounce.300ms="search"
-                        type="text"
-                        placeholder="Search by name, email, ID, class, parent..."
-                        class="input"
-                    />
-                </div>
-            </div>
-        </div>
     </div>
 
     <x-table sortable selectable :items="$this->students">

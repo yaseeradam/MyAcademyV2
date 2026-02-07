@@ -5,6 +5,7 @@ namespace App\Livewire\Students;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -110,6 +111,12 @@ class Form extends Component
             $ext = $this->passport->getClientOriginalExtension() ?: 'jpg';
             $filename = $data['admission_number'].'-'.now()->format('YmdHis').'.'.$ext;
             $path = $this->passport->storeAs('passports', $filename, 'uploads');
+            $path = str_replace('\\', '/', $path);
+
+            if ($student->exists && $student->passport_photo && $student->passport_photo !== $path) {
+                Storage::disk('uploads')->delete($student->passport_photo);
+            }
+
             $student->passport_photo = $path;
         }
 

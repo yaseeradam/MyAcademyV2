@@ -186,6 +186,27 @@
 
                         <div>
                             <label class="text-sm font-semibold text-gray-700">Passport Photo</label>
+
+                            @if ($passport)
+                                <div class="mt-3 flex items-center gap-3">
+                                    <img
+                                        src="{{ $passport->temporaryUrl() }}"
+                                        alt="Passport preview"
+                                        class="h-16 w-16 rounded-xl object-cover ring-1 ring-inset ring-gray-200"
+                                    />
+                                    <div class="text-xs text-gray-500">Preview (not saved yet)</div>
+                                </div>
+                            @elseif ($student?->passport_photo_url)
+                                <div class="mt-3 flex items-center gap-3">
+                                    <img
+                                        src="{{ $student->passport_photo_url }}"
+                                        alt="{{ $student->full_name }}"
+                                        class="h-16 w-16 rounded-xl object-cover ring-1 ring-inset ring-gray-200"
+                                    />
+                                    <div class="text-xs text-gray-500">Current photo</div>
+                                </div>
+                            @endif
+
                             <input
                                 type="file"
                                 wire:model="passport"

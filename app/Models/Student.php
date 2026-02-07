@@ -64,7 +64,9 @@ class Student extends Model
             return null;
         }
 
-        return asset('uploads/'.$this->passport_photo);
+        $path = str_replace('\\', '/', $this->passport_photo);
+
+        return asset('uploads/'.$path);
     }
 
     public function getRouteKeyName(): string
