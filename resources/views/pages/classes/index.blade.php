@@ -64,43 +64,42 @@
             @forelse ($classes as $class)
                 @php
                     $palette = [
-                        ['from' => 'from-sky-500', 'via' => 'via-blue-500', 'to' => 'to-indigo-500', 'bg' => 'bg-sky-50/50', 'ring' => 'ring-sky-100', 'iconBg' => 'bg-sky-100', 'iconText' => 'text-sky-800'],
-                        ['from' => 'from-emerald-500', 'via' => 'via-teal-500', 'to' => 'to-cyan-500', 'bg' => 'bg-emerald-50/45', 'ring' => 'ring-emerald-100', 'iconBg' => 'bg-emerald-100', 'iconText' => 'text-emerald-800'],
-                        ['from' => 'from-violet-500', 'via' => 'via-indigo-500', 'to' => 'to-blue-500', 'bg' => 'bg-violet-50/45', 'ring' => 'ring-violet-100', 'iconBg' => 'bg-violet-100', 'iconText' => 'text-violet-800'],
-                        ['from' => 'from-amber-500', 'via' => 'via-orange-500', 'to' => 'to-rose-500', 'bg' => 'bg-amber-50/45', 'ring' => 'ring-amber-100', 'iconBg' => 'bg-amber-100', 'iconText' => 'text-amber-800'],
+                        ['from' => 'from-sky-400', 'via' => 'via-blue-500', 'to' => 'to-indigo-500', 'bg' => 'bg-sky-50/40', 'ring' => 'ring-sky-200/60', 'iconBg' => 'bg-sky-100', 'iconText' => 'text-sky-700', 'accent' => 'bg-sky-500'],
+                        ['from' => 'from-emerald-400', 'via' => 'via-teal-500', 'to' => 'to-cyan-500', 'bg' => 'bg-emerald-50/40', 'ring' => 'ring-emerald-200/60', 'iconBg' => 'bg-emerald-100', 'iconText' => 'text-emerald-700', 'accent' => 'bg-emerald-500'],
+                        ['from' => 'from-violet-400', 'via' => 'via-indigo-500', 'to' => 'to-blue-500', 'bg' => 'bg-violet-50/40', 'ring' => 'ring-violet-200/60', 'iconBg' => 'bg-violet-100', 'iconText' => 'text-violet-700', 'accent' => 'bg-violet-500'],
+                        ['from' => 'from-amber-400', 'via' => 'via-orange-500', 'to' => 'to-rose-500', 'bg' => 'bg-amber-50/40', 'ring' => 'ring-amber-200/60', 'iconBg' => 'bg-amber-100', 'iconText' => 'text-amber-700', 'accent' => 'bg-amber-500'],
                     ];
                     $scheme = $palette[$class->id % count($palette)];
                 @endphp
 
-                <div class="card overflow-hidden ring-1 ring-inset {{ $scheme['ring'] }} {{ $scheme['bg'] }}">
-                    <div class="h-1 bg-gradient-to-r {{ $scheme['from'] }} {{ $scheme['via'] }} {{ $scheme['to'] }}"></div>
+                <div class="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 {{ $scheme['ring'] }} transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="h-1.5 bg-gradient-to-r {{ $scheme['from'] }} {{ $scheme['via'] }} {{ $scheme['to'] }}"></div>
+                    <div class="absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-5 {{ $scheme['accent'] }}"></div>
                     <div class="p-6">
                         <div class="flex items-start justify-between gap-4">
                             <div class="min-w-0">
-                                <div class="inline-flex items-center gap-2 rounded-full bg-white/70 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-gray-200/60">
+                                <div class="inline-flex items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-gray-200/70 backdrop-blur-sm">
                                     Level {{ $class->level }}
                                 </div>
-                                <div class="mt-2 truncate text-lg font-semibold tracking-tight text-slate-900">{{ $class->name }}</div>
-                                <div class="mt-1 text-sm text-slate-600">Enrollment and sections overview.</div>
+                                <div class="mt-2.5 truncate text-lg font-bold tracking-tight text-slate-900">{{ $class->name }}</div>
+                                <div class="mt-1 text-sm text-slate-600">Enrollment overview</div>
                             </div>
-                            <div class="grid h-12 w-12 place-items-center rounded-2xl {{ $scheme['iconBg'] }} {{ $scheme['iconText'] }} ring-1 ring-inset ring-white/60">
-                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M4 4h16v16H4z" />
-                                    <path d="M8 8h8" />
-                                    <path d="M8 12h8" />
-                                    <path d="M8 16h5" />
+                            <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br {{ $scheme['from'] }} {{ $scheme['to'] }} text-white shadow-lg shadow-{{ explode('-', $scheme['iconText'])[1] ?? 'blue' }}-500/30">
+                                <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
                                 </svg>
                             </div>
                         </div>
 
                         <div class="mt-5 grid grid-cols-2 gap-3">
-                            <div class="rounded-2xl bg-white/80 px-4 py-3 ring-1 ring-inset ring-gray-200/60">
-                                <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Sections</div>
-                                <div class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{{ number_format((int) $class->sections_count) }}</div>
+                            <div class="rounded-xl bg-white/90 px-4 py-3 ring-1 ring-gray-200/70 backdrop-blur-sm">
+                                <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Sections</div>
+                                <div class="mt-2 text-2xl font-bold tracking-tight text-slate-900">{{ number_format((int) $class->sections_count) }}</div>
                             </div>
-                            <div class="rounded-2xl bg-white/80 px-4 py-3 ring-1 ring-inset ring-gray-200/60">
-                                <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Students</div>
-                                <div class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{{ number_format((int) $class->students_count) }}</div>
+                            <div class="rounded-xl bg-white/90 px-4 py-3 ring-1 ring-gray-200/70 backdrop-blur-sm">
+                                <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Students</div>
+                                <div class="mt-2 text-2xl font-bold tracking-tight text-slate-900">{{ number_format((int) $class->students_count) }}</div>
                             </div>
                         </div>
                     </div>

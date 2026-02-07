@@ -40,6 +40,10 @@
         transform: scale(1.02);
     }
     
+    .animate-gradient-x {
+        animation: gradientX 3s ease infinite;
+    }
+    
     .glass-morphism {
         background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(10px);
@@ -94,9 +98,14 @@
     100% { background-position: 1000px 0; }
 }
 
+@keyframes gradientX {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
 @layer components {
     .card {
-        @apply rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition-shadow duration-200 hover:shadow-md;
+        @apply rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition-all duration-200 hover:shadow-md;
     }
 
     .card-padded {
@@ -104,7 +113,36 @@
     }
     
     .card-interactive {
-        @apply card cursor-pointer hover:ring-brand-100;
+        @apply card cursor-pointer hover:ring-brand-100 hover:-translate-y-0.5;
+    }
+    
+    .card-stat {
+        @apply relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+    }
+    
+    .card-stat::before {
+        content: '';
+        @apply absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-5;
+    }
+    
+    .card-stat-blue::before {
+        @apply bg-blue-500;
+    }
+    
+    .card-stat-purple::before {
+        @apply bg-purple-500;
+    }
+    
+    .card-stat-indigo::before {
+        @apply bg-indigo-500;
+    }
+    
+    .card-stat-orange::before {
+        @apply bg-orange-500;
+    }
+    
+    .card-stat-green::before {
+        @apply bg-green-500;
     }
     
     .card-glass {
@@ -149,5 +187,16 @@
     
     .checkbox-custom {
         @apply h-4 w-4 rounded border-gray-300 bg-white text-brand-500 transition-colors duration-200 focus:ring-brand-500 focus:ring-offset-0;
+    }
+    
+    .icon-3d {
+        @apply relative;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+    
+    .icon-3d::before {
+        content: '';
+        @apply absolute inset-0 rounded-xl;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1) 100%);
     }
 }
