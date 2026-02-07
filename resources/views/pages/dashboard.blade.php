@@ -134,10 +134,11 @@
             </div>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="card-stat card-stat-blue">
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 p-6 shadow-sm ring-1 ring-blue-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Students Present</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-blue-600">Students Present</div>
                             <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($studentsPresent) }}</div>
                             <div class="mt-1.5 text-sm text-slate-600">of {{ number_format((int) $studentsTotal) }} enrolled</div>
                         </div>
@@ -151,10 +152,11 @@
                     </div>
                 </div>
 
-                <div class="card-stat card-stat-purple">
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100/50 p-6 shadow-sm ring-1 ring-purple-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-purple-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Teachers Present</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-purple-600">Teachers Present</div>
                             <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($teachersPresent) }}</div>
                             <div class="mt-1.5 text-sm text-slate-600">of {{ number_format((int) $teachersTotal) }} staff</div>
                         </div>
@@ -167,10 +169,11 @@
                     </div>
                 </div>
 
-                <div class="card-stat card-stat-indigo">
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-6 shadow-sm ring-1 ring-indigo-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-indigo-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Classes Running</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-indigo-600">Classes Running</div>
                             <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($classesRunning) }}</div>
                             <div class="mt-1.5 text-sm text-slate-600">of {{ number_format((int) $classesTotal) }} total</div>
                         </div>
@@ -185,10 +188,11 @@
                     </div>
                 </div>
 
-                <div class="card-stat card-stat-orange">
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100/50 p-6 shadow-sm ring-1 ring-orange-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-orange-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Pending Actions</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-orange-600">Pending Actions</div>
                             <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format((int) $overdueInvoices) }}</div>
                             <div class="mt-1.5 text-sm text-slate-600">overdue invoices</div>
                         </div>
@@ -289,10 +293,11 @@
             <div class="text-sm font-semibold text-slate-900">Finance</div>
 
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                <div class="card-stat card-stat-green">
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-6 shadow-sm ring-1 ring-emerald-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Fees Collected</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-emerald-600">Fees Collected</div>
                             <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ config('myacademy.currency_symbol') }}{{ number_format($feesCollectedToday, 2) }}</div>
                             <div class="mt-1.5 text-sm text-slate-600">Week: {{ config('myacademy.currency_symbol') }}{{ number_format($feesCollectedThisWeek, 2) }}</div>
                         </div>
@@ -305,10 +310,11 @@
                     </div>
                 </div>
 
-                <div class="card-stat card-stat-blue">
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-50 to-cyan-100/50 p-6 shadow-sm ring-1 ring-cyan-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-cyan-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Outstanding</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-cyan-600">Outstanding</div>
                             <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ config('myacademy.currency_symbol') }}{{ number_format($outstandingPaymentsEstimate, 2) }}</div>
                             <div class="mt-1.5 text-sm text-slate-600">from fee structures</div>
                         </div>
@@ -321,10 +327,11 @@
                     </div>
                 </div>
 
-                <div class="card-stat card-stat-orange">
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-50 to-red-100/50 p-6 shadow-sm ring-1 ring-red-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-red-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Overdue</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-red-600">Overdue</div>
                             <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format((int) $overdueInvoices) }}</div>
                             <div class="mt-1.5 text-sm text-slate-600">with balance due</div>
                         </div>
