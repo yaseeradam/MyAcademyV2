@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Results;
 
+use App\Models\AcademicSession;
 use App\Models\SchoolClass;
 use App\Models\Score;
 use App\Models\Student;
@@ -114,20 +115,27 @@ class Broadsheet extends Component
 
         $rank = 0;
         $lastScore = null;
-        foreach ($sorted as $i => $row) {
+        $sorted = $sorted->map(function (array $row, int $i) use (&$rank, &$lastScore) {
             if ($lastScore === null || $row['grandTotal'] !== $lastScore) {
                 $rank = $i + 1;
                 $lastScore = $row['grandTotal'];
             }
 
-            $sorted[$i]['position'] = $rank;
-        }
+            $row['position'] = $rank;
+
+            return $row;
+        });
 
         return $sorted;
     }
 
     private function defaultSession(): string
     {
+        $active = AcademicSession::activeName();
+        if ($active) {
+            return $active;
+        }
+
         $year = (int) now()->format('Y');
         $next = $year + 1;
 

@@ -21,11 +21,20 @@
                 <div class="flex h-full flex-col bg-white dark:bg-dark-100">
                     <div class="flex items-center justify-between border-b border-gray-100 dark:border-dark-200 px-4 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600">
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 3 1 9l11 6 9-4.91V17a2 2 0 0 1-1.1 1.79l-7.4 3.7a2 2 0 0 1-1.8 0l-7.4-3.7A2 2 0 0 1 2 17V9" />
-                                    <path d="M12 21V9" />
-                                </svg>
+                            @php($schoolLogo = config('myacademy.school_logo'))
+                            <div class="grid h-10 w-10 place-items-center overflow-hidden rounded-xl bg-blue-50 text-blue-600 ring-1 ring-inset ring-blue-100">
+                                @if ($schoolLogo)
+                                    <img
+                                        src="{{ asset('uploads/'.str_replace('\\', '/', $schoolLogo)) }}"
+                                        alt="School logo"
+                                        class="h-full w-full bg-white object-contain p-1.5"
+                                    />
+                                @else
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 3 1 9l11 6 9-4.91V17a2 2 0 0 1-1.1 1.79l-7.4 3.7a2 2 0 0 1-1.8 0l-7.4-3.7A2 2 0 0 1 2 17V9" />
+                                        <path d="M12 21V9" />
+                                    </svg>
+                                @endif
                             </div>
                             <div class="text-sm font-semibold tracking-tight text-slate-900">
                                 {{ config('myacademy.school_name', config('app.name', 'MyAcademy')) }}
@@ -189,27 +198,36 @@
             </aside>
             
             <!-- Desktop Sidebar -->
-            <aside id="desktopSidebar" class="fixed inset-y-0 left-0 hidden w-64 flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 transition-all duration-300 lg:flex">
-                <div class="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5">
+            <aside id="desktopSidebar" class="fixed inset-y-0 left-0 hidden w-64 flex-col bg-white shadow-2xl transition-all duration-300 lg:flex">
+                <div class="flex items-center justify-between border-b border-gray-200 bg-gradient-to-br from-slate-50 to-gray-100 px-6 py-5 shadow-sm">
                     <div class="flex items-center gap-3 min-w-0">
-                    <div class="icon-3d grid h-11 w-11 place-items-center rounded-xl bg-white text-indigo-600 shadow-lg">
-                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M12 3 1 9l11 6 9-4.91V17a2 2 0 0 1-1.1 1.79l-7.4 3.7a2 2 0 0 1-1.8 0l-7.4-3.7A2 2 0 0 1 2 17V9" />
-                            <path d="M12 21V9" />
-                        </svg>
+                    @php($schoolLogo = config('myacademy.school_logo'))
+                    <div class="icon-3d grid h-11 w-11 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg ring-1 ring-gray-200">
+                        @if ($schoolLogo)
+                            <img
+                                src="{{ asset('uploads/'.str_replace('\\', '/', $schoolLogo)) }}"
+                                alt="School logo"
+                                class="h-full w-full object-contain p-1.5 bg-white rounded-lg"
+                            />
+                        @else
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M12 3 1 9l11 6 9-4.91V17a2 2 0 0 1-1.1 1.79l-7.4 3.7a2 2 0 0 1-1.8 0l-7.4-3.7A2 2 0 0 1 2 17V9" />
+                                <path d="M12 21V9" />
+                            </svg>
+                        @endif
                     </div>
                         <div class="min-w-0">
-                            <div class="sidebar-text truncate text-base font-black tracking-tight text-white">
+                            <div class="sidebar-text truncate text-base font-black tracking-tight text-gray-900">
                                 {{ config('myacademy.school_name', config('app.name', 'MyAcademy')) }}
                             </div>
-                            <div class="sidebar-text mt-0.5 text-xs font-semibold text-indigo-200">
+                            <div class="sidebar-text mt-0.5 text-xs font-semibold text-gray-600">
                                 {{ config('myacademy.current_term', 'Term 1') }} · {{ config('myacademy.current_week', 'Week 1') }}
                             </div>
                         </div>
                     </div>
-                    <button id="sidebarToggle" class="rounded-lg p-1.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors">
+                    <button id="sidebarToggle" class="rounded-lg p-1.5 text-gray-600 hover:bg-gray-200 transition-colors">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M11 19l-7-7 7-7M18 19l-7-7 7-7"/>
+                            <path d="M15 18l-6-6 6-6"/>
                         </svg>
                     </button>
                 </div>
@@ -217,129 +235,131 @@
                 <nav class="flex-1 overflow-y-auto px-3 py-4">
                     @php($user = auth()->user())
 
-                    <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                    <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M3 13h8V3H3v10zM13 21h8V11h-8v10zM13 3h8v6h-8V3zM3 21h8v-6H3v6z" />
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
                         </svg>
                         <span class="sidebar-text">Dashboard</span>
                     </a>
 
-                    <a href="{{ route('students.index') }}" class="{{ request()->routeIs('students.*') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                    <a href="{{ route('students.index') }}" class="{{ request()->routeIs('students.*') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                            <circle cx="9" cy="7" r="4" />
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
                         </svg>
                         <span class="sidebar-text">Students</span>
                     </a>
 
-                    @if ($user?->role === 'admin' || $user?->role === 'teacher')
-                        <a href="{{ route('teachers') }}" class="{{ request()->routeIs('teachers') || request()->routeIs('teachers.*') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                    @if ($user?->role === 'admin')
+                        <a href="{{ route('teachers') }}" class="{{ request()->routeIs('teachers') || request()->routeIs('teachers.*') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M2 7l10-5 10 5-10 5L2 7z" />
-                                <path d="M12 12v10" />
-                                <path d="M22 7v10l-10 5" />
-                                <path d="M2 7v10l10 5" />
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                             </svg>
                             <span class="sidebar-text">Teachers</span>
                         </a>
 
-                        <a href="{{ route('classes.index') }}" class="{{ request()->routeIs('classes.*') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                        <a href="{{ route('classes.index') }}" class="{{ request()->routeIs('classes.*') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M4 4h16v16H4z" />
-                                <path d="M8 8h8" />
-                                <path d="M8 12h8" />
-                                <path d="M8 16h5" />
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="3" y1="9" x2="21" y2="9"/>
                             </svg>
                             <span class="sidebar-text">Classes</span>
                         </a>
 
-                        <a href="{{ route('subjects.index') }}" class="{{ request()->routeIs('subjects.*') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                        <a href="{{ route('subjects.index') }}" class="{{ request()->routeIs('subjects.*') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5V4.5A2.5 2.5 0 0 1 6.5 2z" />
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                             </svg>
                             <span class="sidebar-text">Subjects</span>
                         </a>
 
-                        <a href="{{ route('results.entry') }}" class="{{ request()->routeIs('results.entry') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                        <a href="{{ route('results.entry') }}" class="{{ request()->routeIs('results.entry') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14 2 14 8 20 8" />
-                                <line x1="16" y1="13" x2="8" y2="13" />
-                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                             </svg>
                             <span class="sidebar-text">Score Entry</span>
                         </a>
 
-                        <a href="{{ route('results.broadsheet') }}" class="{{ request()->routeIs('results.broadsheet') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                        <a href="{{ route('results.broadsheet') }}" class="{{ request()->routeIs('results.broadsheet') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M4 4h16v16H4z" />
-                                <path d="M4 9h16" />
-                                <path d="M9 4v16" />
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
                             </svg>
                             <span class="sidebar-text">Broadsheet</span>
                         </a>
 
-                        <a href="{{ route('attendance') }}" class="{{ request()->routeIs('attendance') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                        <a href="{{ route('attendance') }}" class="{{ request()->routeIs('attendance') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M8 7V3h8v4" />
-                                <path d="M5 7h14v14H5z" />
-                                <path d="M9 11h6" />
-                                <path d="M9 15h6" />
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <polyline points="16 11 18 13 22 9"/>
                             </svg>
                             <span class="sidebar-text">Attendance</span>
                         </a>
 
-                        <a href="{{ route('examination') }}" class="{{ request()->routeIs('examination') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                        <a href="{{ route('messages') }}" class="{{ request()->routeIs('messages') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M8 2v4" />
-                                <path d="M16 2v4" />
-                                <path d="M3 10h18" />
-                                <path d="M5 6h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" />
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <span class="sidebar-text">Messages</span>
+                            <span class="ml-auto flex items-center">
+                                <livewire:messages.unread-badge />
+                            </span>
+                        </a>
+
+                        <a href="{{ route('examination') }}" class="{{ request()->routeIs('examination') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                            <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
                             </svg>
                             <span class="sidebar-text">Examination</span>
                         </a>
                     @endif
 
                     @if ($user?->role === 'admin' || $user?->role === 'bursar')
-                        <a href="{{ route('billing.index') }}" class="{{ request()->routeIs('billing.*') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                        <a href="{{ route('billing.index') }}" class="{{ request()->routeIs('billing.*') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M12 1v22" />
-                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" />
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                <line x1="1" y1="10" x2="23" y2="10"/>
                             </svg>
                             <span class="sidebar-text">Billing</span>
                         </a>
-                        <a href="{{ route('accounts') }}" class="{{ request()->routeIs('accounts') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                        <a href="{{ route('accounts') }}" class="{{ request()->routeIs('accounts') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M4 4h16v16H4z" />
-                                <path d="M8 10h8" />
-                                <path d="M8 14h5" />
+                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                             </svg>
                             <span class="sidebar-text">Accounts</span>
                         </a>
                     @endif
 
-                    <a href="{{ route('more-features') }}" class="{{ request()->routeIs('more-features') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                    <a href="{{ route('more-features') }}" class="{{ request()->routeIs('more-features') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M12 6v.01" />
-                            <path d="M12 12v.01" />
-                            <path d="M12 18v.01" />
-                            <path d="M7 6v.01" />
-                            <path d="M7 12v.01" />
-                            <path d="M7 18v.01" />
-                            <path d="M17 6v.01" />
-                            <path d="M17 12v.01" />
-                            <path d="M17 18v.01" />
+                            <circle cx="12" cy="12" r="1"/>
+                            <circle cx="19" cy="12" r="1"/>
+                            <circle cx="5" cy="12" r="1"/>
                         </svg>
                         <span class="sidebar-text">More Features</span>
                     </a>
 
                     @if ($user?->role === 'admin')
-                        <a href="{{ route('settings') }}" class="{{ request()->routeIs('settings') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                        <a href="{{ route('settings') }}" class="{{ request()->routeIs('settings') ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <circle cx="12" cy="12" r="3" />
-                                <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24" />
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
                             </svg>
                             <span class="sidebar-text">Settings</span>
                         </a>
@@ -388,17 +408,7 @@
                             <div class="hidden rounded-xl border border-gray-200/70 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm md:block">
                                 {{ now()->format('D, M j, Y') }}
                             </div>
-                            <button
-                                type="button"
-                                class="relative rounded-xl border border-gray-200/70 bg-white p-2 text-slate-500 shadow-sm hover:bg-slate-50"
-                                aria-label="Notifications"
-                            >
-                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                                </svg>
-                                <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white"></span>
-                            </button>
+                            <livewire:notifications.bell />
                             <div class="flex items-center gap-2">
                                 <div class="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200">
                                     <span class="text-sm font-semibold">

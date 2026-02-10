@@ -4,7 +4,12 @@
     <div class="space-y-6">
         <x-page-header title="Add Teacher" subtitle="Create a teacher account for access to academics modules." accent="teachers">
             <x-slot:actions>
-                <a href="{{ route('teachers') }}" class="btn-ghost">Back to Teachers</a>
+                <a href="{{ route('teachers') }}" class="btn-outline">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Back
+                </a>
             </x-slot:actions>
         </x-page-header>
 

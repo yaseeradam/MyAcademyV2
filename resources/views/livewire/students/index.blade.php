@@ -166,9 +166,13 @@
                     </td>
                     <td class="px-5 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="grid h-10 w-10 place-items-center rounded-full bg-brand-50 text-sm font-bold text-brand-600">
-                                {{ $initials }}
-                            </div>
+                            @if($student->passport_photo_url)
+                                <img src="{{ $student->passport_photo_url }}" alt="{{ $student->full_name }}" class="h-10 w-10 rounded-full object-cover ring-2 ring-gray-100">
+                            @else
+                                <div class="grid h-10 w-10 place-items-center rounded-full bg-brand-50 text-sm font-bold text-brand-600">
+                                    {{ $initials }}
+                                </div>
+                            @endif
                             <div class="min-w-0">
                                 <div class="truncate text-sm font-semibold text-gray-900">{{ $student->full_name }}</div>
                                 <div class="truncate text-xs text-gray-500">

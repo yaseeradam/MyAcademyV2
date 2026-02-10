@@ -1,12 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
+    @php($dbDriver = (string) config('database.default'))
     <div class="space-y-6">
         <x-page-header
             title="Backup & Restore"
-            subtitle="Offline snapshot system: downloads a zip with database + uploads."
+            subtitle="Offline snapshot system: downloads a zip with database + uploads + school settings."
             accent="settings"
-        />
+        >
+            <x-slot:actions>
+                <a href="{{ route('settings') }}" class="btn-outline">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Back
+                </a>
+            </x-slot:actions>
+        </x-page-header>
 
         @if (session('status'))
             <div class="rounded-xl border border-green-100 bg-green-50 p-4 text-sm font-medium text-green-700">
@@ -18,7 +28,7 @@
             <div class="card-padded">
                 <div class="text-sm font-semibold text-gray-900">Create Backup</div>
                 <div class="mt-2 text-sm text-gray-600">
-                    Generates a fresh database dump and zips it with uploaded images.
+                    Creates a zip containing the database, uploads folder, and school settings.
                 </div>
 
                 <form method="POST" action="{{ route('settings.backup.create') }}" class="mt-5">
@@ -32,14 +42,20 @@
                 </form>
 
                 <div class="mt-4 text-xs text-gray-500">
-                    Configure binaries with <span class="font-mono">MYACADEMY_MYSQLDUMP</span> and <span class="font-mono">MYACADEMY_MYSQL</span> if they are not in PATH.
+                    @if ($dbDriver === 'mysql')
+                        Uses <span class="font-mono">mysqldump</span>. Configure binaries with <span class="font-mono">MYACADEMY_MYSQLDUMP</span> and <span class="font-mono">MYACADEMY_MYSQL</span> if they are not in PATH.
+                    @elseif ($dbDriver === 'sqlite')
+                        Uses your SQLite file: <span class="font-mono">{{ config('database.connections.sqlite.database') }}</span>
+                    @else
+                        Database driver <span class="font-mono">{{ $dbDriver }}</span> is not supported for backup/restore.
+                    @endif
                 </div>
             </div>
 
             <div class="card-padded">
                 <div class="text-sm font-semibold text-gray-900">Restore Backup</div>
                 <div class="mt-2 text-sm text-gray-600">
-                    Upload a backup zip. The system enters maintenance mode, wipes the DB and uploads, then restores.
+                    Upload a backup zip. The system enters maintenance mode, replaces the database and uploads, then restores settings.
                 </div>
 
                 <form method="POST" action="{{ route('settings.restore') }}" enctype="multipart/form-data" class="mt-5 space-y-4">

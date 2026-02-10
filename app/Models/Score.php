@@ -40,18 +40,30 @@ class Score extends Model
     {
         static::saving(function (self $score) {
             $score->total = (int) $score->ca1 + (int) $score->ca2 + (int) $score->exam;
-            $score->grade = self::gradeForTotal($score->total);
+
+            $maxTotal =
+                max(0, (int) config('myacademy.results_ca1_max', 20))
+                + max(0, (int) config('myacademy.results_ca2_max', 20))
+                + max(0, (int) config('myacademy.results_exam_max', 60));
+
+            $score->grade = self::gradeForTotal($score->total, $maxTotal);
         });
     }
 
-    public static function gradeForTotal(int $total): string
+    public static function gradeForTotal(int $total, int $maxTotal = 100): string
     {
+        if ($maxTotal <= 0) {
+            $maxTotal = 100;
+        }
+
+        $percent = (int) round(($total / $maxTotal) * 100);
+
         return match (true) {
-            $total >= 70 => 'A',
-            $total >= 60 => 'B',
-            $total >= 50 => 'C',
-            $total >= 45 => 'D',
-            $total >= 40 => 'E',
+            $percent >= 70 => 'A',
+            $percent >= 60 => 'B',
+            $percent >= 50 => 'C',
+            $percent >= 45 => 'D',
+            $percent >= 40 => 'E',
             default => 'F',
         };
     }

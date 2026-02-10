@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SchoolClass;
+use App\Models\SubjectAllocation;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
@@ -11,12 +12,28 @@ class SchoolClassController extends Controller
 {
     public function index()
     {
-        $classes = SchoolClass::query()
+        $user = auth()->user();
+
+        $classesQuery = SchoolClass::query()
             ->with('sections')
             ->withCount(['sections', 'students'])
             ->orderBy('level')
-            ->orderBy('name')
-            ->get();
+            ->orderBy('name');
+
+        if ($user?->role === 'teacher') {
+            $classIds = SubjectAllocation::query()
+                ->where('teacher_id', $user->id)
+                ->pluck('class_id')
+                ->unique();
+
+            if ($classIds->isEmpty()) {
+                return view('pages.classes.index', ['classes' => collect()]);
+            }
+
+            $classesQuery->whereIn('id', $classIds);
+        }
+
+        $classes = $classesQuery->get();
 
         return view('pages.classes.index', compact('classes'));
     }

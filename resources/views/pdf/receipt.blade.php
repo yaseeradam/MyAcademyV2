@@ -77,7 +77,7 @@
         @endif
 
         <div class="header">
-            <div class="title">{{ config('app.name', 'MyAcademy') }}</div>
+            <div class="title">{{ config('myacademy.school_name', config('app.name', 'MyAcademy')) }}</div>
             <div class="muted">Official Receipt</div>
         </div>
 

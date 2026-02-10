@@ -22,6 +22,7 @@ class Form extends Component
     public ?Student $student = null;
 
     public string $admission_number = '';
+    public bool $auto_admission = true;
     public string $first_name = '';
     public string $last_name = '';
     public ?int $class_id = null;
@@ -44,6 +45,7 @@ class Form extends Component
 
         if ($student) {
             $this->admission_number = $student->admission_number;
+            $this->auto_admission = false;
             $this->first_name = $student->first_name;
             $this->last_name = $student->last_name;
             $this->class_id = $student->class_id;
@@ -55,6 +57,8 @@ class Form extends Component
             $this->guardian_phone = $student->guardian_phone;
             $this->guardian_address = $student->guardian_address;
             $this->status = $student->status;
+        } else {
+            $this->admission_number = $this->generateAdmissionNumber();
         }
     }
 
@@ -79,17 +83,29 @@ class Form extends Component
         $this->section_id = null;
     }
 
+    private function generateAdmissionNumber(): string
+    {
+        $year = now()->format('Y');
+        $lastStudent = Student::query()
+            ->where('admission_number', 'like', "STU{$year}%")
+            ->orderByDesc('id')
+            ->first();
+        
+        if ($lastStudent) {
+            $lastNum = (int) substr($lastStudent->admission_number, -4);
+            $nextNum = str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $nextNum = '0001';
+        }
+        
+        return "STU{$year}{$nextNum}";
+    }
+
     public function save()
     {
         $id = $this->student?->id;
 
-        $data = $this->validate([
-            'admission_number' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('students', 'admission_number')->ignore($id),
-            ],
+        $rules = [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'class_id' => ['required', 'integer', Rule::exists('classes', 'id')],
@@ -102,7 +118,21 @@ class Form extends Component
             'guardian_address' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::in(['Active', 'Graduated', 'Expelled'])],
             'passport' => ['nullable', 'image', 'max:2048'],
-        ]);
+        ];
+
+        if (!$this->auto_admission || $id) {
+            $rules['admission_number'] = [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('students', 'admission_number')->ignore($id),
+            ];
+        } else {
+            $this->admission_number = $this->generateAdmissionNumber();
+        }
+
+        $data = $this->validate($rules);
+        $data['admission_number'] = $this->admission_number;
 
         $student = $this->student ?? new Student();
         $student->fill($data);

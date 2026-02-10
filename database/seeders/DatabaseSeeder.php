@@ -9,6 +9,7 @@ use App\Models\FeeStructure;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\SubjectAllocation;
+use App\Models\AcademicSession;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -119,6 +120,19 @@ class DatabaseSeeder extends Seeder
                     'amount_due' => $amount,
                 ]
             );
+        }
+
+        $year = (int) now()->format('Y');
+        $next = $year + 1;
+        $defaultSession = "{$year}/{$next}";
+
+        if (! AcademicSession::query()->where('is_active', true)->exists()) {
+            AcademicSession::query()->firstOrCreate(
+                ['name' => $defaultSession],
+                ['is_active' => true]
+            );
+        } else {
+            AcademicSession::query()->firstOrCreate(['name' => $defaultSession]);
         }
 
         if (Student::query()->count() === 0) {

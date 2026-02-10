@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicSession;
 use App\Models\Score;
 use App\Models\Student;
 use App\Models\SubjectAllocation;
@@ -47,7 +48,7 @@ class ReportCardController extends Controller
                 'ca2' => $score?->ca2 ?? null,
                 'exam' => $score?->exam ?? null,
                 'total' => $score?->total ?? null,
-                'grade' => $score?->grade ?? ($score ? Score::gradeForTotal((int) $score->total) : null),
+                'grade' => $score?->grade ?? ($score ? Score::gradeForTotal((int) $score->total, max(0, (int) config('myacademy.results_ca1_max', 20)) + max(0, (int) config('myacademy.results_ca2_max', 20)) + max(0, (int) config('myacademy.results_exam_max', 60))) : null),
             ];
         });
 
@@ -146,6 +147,11 @@ class ReportCardController extends Controller
 
     private function defaultSession(): string
     {
+        $active = AcademicSession::activeName();
+        if ($active) {
+            return $active;
+        }
+
         $year = (int) now()->format('Y');
         $next = $year + 1;
 

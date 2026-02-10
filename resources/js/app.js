@@ -259,6 +259,51 @@ document.addEventListener('livewire:init', () => {
 
         window.showAlertModal(message, type, { title });
     });
+
+    // Message unread sound (plays only when server emits "messages-unread")
+    let audioContext;
+    let audioUnlocked = false;
+
+    const unlockAudio = () => {
+        audioUnlocked = true;
+        document.removeEventListener('pointerdown', unlockAudio);
+        document.removeEventListener('keydown', unlockAudio);
+    };
+
+    document.addEventListener('pointerdown', unlockAudio, { once: true });
+    document.addEventListener('keydown', unlockAudio, { once: true });
+
+    const playBeep = () => {
+        if (!audioUnlocked) return;
+
+        try {
+            audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+            const ctx = audioContext;
+
+            const oscillator = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 880;
+
+            const now = ctx.currentTime;
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+            oscillator.connect(gain);
+            gain.connect(ctx.destination);
+
+            oscillator.start(now);
+            oscillator.stop(now + 0.2);
+        } catch (e) {
+            // ignore
+        }
+    };
+
+    window.Livewire.on('messages-unread', () => {
+        playBeep();
+    });
 });
 
 // Bulk operations

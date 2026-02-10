@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Attendance;
 
+use App\Models\AcademicSession;
 use App\Models\AttendanceMark;
 use App\Models\AttendanceSheet;
 use App\Models\SchoolClass;
@@ -321,6 +322,11 @@ class Index extends Component
 
     private function defaultSession(): string
     {
+        $active = AcademicSession::activeName();
+        if ($active) {
+            return $active;
+        }
+
         $year = (int) now()->format('Y');
         $next = $year + 1;
 

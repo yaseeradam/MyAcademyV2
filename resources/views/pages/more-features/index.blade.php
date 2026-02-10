@@ -1,58 +1,85 @@
-@php
-    $user = auth()->user();
+	@php
+	    $user = auth()->user();
+	    $features = [
+	        ['route' => 'users.index', 'title' => 'User Management', 'desc' => 'Create accounts, assign roles, activate/deactivate', 'icon' => 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', 'color' => 'indigo', 'roles' => ['admin']],
+	        ['route' => 'imports.index', 'title' => 'Imports', 'desc' => 'Bulk import students, teachers, and subjects (CSV)', 'icon' => 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3', 'color' => 'cyan', 'roles' => ['admin']],
+
+	        ['route' => 'announcements', 'title' => 'Announcements', 'desc' => 'School-wide announcements', 'icon' => 'M3 11l18-5v12L3 13v-2zm4 10a2 2 0 0 1-2-2v-2l4 1v3a2 2 0 0 1-2 2z', 'color' => 'orange', 'roles' => ['admin', 'teacher', 'bursar']],
+	        ['route' => 'notifications', 'title' => 'Notifications', 'desc' => 'In-app notifications', 'icon' => 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7zm-6 13a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2z', 'color' => 'slate', 'roles' => ['admin', 'teacher', 'bursar']],
+
+	        ['route' => 'promotions', 'title' => 'Promote Students', 'desc' => 'Move students between classes/grades', 'icon' => 'M12 2l4 4h-3v7h-2V6H8l4-4zm-7 9h2v9h10v-9h2v11H5V11z', 'color' => 'emerald', 'roles' => ['admin']],
+	        ['route' => 'promotions', 'title' => 'Bulk Promotion', 'desc' => 'Promote multiple students at once', 'icon' => 'M16 7h5v5h-2V9h-3V7zM3 12h10v2H3v-2zm0 5h10v2H3v-2zM3 7h10v2H3V7z', 'color' => 'indigo', 'roles' => ['admin']],
+	        ['route' => 'events', 'title' => 'Event Scheduling', 'desc' => 'Plan and manage school events', 'icon' => 'M7 2v2H5a2 2 0 0 0-2 2v2h18V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm14 8H3v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V10z', 'color' => 'purple', 'roles' => ['admin', 'teacher']],
+	        ['route' => 'academic-sessions', 'title' => 'Academic Year Management', 'desc' => 'Sessions and active academic year', 'icon' => 'M4 19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7H4v12zm16-14V3h-2v2H6V3H4v2a2 2 0 0 0-2 2v2h20V7a2 2 0 0 0-2-2z', 'color' => 'cyan', 'roles' => ['admin']],
+	        ['route' => 'timetable', 'title' => 'Timetable', 'desc' => 'Class scheduling and time slots', 'icon' => 'M7 11h5v5H7v-5zm7 0h5v5h-5v-5zM7 4v2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2V4h-2v2H9V4H7z', 'color' => 'blue', 'roles' => ['admin', 'teacher']],
+	        ['route' => 'certificates', 'title' => 'Certificates', 'desc' => 'Certificate generation and printing', 'icon' => 'M6 2h9l3 3v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 0v4h4', 'color' => 'orange', 'roles' => ['admin', 'teacher']],
+	    ];
+	    
+	    $colors = [
+	        'blue' => ['bg' => 'from-blue-50 to-cyan-50/60', 'icon' => 'from-blue-500 to-cyan-600', 'shadow' => 'shadow-blue-500/30'],
+	        'emerald' => ['bg' => 'from-emerald-50 to-teal-50/60', 'icon' => 'from-emerald-500 to-teal-600', 'shadow' => 'shadow-emerald-500/30'],
+	        'purple' => ['bg' => 'from-purple-50 to-pink-50/60', 'icon' => 'from-purple-500 to-pink-600', 'shadow' => 'shadow-purple-500/30'],
+	        'orange' => ['bg' => 'from-orange-50 to-amber-50/60', 'icon' => 'from-orange-500 to-amber-600', 'shadow' => 'shadow-orange-500/30'],
+	        'indigo' => ['bg' => 'from-indigo-50 to-blue-50/60', 'icon' => 'from-indigo-500 to-blue-600', 'shadow' => 'shadow-indigo-500/30'],
+	        'cyan' => ['bg' => 'from-cyan-50 to-sky-50/60', 'icon' => 'from-cyan-500 to-sky-600', 'shadow' => 'shadow-cyan-500/30'],
+	        'slate' => ['bg' => 'from-slate-50 to-gray-50/60', 'icon' => 'from-slate-600 to-gray-700', 'shadow' => 'shadow-slate-500/30'],
+    ];
 @endphp
 
 @extends('layouts.app')
 
 @section('content')
-    <div class="space-y-6">
-        <x-page-header title="More Features" subtitle="All modules and utilities grouped in one place." accent="more" />
+	    <div class="space-y-6">
+	        <x-page-header title="More Features" subtitle="All modules and utilities grouped in one place." accent="more" />
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <a href="{{ route('students.index') }}" class="card p-6 transition hover:ring-brand-100">
-                <div class="text-sm font-semibold text-gray-900">Students</div>
-                <div class="mt-2 text-sm text-gray-600">Profiles, results, attendance, and finance.</div>
-            </a>
+	        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+	            @foreach($features as $feature)
+	                @if(in_array($user?->role, $feature['roles']))
+	                    @php $scheme = $colors[$feature['color']]; @endphp
+	                    @php
+	                        $isAvailable = isset($feature['route']) && $feature['route'];
+	                        $isComingSoon = (bool) ($feature['coming_soon'] ?? false);
+	                        $cardClass = $isAvailable
+	                            ? 'group rounded-3xl border border-gray-100 bg-gradient-to-br '.$scheme['bg'].' p-6 shadow-lg transition-all hover:shadow-2xl hover:-translate-y-1'
+	                            : 'rounded-3xl border border-gray-100 bg-gradient-to-br '.$scheme['bg'].' p-6 shadow-lg opacity-70 cursor-not-allowed';
+	                    @endphp
 
-            @if ($user?->role === 'admin' || $user?->role === 'teacher')
-                <a href="{{ route('attendance') }}" class="card p-6 transition hover:ring-brand-100">
-                    <div class="text-sm font-semibold text-gray-900">Attendance</div>
-                    <div class="mt-2 text-sm text-gray-600">Take daily attendance and view history.</div>
-                </a>
-            @endif
-
-            @if ($user?->role === 'admin' || $user?->role === 'bursar')
-                <a href="{{ route('billing.index') }}" class="card p-6 transition hover:ring-brand-100">
-                    <div class="text-sm font-semibold text-gray-900">Billing</div>
-                    <div class="mt-2 text-sm text-gray-600">Transactions, debtors, receipts, and exports.</div>
-                </a>
-            @endif
-
-            @if ($user?->role === 'admin' || $user?->role === 'teacher')
-                <a href="{{ route('institute') }}" class="card p-6 transition hover:ring-brand-100">
-                    <div class="text-sm font-semibold text-gray-900">Institute</div>
-                    <div class="mt-2 text-sm text-gray-600">Classes, sections, subjects, and allocations.</div>
-                </a>
-            @endif
-
-            @if ($user?->role === 'admin')
-                <a href="{{ route('users.index') }}" class="card p-6 transition hover:ring-brand-100">
-                    <div class="text-sm font-semibold text-gray-900">User Management</div>
-                    <div class="mt-2 text-sm text-gray-600">Create accounts, assign roles, activate/deactivate.</div>
-                </a>
-
-                <a href="{{ route('imports.index') }}" class="card p-6 transition hover:ring-brand-100">
-                    <div class="text-sm font-semibold text-gray-900">Imports</div>
-                    <div class="mt-2 text-sm text-gray-600">Bulk import students, teachers, and subjects (CSV).</div>
-                </a>
-            @endif
-
-            @if ($user?->role === 'admin')
-                <a href="{{ route('settings') }}" class="card p-6 transition hover:ring-brand-100">
-                    <div class="text-sm font-semibold text-gray-900">Settings</div>
-                    <div class="mt-2 text-sm text-gray-600">Backup, restore, and system preferences.</div>
-                </a>
-            @endif
-        </div>
-    </div>
-@endsection
+	                    @if($isAvailable)
+	                        <a href="{{ route($feature['route']) }}" class="{{ $cardClass }}">
+	                            <div class="flex items-start gap-4">
+	                                <div class="icon-3d grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br {{ $scheme['icon'] }} text-white shadow-xl {{ $scheme['shadow'] }} transition-transform group-hover:scale-110 group-hover:rotate-6">
+	                                    <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+	                                        <path d="{{ $feature['icon'] }}"/>
+	                                    </svg>
+	                                </div>
+	                                <div class="flex-1 min-w-0">
+	                                    <div class="text-lg font-black text-gray-900">{{ $feature['title'] }}</div>
+	                                    <div class="mt-1.5 text-sm font-semibold text-gray-600">{{ $feature['desc'] }}</div>
+	                                </div>
+	                            </div>
+	                        </a>
+	                    @else
+	                        <div class="{{ $cardClass }}" aria-disabled="true">
+	                            <div class="flex items-start gap-4">
+	                                <div class="icon-3d grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br {{ $scheme['icon'] }} text-white shadow-xl {{ $scheme['shadow'] }}">
+	                                    <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+	                                        <path d="{{ $feature['icon'] }}"/>
+	                                    </svg>
+	                                </div>
+	                                <div class="flex-1 min-w-0">
+	                                    <div class="flex items-center gap-2">
+	                                        <div class="text-lg font-black text-gray-900">{{ $feature['title'] }}</div>
+	                                        @if($isComingSoon)
+	                                            <span class="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-gray-700 ring-1 ring-white/60">Coming soon</span>
+	                                        @endif
+	                                    </div>
+	                                    <div class="mt-1.5 text-sm font-semibold text-gray-600">{{ $feature['desc'] }}</div>
+	                                </div>
+	                            </div>
+	                        </div>
+	                    @endif
+	                @endif
+	            @endforeach
+	        </div>
+	    </div>
+	@endsection

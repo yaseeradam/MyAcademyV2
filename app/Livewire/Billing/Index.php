@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Billing;
 
+use App\Models\AcademicSession;
 use App\Models\FeeStructure;
 use App\Models\Student;
 use App\Models\Transaction;
@@ -214,6 +215,11 @@ class Index extends Component
 
     private function defaultSession(): string
     {
+        $active = AcademicSession::activeName();
+        if ($active) {
+            return $active;
+        }
+
         $year = (int) now()->format('Y');
         $next = $year + 1;
 

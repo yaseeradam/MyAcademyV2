@@ -5,6 +5,8 @@ namespace App\Livewire\Students;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
+use App\Models\SubjectAllocation;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -22,21 +24,55 @@ class Index extends Component
     public string $statusFilter = 'all';
     public string $search = '';
 
+    private ?Collection $teacherClassIdsCache = null;
+
     #[Computed]
     public function classes()
     {
+        $user = auth()->user();
+        if ($user?->role === 'teacher') {
+            $classIds = $this->teacherClassIds();
+            if ($classIds->isEmpty()) {
+                return collect();
+            }
+
+            return SchoolClass::query()
+                ->whereIn('id', $classIds)
+                ->orderBy('level')
+                ->get();
+        }
+
         return SchoolClass::query()->orderBy('level')->get();
     }
 
     #[Computed]
     public function sections()
     {
+        $user = auth()->user();
+
         if ($this->classFilter === 'all') {
-            return Section::query()
+            $query = Section::query()
                 ->select('name')
                 ->distinct()
-                ->orderBy('name')
-                ->pluck('name');
+                ->orderBy('name');
+
+            if ($user?->role === 'teacher') {
+                $classIds = $this->teacherClassIds();
+                if ($classIds->isEmpty()) {
+                    return collect();
+                }
+
+                $query->whereIn('class_id', $classIds);
+            }
+
+            return $query->pluck('name');
+        }
+
+        if ($user?->role === 'teacher') {
+            $classIds = $this->teacherClassIds();
+            if (! $classIds->contains((int) $this->classFilter)) {
+                return collect();
+            }
         }
 
         return Section::query()
@@ -49,8 +85,23 @@ class Index extends Component
     public function students()
     {
         $query = Student::query()->with(['schoolClass', 'section']);
+        $user = auth()->user();
+        $teacherClassIds = null;
+
+        if ($user?->role === 'teacher') {
+            $teacherClassIds = $this->teacherClassIds();
+            if ($teacherClassIds->isEmpty()) {
+                return Student::query()->whereRaw('1 = 0')->paginate(15);
+            }
+
+            $query->whereIn('class_id', $teacherClassIds);
+        }
 
         if ($this->classFilter !== 'all') {
+            if ($teacherClassIds && ! $teacherClassIds->contains((int) $this->classFilter)) {
+                return Student::query()->whereRaw('1 = 0')->paginate(15);
+            }
+
             $query->where('class_id', $this->classFilter);
         }
 
@@ -83,6 +134,21 @@ class Index extends Component
     public function stats(): array
     {
         $all = Student::query();
+        $user = auth()->user();
+
+        if ($user?->role === 'teacher') {
+            $classIds = $this->teacherClassIds();
+            if ($classIds->isEmpty()) {
+                return [
+                    'total' => 0,
+                    'boys' => 0,
+                    'girls' => 0,
+                    'alumni' => 0,
+                ];
+            }
+
+            $all->whereIn('class_id', $classIds);
+        }
 
         $total = (clone $all)->count();
         $boys = (clone $all)->where('gender', 'Male')->count();
@@ -108,5 +174,26 @@ class Index extends Component
         return view('livewire.students.index', [
             'students' => $this->students,
         ]);
+    }
+
+    private function teacherClassIds(): Collection
+    {
+        if ($this->teacherClassIdsCache !== null) {
+            return $this->teacherClassIdsCache;
+        }
+
+        $user = auth()->user();
+        if ($user?->role !== 'teacher') {
+            $this->teacherClassIdsCache = collect();
+            return $this->teacherClassIdsCache;
+        }
+
+        $this->teacherClassIdsCache = SubjectAllocation::query()
+            ->where('teacher_id', $user->id)
+            ->pluck('class_id')
+            ->unique()
+            ->values();
+
+        return $this->teacherClassIdsCache;
     }
 }

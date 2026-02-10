@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Results;
 
+use App\Models\AcademicSession;
 use App\Models\SchoolClass;
 use App\Models\Score;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\SubjectAllocation;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -29,9 +29,71 @@ class Entry extends Component
      */
     public array $scores = [];
 
+    /**
+     * @return array{ca1:int, ca2:int, exam:int}
+     */
+    public function maxMarks(): array
+    {
+        return [
+            'ca1' => max(0, (int) config('myacademy.results_ca1_max', 20)),
+            'ca2' => max(0, (int) config('myacademy.results_ca2_max', 20)),
+            'exam' => max(0, (int) config('myacademy.results_exam_max', 60)),
+        ];
+    }
+
     public function mount(): void
     {
         $this->session = $this->session ?: $this->defaultSession();
+
+        $user = auth()->user();
+        $defaultClassId = (int) request('class', 0);
+        $defaultSubjectId = (int) request('subject', 0);
+        $defaultTerm = (int) request('term', 0);
+        $defaultSession = trim((string) request('session', ''));
+
+        if ($user?->role === 'teacher' && $defaultClassId > 0) {
+            $allowedClass = SubjectAllocation::query()
+                ->where('teacher_id', $user->id)
+                ->where('class_id', $defaultClassId)
+                ->exists();
+
+            if (! $allowedClass) {
+                $defaultClassId = 0;
+                $defaultSubjectId = 0;
+            }
+        }
+
+        if ($user?->role === 'teacher' && $defaultClassId > 0 && $defaultSubjectId > 0) {
+            $allowedSubject = SubjectAllocation::query()
+                ->where('teacher_id', $user->id)
+                ->where('class_id', $defaultClassId)
+                ->where('subject_id', $defaultSubjectId)
+                ->exists();
+
+            if (! $allowedSubject) {
+                $defaultSubjectId = 0;
+            }
+        }
+
+        if ($defaultClassId > 0) {
+            $this->classId = $defaultClassId;
+        }
+
+        if ($defaultSubjectId > 0) {
+            $this->subjectId = $defaultSubjectId;
+        }
+
+        if ($defaultTerm >= 1 && $defaultTerm <= 3) {
+            $this->term = $defaultTerm;
+        }
+
+        if ($defaultSession !== '') {
+            $this->session = $defaultSession;
+        }
+
+        if ($this->classId && $this->subjectId) {
+            $this->loadExistingScores();
+        }
     }
 
     #[Computed]
@@ -81,11 +143,35 @@ class Entry extends Component
             return collect();
         }
 
+        $user = auth()->user();
+        if ($user?->role === 'teacher') {
+            $allowed = SubjectAllocation::query()
+                ->where('teacher_id', $user->id)
+                ->where('class_id', $this->classId)
+                ->exists();
+
+            if (! $allowed) {
+                return collect();
+            }
+        }
+
         return Student::query()
             ->where('class_id', $this->classId)
             ->where('status', 'Active')
             ->orderBy('last_name')
             ->get();
+    }
+
+    #[Computed]
+    public function submission()
+    {
+        return null;
+    }
+
+    #[Computed]
+    public function submissions()
+    {
+        return collect();
     }
 
     public function updatedClassId(): void
@@ -109,6 +195,53 @@ class Entry extends Component
         $this->loadExistingScores();
     }
 
+    public function updatedScores(mixed $value, ?string $name = null): void
+    {
+        if ($name === null || $name === '') {
+            return;
+        }
+
+        $parts = explode('.', $name);
+        if (count($parts) < 2) {
+            return;
+        }
+
+        if (! is_numeric($parts[0]) && isset($parts[1]) && is_numeric($parts[1])) {
+            array_shift($parts);
+        }
+
+        if (! isset($parts[0])) {
+            return;
+        }
+
+        $studentId = (int) $parts[0];
+        $field = (string) end($parts);
+
+        $maxMarks = $this->maxMarks();
+        if (! array_key_exists($field, $maxMarks)) {
+            return;
+        }
+
+        if ($value === '' || $value === null) {
+            $value = 0;
+        }
+
+        $score = (int) $value;
+
+        if ($score < 0) {
+            $this->scores[$studentId][$field] = 0;
+            $this->dispatch('alert', message: 'Scores cannot be negative.', type: 'warning');
+            return;
+        }
+
+        $max = $maxMarks[$field];
+        if ($score > $max) {
+            $label = strtoupper($field);
+            $this->scores[$studentId][$field] = $max;
+            $this->dispatch('alert', message: "{$label} max is {$max}.", type: 'warning');
+        }
+    }
+
     public function save(): void
     {
         if (! $this->classId || ! $this->subjectId) {
@@ -118,6 +251,7 @@ class Entry extends Component
         }
 
         $user = auth()->user();
+
         if ($user?->role !== 'admin') {
             $allowed = SubjectAllocation::query()
                 ->where('teacher_id', $user->id)
@@ -133,7 +267,15 @@ class Entry extends Component
             'session' => ['required', 'string', 'max:9'],
         ]);
 
-        DB::transaction(function () {
+        $maxMarks = $this->maxMarks();
+        $maxTotal = $maxMarks['ca1'] + $maxMarks['ca2'] + $maxMarks['exam'];
+        if ($maxTotal <= 0) {
+            throw ValidationException::withMessages([
+                'scores' => 'Invalid scoring settings. Please update max marks in Settings.',
+            ]);
+        }
+
+        DB::transaction(function () use ($maxMarks) {
             foreach ($this->students as $student) {
                 $row = $this->scores[$student->id] ?? [];
 
@@ -141,7 +283,11 @@ class Entry extends Component
                 $ca2 = (int) ($row['ca2'] ?? 0);
                 $exam = (int) ($row['exam'] ?? 0);
 
-                if ($ca1 < 0 || $ca1 > 20 || $ca2 < 0 || $ca2 > 20 || $exam < 0 || $exam > 60) {
+                if (
+                    $ca1 < 0 || $ca1 > $maxMarks['ca1']
+                    || $ca2 < 0 || $ca2 > $maxMarks['ca2']
+                    || $exam < 0 || $exam > $maxMarks['exam']
+                ) {
                     throw ValidationException::withMessages([
                         'scores' => "Invalid score range for {$student->full_name}.",
                     ]);
@@ -166,6 +312,27 @@ class Entry extends Component
 
         $this->dispatch('alert', message: 'Scores saved.', type: 'success');
         $this->loadExistingScores();
+    }
+
+    public function submitScores(): void
+    {
+        $this->save();
+        $this->dispatch('alert', message: 'Scores saved successfully.', type: 'success');
+    }
+
+    public function approveSubmission(int $id): void
+    {
+        $this->dispatch('alert', message: 'Feature not available.', type: 'info');
+    }
+
+    public function startReject(int $id): void
+    {
+        $this->dispatch('alert', message: 'Feature not available.', type: 'info');
+    }
+
+    public function confirmReject(): void
+    {
+        $this->dispatch('alert', message: 'Feature not available.', type: 'info');
     }
 
     private function loadExistingScores(): void
@@ -196,6 +363,11 @@ class Entry extends Component
 
     private function defaultSession(): string
     {
+        $active = AcademicSession::activeName();
+        if ($active) {
+            return $active;
+        }
+
         $year = (int) now()->format('Y');
         $next = $year + 1;
 

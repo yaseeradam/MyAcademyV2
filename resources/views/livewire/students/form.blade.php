@@ -15,12 +15,21 @@
                 <div class="text-sm font-semibold text-gray-900">Bio</div>
 
                 <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Admission Number</label>
+                    <div class="sm:col-span-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm font-semibold text-gray-700">Admission Number</label>
+                            @if(!$student)
+                                <label class="flex items-center gap-2 text-xs text-gray-600">
+                                    <input type="checkbox" wire:model.live="auto_admission" class="rounded">
+                                    Auto-generate
+                                </label>
+                            @endif
+                        </div>
                         <input
                             wire:model.live="admission_number"
                             type="text"
-                            class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                            @if($auto_admission && !$student) readonly @endif
+                            class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500 {{ $auto_admission && !$student ? 'bg-gray-50' : '' }}"
                         />
                         @error('admission_number')
                             <div class="mt-2 text-sm text-orange-700">{{ $message }}</div>

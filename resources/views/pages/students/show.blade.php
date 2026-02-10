@@ -110,7 +110,12 @@
                 @if (auth()->user()?->role === 'admin')
                     <a href="{{ route('students.edit', $student) }}" class="btn-outline">Edit</a>
                 @endif
-                <a href="{{ route('students.index') }}" class="btn-ghost">All Students</a>
+                <a href="{{ route('students.index') }}" class="btn-outline">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Back
+                </a>
             </x-slot:actions>
         </x-page-header>
 
@@ -328,11 +333,21 @@
                 </x-table>
             </div>
         @else
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                <div class="space-y-4 lg:col-span-2">
-                    <div class="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                        <div class="text-sm font-semibold text-gray-800">Student Information</div>
-                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div class="space-y-6 lg:col-span-2">
+                    <!-- Student Information Card -->
+                    <div class="rounded-3xl border border-gray-100 bg-gradient-to-br from-blue-50 to-indigo-50/60 p-6 shadow-lg">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="icon-3d grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                                </svg>
+                            </div>
+                            <div class="text-lg font-black text-gray-900">Student Information</div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             @foreach ([
                                 'Admission Number' => $student->admission_number,
                                 'Gender' => $student->gender,
@@ -341,48 +356,106 @@
                                 'Class' => $student->schoolClass?->name ?: '—',
                                 'Section' => $student->section?->name ?: '—',
                             ] as $label => $value)
-                                <div class="rounded-lg border border-gray-100 bg-gray-50 p-4">
-                                    <div class="text-xs font-semibold uppercase tracking-wider text-gray-500">{{ $label }}</div>
-                                    <div class="mt-2 text-sm font-semibold text-gray-900">{{ $value }}</div>
+                                <div class="rounded-2xl border border-white/60 bg-white/70 backdrop-blur-sm p-5 hover:shadow-md transition-all">
+                                    <div class="text-xs font-bold uppercase tracking-wider text-gray-500">{{ $label }}</div>
+                                    <div class="mt-2 text-base font-bold text-gray-900">{{ $value }}</div>
                                 </div>
                             @endforeach
                         </div>
                     </div>
 
-                    <div class="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                        <div class="text-sm font-semibold text-gray-800">Guardian Information</div>
-                        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div class="rounded-xl border border-gray-100 bg-gray-50 p-5">
-                                <div class="text-xs font-semibold uppercase tracking-wider text-gray-500">Name</div>
-                                <div class="mt-2 text-sm font-semibold text-gray-900">{{ $student->guardian_name ?: '—' }}</div>
+                    <!-- Subject Card -->
+                    <div class="rounded-3xl border border-gray-100 bg-gradient-to-br from-purple-50 to-pink-50/60 p-6 shadow-lg">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="icon-3d grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/30">
+                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5V4.5A2.5 2.5 0 0 1 6.5 2z" />
+                                </svg>
                             </div>
-                            <div class="rounded-xl border border-gray-100 bg-gray-50 p-5">
-                                <div class="text-xs font-semibold uppercase tracking-wider text-gray-500">Phone</div>
-                                <div class="mt-2 text-sm font-semibold text-gray-900">{{ $student->guardian_phone ?: '—' }}</div>
+                            <div class="text-lg font-black text-gray-900">Enrolled Subjects</div>
+                        </div>
+                        @if($student->schoolClass && $student->schoolClass->subjects->count() > 0)
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                @foreach($student->schoolClass->subjects as $subject)
+                                    <div class="rounded-2xl border border-white/60 bg-white/70 backdrop-blur-sm p-4 hover:shadow-md transition-all">
+                                        <div class="flex items-center gap-3">
+                                            <div class="grid h-10 w-10 place-items-center rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 text-purple-600">
+                                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5V4.5A2.5 2.5 0 0 1 6.5 2z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-bold text-gray-900">{{ $subject->name }}</div>
+                                                <div class="text-xs text-gray-500">{{ $subject->code }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
-                            <div class="rounded-xl border border-gray-100 bg-gray-50 p-5 md:col-span-2">
-                                <div class="text-xs font-semibold uppercase tracking-wider text-gray-500">Address</div>
-                                <div class="mt-2 text-sm font-semibold text-gray-900">{{ $student->guardian_address ?: '—' }}</div>
+                        @else
+                            <div class="rounded-2xl border border-white/60 bg-white/70 backdrop-blur-sm p-5 text-center">
+                                <div class="text-sm font-semibold text-gray-500">No subjects assigned</div>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Guardian Information Card -->
+                    <div class="rounded-3xl border border-gray-100 bg-gradient-to-br from-amber-50 to-orange-50/60 p-6 shadow-lg">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="icon-3d grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30">
+                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                </svg>
+                            </div>
+                            <div class="text-lg font-black text-gray-900">Guardian Information</div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div class="rounded-2xl border border-white/60 bg-white/70 backdrop-blur-sm p-5 hover:shadow-md transition-all">
+                                <div class="text-xs font-bold uppercase tracking-wider text-gray-500">Name</div>
+                                <div class="mt-2 text-base font-bold text-gray-900">{{ $student->guardian_name ?: '—' }}</div>
+                            </div>
+                            <div class="rounded-2xl border border-white/60 bg-white/70 backdrop-blur-sm p-5 hover:shadow-md transition-all">
+                                <div class="text-xs font-bold uppercase tracking-wider text-gray-500">Phone</div>
+                                <div class="mt-2 text-base font-bold text-gray-900">{{ $student->guardian_phone ?: '—' }}</div>
+                            </div>
+                            <div class="rounded-2xl border border-white/60 bg-white/70 backdrop-blur-sm p-5 md:col-span-2 hover:shadow-md transition-all">
+                                <div class="text-xs font-bold uppercase tracking-wider text-gray-500">Address</div>
+                                <div class="mt-2 text-base font-bold text-gray-900">{{ $student->guardian_address ?: '—' }}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="lg:col-span-1">
-                    <div class="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                        <div class="text-sm font-semibold text-gray-800">Recent Activities</div>
-                        <div class="mt-4 space-y-4">
+                    <div class="rounded-3xl border border-gray-100 bg-gradient-to-br from-slate-50 to-gray-50/60 p-6 shadow-lg sticky top-6">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="icon-3d grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-slate-600 to-gray-700 text-white shadow-lg shadow-slate-500/30">
+                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M12 8v4l3 3" />
+                                    <circle cx="12" cy="12" r="10" />
+                                </svg>
+                            </div>
+                            <div class="text-lg font-black text-gray-900">Recent Activities</div>
+                        </div>
+                        <div class="space-y-4">
                             @foreach ([
                                 ['title' => 'Student record viewed', 'time' => now()->format('M j, Y g:i A'), 'variant' => 'info'],
                             ] as $item)
                                 <div class="relative pl-5">
-                                    <div class="absolute left-0 top-1.5 h-full w-px bg-gray-100"></div>
-                                    <div class="absolute left-[-4px] top-1.5 h-2.5 w-2.5 rounded-full bg-brand-500"></div>
-                                    <div class="flex items-center justify-between gap-3">
-                                        <div class="text-sm font-medium text-gray-800">{{ $item['title'] }}</div>
-                                        <x-status-badge variant="{{ $item['variant'] }}">{{ strtoupper(mb_substr($item['variant'], 0, 1)) }}</x-status-badge>
+                                    <div class="absolute left-0 top-1.5 h-full w-px bg-gradient-to-b from-blue-200 to-transparent"></div>
+                                    <div class="absolute left-[-4px] top-1.5 h-2.5 w-2.5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/50"></div>
+                                    <div class="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm p-4 hover:shadow-md transition-all">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <div class="text-sm font-bold text-gray-800">{{ $item['title'] }}</div>
+                                            <x-status-badge variant="{{ $item['variant'] }}">{{ strtoupper(mb_substr($item['variant'], 0, 1)) }}</x-status-badge>
+                                        </div>
+                                        <div class="mt-2 text-xs font-semibold text-gray-500">{{ $item['time'] }}</div>
                                     </div>
-                                    <div class="mt-1 text-xs text-gray-500">{{ $item['time'] }}</div>
                                 </div>
                             @endforeach
                         </div>

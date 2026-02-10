@@ -5,18 +5,29 @@ use App\Http\Controllers\BillingReceiptController;
 use App\Http\Controllers\BillingExportController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\ReportCardController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SchoolClassController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
+use App\Livewire\Academics\Sessions as AcademicSessions;
+use App\Livewire\Announcements\Index as AnnouncementsIndex;
 use App\Livewire\Billing\Index as BillingIndex;
 use App\Livewire\Attendance\Index as AttendanceIndex;
+use App\Livewire\Certificates\Index as CertificatesIndex;
+use App\Livewire\Events\Index as EventsIndex;
 use App\Livewire\Results\Entry as ResultsEntry;
 use App\Livewire\Results\Broadsheet as ResultsBroadsheet;
+use App\Livewire\Messages\Index as MessagesIndex;
+use App\Livewire\Notifications\Index as NotificationsIndex;
+use App\Livewire\Promotions\Index as PromotionsIndex;
+use App\Livewire\Premium\Devices as PremiumDevices;
 use App\Livewire\Students\Form as StudentsForm;
 use App\Livewire\Students\Index as StudentsIndex;
+use App\Livewire\Timetable\Index as TimetableIndex;
 use App\Livewire\Users\Index as UsersIndex;
 use App\Livewire\Imports\Index as ImportsIndex;
 use App\Livewire\Imports\Students as ImportsStudents;
@@ -50,7 +61,14 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->name('logout');
 
 Route::middleware(['auth', 'active'])->group(function () {
-    Route::view('/dashboard', 'pages.dashboard')->name('dashboard');
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        if ($user?->role === 'teacher') {
+            return view('pages.dashboard-teacher');
+        }
+
+        return view('pages.dashboard');
+    })->name('dashboard');
     Route::view('/more-features', 'pages.more-features.index')->name('more-features');
 
     Route::middleware('role:admin')->group(function () {
@@ -80,6 +98,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/imports/students', ImportsStudents::class)->name('imports.students');
         Route::get('/imports/teachers', ImportsTeachers::class)->name('imports.teachers');
         Route::get('/imports/subjects', ImportsSubjects::class)->name('imports.subjects');
+
+        Route::post('/settings/school', [SettingsController::class, 'updateSchool'])->name('settings.update-school');
+        Route::post('/settings/results', [SettingsController::class, 'updateResults'])->name('settings.update-results');
+        Route::post('/settings/certificates', [SettingsController::class, 'updateCertificates'])->name('settings.update-certificates');
     });
 
     Route::get('/students', StudentsIndex::class)->name('students.index');
@@ -105,16 +127,31 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/results/entry', ResultsEntry::class)->name('results.entry');
         Route::get('/results/broadsheet', ResultsBroadsheet::class)->name('results.broadsheet');
         Route::get('/results/report-card/{student}', [ReportCardController::class, 'download'])->name('results.report-card');
+
+        Route::get('/events', EventsIndex::class)->name('events');
+        Route::get('/timetable', TimetableIndex::class)->name('timetable');
+        Route::get('/certificates', CertificatesIndex::class)->name('certificates');
+        Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
     });
 
     Route::middleware('role:admin,bursar')->group(function () {
         Route::view('/accounts', 'pages.accounts.index')->name('accounts');
     });
 
+    Route::middleware('role:admin,teacher,bursar')->group(function () {
+        Route::get('/messages', MessagesIndex::class)->name('messages');
+        Route::get('/announcements', AnnouncementsIndex::class)->name('announcements');
+        Route::get('/notifications', NotificationsIndex::class)->name('notifications');
+    });
+
     Route::middleware('role:admin')->group(function () {
         Route::view('/settings', 'pages.settings.index')->name('settings');
+        Route::get('/settings/devices', PremiumDevices::class)->name('settings.devices');
         Route::get('/settings/backup', [BackupController::class, 'index'])->name('settings.backup');
         Route::post('/settings/backup', [BackupController::class, 'create'])->name('settings.backup.create');
         Route::post('/settings/restore', [BackupController::class, 'restore'])->name('settings.restore');
+
+        Route::get('/promotions', PromotionsIndex::class)->name('promotions');
+        Route::get('/academic-sessions', AcademicSessions::class)->name('academic-sessions');
     });
 });

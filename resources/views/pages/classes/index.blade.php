@@ -9,6 +9,14 @@
     <div class="space-y-6">
         <x-page-header title="Classes" subtitle="Manage class levels and enrollment structure." accent="classes">
             <x-slot:actions>
+                @if ($user?->role === 'admin')
+                    <a href="{{ route('classes.manage') }}" class="btn-outline">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                        Manage Classes
+                    </a>
+                @endif
                 <a href="{{ route('subjects.index') }}" class="btn-outline">Subjects</a>
             </x-slot:actions>
         </x-page-header>
@@ -141,89 +149,5 @@
             @endforelse
         </div>
 
-        @if ($user?->role === 'admin' && $classes->isNotEmpty())
-            <div class="card-padded">
-                <div class="flex items-center justify-between gap-4">
-                    <div class="text-sm font-semibold text-slate-900">Manage Classes & Sections</div>
-                    <div class="text-xs text-slate-500">Edit names/levels, add sections, and remove empty records.</div>
-                </div>
-
-                <div class="mt-4">
-                    <x-table>
-                        <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <tr>
-                                <th class="px-5 py-3">Class</th>
-                                <th class="px-5 py-3 text-right">Counts</th>
-                                <th class="px-5 py-3 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            @foreach ($classes as $class)
-                                <tr class="bg-white hover:bg-gray-50">
-                                    <td class="px-5 py-4">
-                                        <form method="POST" action="{{ route('classes.update', $class) }}" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                                            @csrf
-                                            @method('PATCH')
-                                            <div class="sm:col-span-2">
-                                                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Name</label>
-                                                <input name="name" class="mt-2 input-compact" value="{{ old('name', $class->name) }}" required />
-                                            </div>
-                                            <div>
-                                                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Level</label>
-                                                <input name="level" type="number" min="1" max="30" class="mt-2 input-compact" value="{{ old('level', $class->level) }}" required />
-                                            </div>
-                                            <div class="sm:col-span-3 flex justify-end">
-                                                <button type="submit" class="btn-outline">Save</button>
-                                            </div>
-                                        </form>
-                                    </td>
-                                    <td class="px-5 py-4 text-right text-sm text-slate-700">
-                                        <div class="font-semibold text-slate-900">{{ number_format((int) $class->students_count) }}</div>
-                                        <div class="mt-1 text-xs text-slate-500">{{ number_format((int) $class->sections_count) }} sections</div>
-                                    </td>
-                                    <td class="px-5 py-4 text-right">
-                                        <form method="POST" action="{{ route('classes.destroy', $class) }}" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn-ghost">Delete</button>
-                                        </form>
-                                    </td>
-                                </tr>
-
-                                <tr class="bg-slate-50">
-                                    <td colspan="3" class="px-5 py-4">
-                                        <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Sections</div>
-
-                                        <div class="mt-3 flex flex-wrap gap-2">
-                                            @forelse ($class->sections as $section)
-                                                <form method="POST" action="{{ route('sections.destroy', ['class' => $class, 'section' => $section]) }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-slate-50">
-                                                        <span>{{ $section->name }}</span>
-                                                        <span class="text-slate-400">×</span>
-                                                    </button>
-                                                </form>
-                                            @empty
-                                                <div class="text-sm text-slate-600">No sections yet.</div>
-                                            @endforelse
-                                        </div>
-
-                                        <form method="POST" action="{{ route('sections.store', $class) }}" class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
-                                            @csrf
-                                            <div class="w-full sm:max-w-xs">
-                                                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Add Section</label>
-                                                <input name="name" class="mt-2 input-compact" placeholder="e.g., A" required />
-                                            </div>
-                                            <button type="submit" class="btn-primary w-full justify-center sm:w-auto">Add</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </x-table>
-                </div>
-            </div>
-        @endif
     </div>
 @endsection
