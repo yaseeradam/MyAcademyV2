@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
+use App\Support\LicenseManager;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,7 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(LicenseManager::class, fn () => new LicenseManager());
     }
 
     /**
@@ -21,6 +23,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Blade::if('premium', function (string $feature) {
+            try {
+                return app(LicenseManager::class)->can($feature);
+            } catch (\Throwable) {
+                return false;
+            }
+        });
+
         $path = storage_path('app/myacademy/settings.json');
 
         if (! File::exists($path)) {

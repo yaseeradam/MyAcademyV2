@@ -102,6 +102,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/settings/school', [SettingsController::class, 'updateSchool'])->name('settings.update-school');
         Route::post('/settings/results', [SettingsController::class, 'updateResults'])->name('settings.update-results');
         Route::post('/settings/certificates', [SettingsController::class, 'updateCertificates'])->name('settings.update-certificates');
+        Route::post('/settings/license', [SettingsController::class, 'updateLicense'])->name('settings.update-license');
     });
 
     Route::get('/students', StudentsIndex::class)->name('students.index');

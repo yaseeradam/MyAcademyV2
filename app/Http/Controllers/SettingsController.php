@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\LicenseManager;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\File;
@@ -215,5 +216,23 @@ class SettingsController extends Controller
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         return back()->with('status', 'Certificate settings saved.');
+    }
+
+    public function updateLicense(Request $request, LicenseManager $licenses)
+    {
+        $request->validate([
+            'license' => ['required', 'file', 'max:64'],
+        ]);
+
+        $realPath = $request->file('license')->getRealPath();
+        $raw = $realPath ? (string) File::get($realPath) : '';
+
+        $state = $licenses->installRaw($raw);
+
+        if (! ($state['ok'] ?? false)) {
+            return back()->withErrors(['license' => (string) ($state['reason'] ?? 'Invalid license.')]);
+        }
+
+        return back()->with('status', 'License installed. Premium features updated.');
     }
 }

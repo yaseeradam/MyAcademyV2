@@ -37,4 +37,8 @@ return [
 
     'premium_device_removal_limit' => (int) env('MYACADEMY_PREMIUM_DEVICE_REMOVAL_LIMIT', 2),
     'premium_device_removal_window_days' => (int) env('MYACADEMY_PREMIUM_DEVICE_REMOVAL_WINDOW_DAYS', 30),
+
+    // Premium licensing (Ed25519)
+    // Set this to the base64 encoded Ed25519 public key used to verify licenses.
+    'license_public_key' => env('MYACADEMY_LICENSE_PUBLIC_KEY', ''),
 ];
