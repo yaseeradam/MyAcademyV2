@@ -9,14 +9,6 @@
     <div class="space-y-6">
         <x-page-header title="Classes" subtitle="Manage class levels and enrollment structure." accent="classes">
             <x-slot:actions>
-                @if ($user?->role === 'admin')
-                    <a href="{{ route('classes.manage') }}" class="btn-outline">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
-                        Manage Classes
-                    </a>
-                @endif
                 <a href="{{ route('subjects.index') }}" class="btn-outline">Subjects</a>
             </x-slot:actions>
         </x-page-header>

@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'mode' => env('MYACADEMY_MODE', 'full'), // full|cbt
+    'premium_enforce' => (bool) env('MYACADEMY_PREMIUM_ENFORCE', true),
+
+    // Used to bind a license to a specific school installation/customer.
+    // Recommended: set a unique value (UUID) per client deployment and issue licenses for that school_id.
+    'school_id' => env('MYACADEMY_SCHOOL_ID', ''),
+
     'school_name' => env('MYACADEMY_SCHOOL_NAME', env('APP_NAME', 'MyAcademy')),
     'tagline' => env('MYACADEMY_SCHOOL_TAGLINE', "Here's what's happening in your school today."),
     'current_term' => env('MYACADEMY_CURRENT_TERM', 'Term 1'),

@@ -17,6 +17,10 @@
             <x-slot:actions>
                 <a href="{{ route('results.entry') }}" class="btn-primary">Enter Results</a>
                 <a href="{{ route('results.broadsheet') }}" class="btn-outline">Broadsheet</a>
+                @php($user = auth()->user())
+                @if ($user?->hasPermission('results.publish'))
+                    <a href="{{ route('results.bulk-report-cards') }}" class="btn-outline">Bulk Report Cards</a>
+                @endif
             </x-slot:actions>
         </x-page-header>
 

@@ -3,12 +3,15 @@
 namespace App\Livewire\Results;
 
 use App\Models\AcademicSession;
+use App\Models\ResultPublication;
 use App\Models\SchoolClass;
 use App\Models\Score;
+use App\Models\ScoreSubmission;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\SubjectAllocation;
 use Illuminate\Support\Collection;
+use App\Support\Audit;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -59,6 +62,102 @@ class Broadsheet extends Component
         }
 
         return Subject::query()->whereIn('id', $ids)->orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function publication(): ?ResultPublication
+    {
+        if (! $this->classId || ! $this->session) {
+            return null;
+        }
+
+        return ResultPublication::query()
+            ->where('class_id', $this->classId)
+            ->where('term', $this->term)
+            ->where('session', $this->session)
+            ->first();
+    }
+
+    #[Computed]
+    public function isPublished(): bool
+    {
+        return (bool) ($this->publication?->published_at);
+    }
+
+    public function publishResults(): void
+    {
+        $user = auth()->user();
+        abort_unless($user?->hasPermission('results.publish'), 403);
+
+        if (! $this->classId || ! $this->session) {
+            return;
+        }
+
+        $hasPending = ScoreSubmission::query()
+            ->where('class_id', $this->classId)
+            ->where('term', $this->term)
+            ->where('session', $this->session)
+            ->where('status', 'submitted')
+            ->exists();
+
+        if ($hasPending) {
+            $this->dispatch('alert', message: 'Cannot publish: there are pending (submitted) teacher score submissions.', type: 'warning');
+            return;
+        }
+
+        $publication = ResultPublication::query()->updateOrCreate(
+            [
+                'class_id' => $this->classId,
+                'term' => $this->term,
+                'session' => $this->session,
+            ],
+            [
+                'published_at' => now(),
+                'published_by' => $user->id,
+            ]
+        );
+
+        Audit::log('results.published', $publication, [
+            'class_id' => $publication->class_id,
+            'term' => $publication->term,
+            'session' => $publication->session,
+        ]);
+
+        unset($this->publication);
+        unset($this->isPublished);
+        $this->dispatch('alert', message: 'Results published.', type: 'success');
+    }
+
+    public function unpublishResults(): void
+    {
+        $user = auth()->user();
+        abort_unless($user?->hasPermission('results.publish'), 403);
+
+        if (! $this->classId || ! $this->session) {
+            return;
+        }
+
+        $publication = ResultPublication::query()->updateOrCreate(
+            [
+                'class_id' => $this->classId,
+                'term' => $this->term,
+                'session' => $this->session,
+            ],
+            [
+                'published_at' => null,
+                'published_by' => $user->id,
+            ]
+        );
+
+        Audit::log('results.unpublished', $publication, [
+            'class_id' => $publication->class_id,
+            'term' => $publication->term,
+            'session' => $publication->session,
+        ]);
+
+        unset($this->publication);
+        unset($this->isPublished);
+        $this->dispatch('alert', message: 'Results unpublished.', type: 'success');
     }
 
     #[Computed]
@@ -144,6 +243,9 @@ class Broadsheet extends Component
 
     public function render()
     {
+        $user = auth()->user();
+        abort_unless($user && $user->hasPermission('results.broadsheet'), 403);
+
         return view('livewire.results.broadsheet');
     }
 }

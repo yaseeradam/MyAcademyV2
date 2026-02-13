@@ -53,7 +53,9 @@ class EnsurePremiumFeature
             abort(403, $message);
         }
 
-        return redirect()->route('settings')->withErrors(['premium' => $message]);
+        $user = auth()->user();
+        $route = $user?->role === 'admin' ? 'marketplace' : 'more-features';
+
+        return redirect()->route($route)->withErrors(['premium' => $message]);
     }
 }
-

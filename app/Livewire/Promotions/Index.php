@@ -117,19 +117,6 @@ class Index extends Component
             ]);
         }
 
-        if ($this->toSectionId) {
-            $belongs = Section::query()
-                ->where('id', $this->toSectionId)
-                ->where('class_id', $this->toClassId)
-                ->exists();
-
-            if (! $belongs) {
-                throw ValidationException::withMessages([
-                    'toSectionId' => 'Selected section does not belong to destination class.',
-                ]);
-            }
-        }
-
         $ids = array_values(array_filter(array_map('intval', $this->selected)));
         $ids = array_values(array_unique(array_filter($ids, fn ($id) => $id > 0)));
 
@@ -139,7 +126,7 @@ class Index extends Component
             ]);
         }
 
-        $students = Student::query()->whereIn('id', $ids)->get();
+        $students = Student::query()->whereIn('id', $ids)->with('section:id,name')->get();
         if ($students->count() !== count($ids)) {
             throw ValidationException::withMessages([
                 'selected' => 'Some selected students could not be found.',
@@ -152,7 +139,33 @@ class Index extends Component
         $toSectionId = $this->toSectionId ? (int) $this->toSectionId : null;
         $note = trim($this->note) !== '' ? trim($this->note) : null;
 
-        DB::transaction(function () use ($students, $user, $fromClassId, $fromSectionId, $toClassId, $toSectionId, $note) {
+        $toSections = Section::query()
+            ->where('class_id', $toClassId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        if ($toSections->isEmpty()) {
+            throw ValidationException::withMessages([
+                'toSectionId' => 'Destination class has no sections. Create a section first.',
+            ]);
+        }
+
+        if ($toSectionId) {
+            $belongs = $toSections->contains(fn (Section $s) => $s->id === $toSectionId);
+            if (! $belongs) {
+                throw ValidationException::withMessages([
+                    'toSectionId' => 'Selected section does not belong to destination class.',
+                ]);
+            }
+        }
+
+        $toSectionsByName = $toSections
+            ->filter(fn (Section $s) => trim((string) $s->name) !== '')
+            ->keyBy(fn (Section $s) => strtolower(trim((string) $s->name)));
+
+        $singleToSectionId = $toSections->count() === 1 ? (int) $toSections->first()->id : null;
+
+        DB::transaction(function () use ($students, $user, $fromClassId, $fromSectionId, $toClassId, $toSectionId, $singleToSectionId, $toSectionsByName, $note) {
             foreach ($students as $student) {
                 if ($student->class_id !== $fromClassId) {
                     throw ValidationException::withMessages([
@@ -166,19 +179,33 @@ class Index extends Component
                     ]);
                 }
 
+                $resolvedToSectionId = $toSectionId;
+                if (! $resolvedToSectionId) {
+                    $fromName = strtolower(trim((string) ($student->section?->name ?? '')));
+                    $mapped = $fromName !== '' ? ($toSectionsByName->get($fromName)?->id ?? null) : null;
+
+                    $resolvedToSectionId = $mapped ? (int) $mapped : ($singleToSectionId ?: null);
+                }
+
+                if (! $resolvedToSectionId) {
+                    throw ValidationException::withMessages([
+                        'toSectionId' => 'Select a destination section.',
+                    ]);
+                }
+
                 $promotion = Promotion::query()->create([
                     'student_id' => $student->id,
                     'from_class_id' => $student->class_id,
                     'from_section_id' => $student->section_id,
                     'to_class_id' => $toClassId,
-                    'to_section_id' => $toSectionId,
+                    'to_section_id' => $resolvedToSectionId,
                     'promoted_by' => $user->id,
                     'promoted_at' => now(),
                     'note' => $note,
                 ]);
 
                 $student->class_id = $toClassId;
-                $student->section_id = $toSectionId;
+                $student->section_id = $resolvedToSectionId;
                 $student->save();
             }
         });
@@ -204,4 +231,3 @@ class Index extends Component
         ]);
     }
 }
-

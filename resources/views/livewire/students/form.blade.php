@@ -136,6 +136,42 @@
 
             <div class="space-y-4">
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <div class="text-sm font-semibold text-gray-900">Passport Photo</div>
+
+                    <div class="mt-5">
+                        @if ($passport)
+                            <div class="flex items-center gap-3">
+                                <img
+                                    src="{{ $passport->temporaryUrl() }}"
+                                    alt="Passport preview"
+                                    class="h-20 w-20 rounded-xl object-cover ring-1 ring-inset ring-gray-200"
+                                />
+                                <div class="text-xs text-gray-500">Preview (not saved yet)</div>
+                            </div>
+                        @elseif ($student?->passport_photo_url)
+                            <div class="flex items-center gap-3">
+                                <img
+                                    src="{{ $student->passport_photo_url }}"
+                                    alt="{{ $student->full_name }}"
+                                    class="h-20 w-20 rounded-xl object-cover ring-1 ring-inset ring-gray-200"
+                                />
+                                <div class="text-xs text-gray-500">Current photo</div>
+                            </div>
+                        @endif
+
+                        <input
+                            type="file"
+                            wire:model="passport"
+                            accept="image/*"
+                            class="mt-3 block w-full text-sm text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-gray-700 hover:file:bg-gray-200"
+                        />
+                        @error('passport')
+                            <div class="mt-2 text-sm text-orange-700">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                     <div class="text-sm font-semibold text-gray-900">Guardian</div>
 
                     <div class="mt-5 space-y-4">
@@ -192,40 +228,6 @@
                         @error('status')
                             <div class="text-sm text-orange-700">{{ $message }}</div>
                         @enderror
-
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Passport Photo</label>
-
-                            @if ($passport)
-                                <div class="mt-3 flex items-center gap-3">
-                                    <img
-                                        src="{{ $passport->temporaryUrl() }}"
-                                        alt="Passport preview"
-                                        class="h-16 w-16 rounded-xl object-cover ring-1 ring-inset ring-gray-200"
-                                    />
-                                    <div class="text-xs text-gray-500">Preview (not saved yet)</div>
-                                </div>
-                            @elseif ($student?->passport_photo_url)
-                                <div class="mt-3 flex items-center gap-3">
-                                    <img
-                                        src="{{ $student->passport_photo_url }}"
-                                        alt="{{ $student->full_name }}"
-                                        class="h-16 w-16 rounded-xl object-cover ring-1 ring-inset ring-gray-200"
-                                    />
-                                    <div class="text-xs text-gray-500">Current photo</div>
-                                </div>
-                            @endif
-
-                            <input
-                                type="file"
-                                wire:model="passport"
-                                accept="image/*"
-                                class="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-gray-700 hover:file:bg-gray-200"
-                            />
-                            @error('passport')
-                                <div class="mt-2 text-sm text-orange-700">{{ $message }}</div>
-                            @enderror
-                        </div>
 
                         <button
                             type="submit"

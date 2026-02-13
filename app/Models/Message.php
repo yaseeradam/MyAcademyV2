@@ -11,11 +11,16 @@ class Message extends Model
         'conversation_id',
         'sender_id',
         'body',
+        'attachment_path',
+        'attachment_name',
+        'attachment_mime',
+        'attachment_size',
     ];
 
     protected $casts = [
         'conversation_id' => 'integer',
         'sender_id' => 'integer',
+        'attachment_size' => 'integer',
     ];
 
     public function conversation(): BelongsTo
@@ -28,4 +33,3 @@ class Message extends Model
         return $this->belongsTo(User::class, 'sender_id');
     }
 }
-

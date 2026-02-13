@@ -1,6 +1,7 @@
 	@php
 	    $user = auth()->user();
 	    $features = [
+	        ['route' => 'marketplace', 'title' => 'Marketplace', 'desc' => 'Unlock premium modules (CBT, Savings/Loan)', 'icon' => 'M6 2l1.5 4h9L18 2M3 6h18l-1 16H4L3 6z', 'color' => 'purple', 'roles' => ['admin']],
 	        ['route' => 'users.index', 'title' => 'User Management', 'desc' => 'Create accounts, assign roles, activate/deactivate', 'icon' => 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', 'color' => 'indigo', 'roles' => ['admin']],
 	        ['route' => 'imports.index', 'title' => 'Imports', 'desc' => 'Bulk import students, teachers, and subjects (CSV)', 'icon' => 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3', 'color' => 'cyan', 'roles' => ['admin']],
 
@@ -31,6 +32,12 @@
 @section('content')
 	    <div class="space-y-6">
 	        <x-page-header title="More Features" subtitle="All modules and utilities grouped in one place." accent="more" />
+
+            @if ($errors->has('premium'))
+                <div class="card-padded border border-orange-200 bg-orange-50/60 text-sm text-orange-900">
+                    {{ $errors->first('premium') }}
+                </div>
+            @endif
 
 	        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
 	            @foreach($features as $feature)

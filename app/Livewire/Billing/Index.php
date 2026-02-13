@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Billing;
 
+use App\Support\Audit;
 use App\Models\AcademicSession;
 use App\Models\FeeStructure;
 use App\Models\Student;
@@ -37,15 +38,54 @@ class Index extends Component
     public ?string $filterTo = null;
     public bool $includeVoided = false;
 
+    public string $debtorsCategory = 'Tuition';
+    public ?string $debtorsSession = null;
+    public ?int $debtorsTerm = null;
+
+    public ?int $feeClassId = null;
+    public string $feeCategory = 'Tuition';
+    public ?int $feeTerm = null;
+    public ?string $feeSession = null;
+    public string $feeAmountDue = '';
+    public ?int $editingFeeId = null;
+
+    public ?int $feeFilterClassId = null;
+    public string $feeFilterCategory = '';
+    public ?int $feeFilterTerm = null;
+    public ?string $feeFilterSession = null;
+
     public ?int $voidingTransactionId = null;
     public string $voidReason = '';
 
     public function mount(): void
     {
-        $this->tab = request('tab', 'transactions');
+        $user = auth()->user();
+        $requestedTab = request('tab');
+        $requestedTab = is_string($requestedTab) ? $requestedTab : null;
+
+        $canTransactions = (bool) ($user?->hasPermission('billing.transactions') ?? false);
+        $canFees = (bool) ($user?->hasPermission('fees.manage') ?? false);
+
+        $allowedTabs = ['debtors'];
+        if ($canTransactions) {
+            $allowedTabs[] = 'transactions';
+        }
+        if ($canFees) {
+            $allowedTabs[] = 'fees';
+        }
+
+        $defaultTab = $canTransactions ? 'transactions' : ($canFees ? 'fees' : 'debtors');
+        $this->tab = ($requestedTab && in_array($requestedTab, $allowedTabs, true)) ? $requestedTab : $defaultTab;
         $this->date = now()->toDateString();
         $this->session = $this->session ?? $this->defaultSession();
         $this->term = $this->term ?? 1;
+
+        $this->debtorsCategory = $this->debtorsCategory ?: $this->category ?: 'Tuition';
+        $this->debtorsSession = $this->debtorsSession ?? $this->defaultSession();
+        $this->debtorsTerm = $this->debtorsTerm ?? 1;
+
+        $this->feeSession = $this->feeSession ?? $this->defaultSession();
+        $this->feeFilterSession = $this->feeFilterSession ?? $this->defaultSession();
 
         $this->filterFrom = now()->subDays(30)->toDateString();
         $this->filterTo = now()->toDateString();
@@ -107,18 +147,65 @@ class Index extends Component
     #[Computed]
     public function debtors()
     {
-        $category = $this->category ?: 'Tuition';
+        $category = trim($this->debtorsCategory) !== '' ? trim($this->debtorsCategory) : 'Tuition';
+        $term = $this->debtorsTerm;
+        $session = $this->debtorsSession;
 
-        $feesByClass = FeeStructure::query()
+        $feeRows = FeeStructure::query()
             ->where('category', $category)
-            ->whereNull('term')
-            ->whereNull('session')
-            ->pluck('amount_due', 'class_id');
+            ->where(function ($q) use ($term) {
+                if ($term === null) {
+                    $q->whereNull('term');
+                } else {
+                    $q->whereNull('term')->orWhere('term', $term);
+                }
+            })
+            ->where(function ($q) use ($session) {
+                if (! $session) {
+                    $q->whereNull('session');
+                } else {
+                    $q->whereNull('session')->orWhere('session', $session);
+                }
+            })
+            ->get(['class_id', 'term', 'session', 'amount_due']);
 
-        $paidByStudent = Transaction::query()
+        $feesByClass = $feeRows
+            ->groupBy('class_id')
+            ->map(function ($rows) use ($term, $session) {
+                $best = null;
+                $bestScore = -1;
+
+                foreach ($rows as $row) {
+                    $score = 0;
+                    if ($row->term !== null) {
+                        $score += 2;
+                    }
+                    if ($row->session !== null) {
+                        $score += 1;
+                    }
+
+                    if ($score > $bestScore) {
+                        $best = $row;
+                        $bestScore = $score;
+                    }
+                }
+
+                return $best?->amount_due ?? 0;
+            });
+
+        $paidQuery = Transaction::query()
             ->where('type', 'Income')
             ->where('category', $category)
-            ->where('is_void', false)
+            ->where('is_void', false);
+
+        if ($term !== null) {
+            $paidQuery->where('term', $term);
+        }
+        if ($session) {
+            $paidQuery->where('session', $session);
+        }
+
+        $paidByStudent = $paidQuery
             ->selectRaw('student_id, COALESCE(SUM(amount_paid),0) as paid')
             ->groupBy('student_id')
             ->pluck('paid', 'student_id');
@@ -128,7 +215,7 @@ class Index extends Component
             ->where('status', 'Active')
             ->get()
             ->map(function (Student $student) use ($feesByClass, $paidByStudent) {
-                $due = (float) ($feesByClass[$student->class_id] ?? 0);
+                $due = (float) ($feesByClass->get($student->class_id, 0) ?? 0);
                 $paid = (float) ($paidByStudent[$student->id] ?? 0);
                 $balance = max(0, $due - $paid);
 
@@ -144,8 +231,150 @@ class Index extends Component
             ->values();
     }
 
+    #[Computed]
+    public function classes()
+    {
+        return \App\Models\SchoolClass::query()->orderBy('level')->orderBy('name')->get(['id', 'name', 'level']);
+    }
+
+    #[Computed]
+    public function feeStructures()
+    {
+        $query = FeeStructure::query()
+            ->with('schoolClass:id,name,level')
+            ->orderByDesc('id');
+
+        if ($this->feeFilterClassId) {
+            $query->where('class_id', $this->feeFilterClassId);
+        }
+
+        $category = trim($this->feeFilterCategory);
+        if ($category !== '') {
+            $query->where('category', 'like', "%{$category}%");
+        }
+
+        if ($this->feeFilterTerm) {
+            $query->where('term', $this->feeFilterTerm);
+        }
+
+        $session = trim((string) ($this->feeFilterSession ?? ''));
+        if ($session !== '') {
+            $query->where('session', $session);
+        }
+
+        return $query->limit(100)->get();
+    }
+
+    public function startEditFee(int $feeId): void
+    {
+        $user = auth()->user();
+        abort_unless($user && $user->hasPermission('fees.manage'), 403);
+
+        $fee = FeeStructure::query()->findOrFail($feeId);
+
+        $this->editingFeeId = $fee->id;
+        $this->feeClassId = $fee->class_id;
+        $this->feeCategory = (string) $fee->category;
+        $this->feeTerm = $fee->term;
+        $this->feeSession = $fee->session;
+        $this->feeAmountDue = (string) $fee->amount_due;
+    }
+
+    public function cancelEditFee(): void
+    {
+        $user = auth()->user();
+        abort_unless($user && $user->hasPermission('fees.manage'), 403);
+
+        $this->editingFeeId = null;
+        $this->feeClassId = null;
+        $this->feeCategory = 'Tuition';
+        $this->feeTerm = null;
+        $this->feeSession = $this->defaultSession();
+        $this->feeAmountDue = '';
+    }
+
+    public function saveFeeStructure(): void
+    {
+        $user = auth()->user();
+        abort_unless($user && $user->hasPermission('fees.manage'), 403);
+
+        $data = $this->validate([
+            'feeClassId' => ['required', 'integer', Rule::exists('classes', 'id')],
+            'feeCategory' => ['required', 'string', 'max:255'],
+            'feeTerm' => ['nullable', 'integer', 'between:1,3'],
+            'feeSession' => ['nullable', 'string', 'max:9'],
+            'feeAmountDue' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        if ($this->editingFeeId) {
+            $fee = FeeStructure::query()->findOrFail($this->editingFeeId);
+            $fee->update([
+                'class_id' => (int) $data['feeClassId'],
+                'category' => trim((string) $data['feeCategory']),
+                'term' => $data['feeTerm'] ? (int) $data['feeTerm'] : null,
+                'session' => $data['feeSession'] ? trim((string) $data['feeSession']) : null,
+                'amount_due' => $data['feeAmountDue'],
+            ]);
+
+            Audit::log('fees.structure_updated', $fee, [
+                'class_id' => $fee->class_id,
+                'category' => $fee->category,
+                'term' => $fee->term,
+                'session' => $fee->session,
+                'amount_due' => (string) $fee->amount_due,
+            ]);
+        } else {
+            $fee = FeeStructure::query()->updateOrCreate(
+                [
+                    'class_id' => (int) $data['feeClassId'],
+                    'category' => trim((string) $data['feeCategory']),
+                    'term' => $data['feeTerm'] ? (int) $data['feeTerm'] : null,
+                    'session' => $data['feeSession'] ? trim((string) $data['feeSession']) : null,
+                ],
+                [
+                    'amount_due' => $data['feeAmountDue'],
+                ]
+            );
+
+            Audit::log('fees.structure_saved', $fee, [
+                'class_id' => $fee->class_id,
+                'category' => $fee->category,
+                'term' => $fee->term,
+                'session' => $fee->session,
+                'amount_due' => (string) $fee->amount_due,
+            ]);
+        }
+
+        $this->cancelEditFee();
+        unset($this->feeStructures);
+
+        $this->dispatch('alert', message: 'Fee structure saved.', type: 'success');
+    }
+
+    public function deleteFeeStructure(int $feeId): void
+    {
+        $user = auth()->user();
+        abort_unless($user && $user->hasPermission('fees.manage'), 403);
+
+        $fee = FeeStructure::query()->findOrFail($feeId);
+        $fee->delete();
+
+        Audit::log('fees.structure_deleted', $fee, [
+            'class_id' => $fee->class_id,
+            'category' => $fee->category,
+            'term' => $fee->term,
+            'session' => $fee->session,
+        ]);
+
+        unset($this->feeStructures);
+        $this->dispatch('alert', message: 'Fee structure deleted.', type: 'success');
+    }
+
     public function saveTransaction(): void
     {
+        $user = auth()->user();
+        abort_unless($user && $user->hasPermission('billing.transactions'), 403);
+
         $data = $this->validate([
             'studentId' => [
                 Rule::requiredIf(fn () => $this->type === 'Income'),
@@ -162,7 +391,7 @@ class Index extends Component
             'date' => ['required', 'date'],
         ]);
 
-        Transaction::query()->create([
+        $transaction = Transaction::query()->create([
             'student_id' => $data['studentId'],
             'type' => $data['type'],
             'category' => $data['category'],
@@ -171,6 +400,16 @@ class Index extends Component
             'payment_method' => $data['type'] === 'Income' ? $data['paymentMethod'] : null,
             'amount_paid' => $data['amountPaid'],
             'date' => Carbon::parse($data['date'])->toDateString(),
+        ]);
+
+        Audit::log('billing.transaction_created', $transaction, [
+            'type' => $transaction->type,
+            'student_id' => $transaction->student_id,
+            'category' => $transaction->category,
+            'term' => $transaction->term,
+            'session' => $transaction->session,
+            'amount_paid' => (string) $transaction->amount_paid,
+            'payment_method' => $transaction->payment_method,
         ]);
 
         $this->reset(['studentId', 'amountPaid']);
@@ -193,6 +432,9 @@ class Index extends Component
 
     public function confirmVoid(int $transactionId): void
     {
+        $user = auth()->user();
+        abort_unless($user && $user->hasPermission('billing.void'), 403);
+
         $data = $this->validate([
             'voidReason' => ['nullable', 'string', 'max:255'],
         ]);
@@ -207,6 +449,10 @@ class Index extends Component
             'void_reason' => $data['voidReason'] ?: null,
             'voided_at' => now(),
             'voided_by' => auth()->id(),
+        ]);
+
+        Audit::log('billing.transaction_voided', $transaction, [
+            'reason' => $transaction->void_reason,
         ]);
 
         $this->cancelVoid();
@@ -228,6 +474,9 @@ class Index extends Component
 
     public function render()
     {
+        $user = auth()->user();
+        abort_unless($user && ($user->hasPermission('billing.transactions') || $user->hasPermission('fees.manage')), 403);
+
         return view('livewire.billing.index');
     }
 }

@@ -103,7 +103,6 @@ class PremiumLicenseMiddlewareTest extends TestCase
 
         $this->actingAs($admin)
             ->get('/__premium_test2')
-            ->assertRedirect(route('settings'));
+            ->assertRedirect(route('marketplace'));
     }
 }
-

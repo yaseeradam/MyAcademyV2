@@ -1,0 +1,271 @@
+@php
+    $isAdmin = $me?->role === 'admin';
+@endphp
+
+<div class="space-y-6">
+    <x-page-header title="CBT" subtitle="Teachers set questions → submit → admin approves → students take exam." accent="results">
+        <x-slot:actions>
+            <a href="{{ route('dashboard') }}" class="btn-outline">Dashboard</a>
+            @if ($me?->role === 'teacher')
+                <button type="button" wire:click="{{ $creating ? 'cancelCreate' : 'startCreate' }}" class="btn-primary">
+                    {{ $creating ? 'Close' : 'New Exam' }}
+                </button>
+            @endif
+            @if ($me?->role === 'admin')
+                <button type="button" wire:click="{{ $requesting ? 'cancelRequest' : 'startRequest' }}" class="btn-primary">
+                    {{ $requesting ? 'Close' : 'Request Teacher' }}
+                </button>
+            @endif
+        </x-slot:actions>
+    </x-page-header>
+
+    <div class="card-padded">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <div class="text-sm font-semibold text-gray-900">Exams</div>
+                <div class="mt-1 text-sm text-gray-600">Manage your CBT exams and approvals.</div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</label>
+                <select wire:model.live="statusFilter" class="select min-w-48">
+                    <option value="">All</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="draft">Draft</option>
+                    <option value="submitted">Submitted</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @if ($requesting)
+        <div class="card-padded border border-brand-100 bg-brand-50/40">
+            <div class="text-sm font-semibold text-gray-900">Request Teacher</div>
+            <div class="mt-1 text-sm text-gray-600">Send a CBT question request to a teacher allocated to the class and subject.</div>
+
+            <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <div class="lg:col-span-2">
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Title</label>
+                    <input wire:model="title" class="mt-2 input w-full" placeholder="e.g. Mathematics CBT - Test 1" />
+                    @error('title') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Duration (minutes)</label>
+                    <input wire:model="durationMinutes" type="number" min="1" max="300" class="mt-2 input w-full" />
+                    @error('durationMinutes') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-4">
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Class</label>
+                    <select wire:model.live="classId" class="mt-2 select w-full">
+                        <option value="">Select class</option>
+                        @foreach ($this->classes as $class)
+                            <option value="{{ $class->id }}">{{ $class->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('classId') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+                <div class="lg:col-span-2">
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Subject</label>
+                    <select wire:model.live="subjectId" @disabled(! $classId) class="mt-2 select w-full">
+                        <option value="">Select subject</option>
+                        @foreach ($this->subjects as $subject)
+                            <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('subjectId') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Teacher</label>
+                    <select wire:model.live="teacherId" @disabled(! $classId || ! $subjectId) class="mt-2 select w-full">
+                        <option value="">Select teacher</option>
+                        @foreach ($this->teachers as $teacher)
+                            <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('teacherId') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Session</label>
+                    <input wire:model="session" class="mt-2 input w-full" placeholder="2025/2026" />
+                    @error('session') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Term</label>
+                    <select wire:model.live="term" class="mt-2 select w-full">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                    @error('term') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Request Note (optional)</label>
+                    <input wire:model="requestNote" class="mt-2 input w-full" placeholder="e.g. Focus on topics 1-5." />
+                    @error('requestNote') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Description (optional)</label>
+                    <input wire:model="description" class="mt-2 input w-full" placeholder="Instructions for students..." />
+                    @error('description') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+                <button type="button" wire:click="createRequest" class="btn-primary">Send Request</button>
+                <button type="button" wire:click="cancelRequest" class="btn-outline">Cancel</button>
+            </div>
+        </div>
+    @endif
+
+    @if ($creating)
+        <div class="card-padded border border-brand-100 bg-brand-50/40">
+            <div class="text-sm font-semibold text-gray-900">Create Exam</div>
+            <div class="mt-1 text-sm text-gray-600">Draft an exam first, then add questions.</div>
+
+            <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <div class="lg:col-span-2">
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Title</label>
+                    <input wire:model="title" class="mt-2 input w-full" placeholder="e.g. Mathematics Quiz 1" />
+                    @error('title') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Duration (minutes)</label>
+                    <input wire:model="durationMinutes" type="number" min="1" max="300" class="mt-2 input w-full" />
+                    @error('durationMinutes') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-4">
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Class</label>
+                    <select wire:model.live="classId" class="mt-2 select w-full">
+                        <option value="">Select class</option>
+                        @foreach ($this->classes as $class)
+                            <option value="{{ $class->id }}">{{ $class->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('classId') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+                <div class="lg:col-span-2">
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Subject</label>
+                    <select wire:model.live="subjectId" @disabled(! $classId) class="mt-2 select w-full">
+                        <option value="">Select subject</option>
+                        @foreach ($this->subjects as $subject)
+                            <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('subjectId') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Term</label>
+                    <select wire:model.live="term" class="mt-2 select w-full">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                    @error('term') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Session</label>
+                <input wire:model="session" class="mt-2 input w-full" placeholder="2025/2026" />
+                @error('session') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="mt-4">
+                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Description (optional)</label>
+                <textarea wire:model="description" rows="3" class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Instructions for students..."></textarea>
+                @error('description') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+                <button type="button" wire:click="createExam" class="btn-primary">Create</button>
+                <button type="button" wire:click="cancelCreate" class="btn-outline">Cancel</button>
+            </div>
+        </div>
+    @endif
+
+    <div class="card-padded">
+        <x-table>
+            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <tr>
+                    <th class="px-5 py-3">Exam</th>
+                    <th class="px-5 py-3">Class / Subject</th>
+                    <th class="px-5 py-3 text-center">Questions</th>
+                    <th class="px-5 py-3 text-center">Attempts</th>
+                    <th class="px-5 py-3">Status</th>
+                    <th class="px-5 py-3">Code</th>
+                    <th class="px-5 py-3 text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @forelse ($exams as $exam)
+                    @php
+                        $variant = match ($exam->status) {
+                            'approved' => 'success',
+                            'submitted' => 'info',
+                            'assigned' => 'info',
+                            'rejected' => 'warning',
+                            default => 'neutral',
+                        };
+                    @endphp
+                    <tr class="bg-white hover:bg-gray-50">
+                        <td class="px-5 py-4">
+                            <div class="text-sm font-semibold text-gray-900">{{ $exam->title }}</div>
+                            <div class="mt-1 text-xs text-gray-500">
+                                @if ($isAdmin)
+                                    @if ($exam->status === 'assigned')
+                                        Teacher: {{ $exam->assignedTeacher?->name ?? 'Not set' }}
+                                    @else
+                                        By {{ $exam->creator?->name ?? 'User' }}
+                                    @endif
+                                @else
+                                    {{ $exam->session ? $exam->session.' ' : '' }}T{{ $exam->term }}
+                                @endif
+                            </div>
+                            @if ($exam->status === 'assigned' && $exam->request_note)
+                                <div class="mt-2 text-xs text-slate-700">Request: {{ $exam->request_note }}</div>
+                            @endif
+                            @if ($exam->status === 'rejected' && $exam->note)
+                                <div class="mt-2 text-xs text-orange-700">Note: {{ $exam->note }}</div>
+                            @endif
+                        </td>
+                        <td class="px-5 py-4">
+                            <div class="text-sm font-semibold text-gray-900">{{ $exam->schoolClass?->name ?? '-' }}</div>
+                            <div class="mt-1 text-xs text-gray-500">{{ $exam->subject?->name ?? '-' }}</div>
+                        </td>
+                        <td class="px-5 py-4 text-center text-sm font-semibold text-gray-900">{{ (int) $exam->questions_count }}</td>
+                        <td class="px-5 py-4 text-center text-sm font-semibold text-gray-900">{{ (int) $exam->attempts_count }}</td>
+                        <td class="px-5 py-4">
+                            <x-status-badge variant="{{ $variant }}">{{ ucfirst($exam->status) }}</x-status-badge>
+                        </td>
+                        <td class="px-5 py-4">
+                            <span class="text-sm font-mono text-gray-700">{{ $exam->status === 'approved' ? ($exam->access_code ?: '-') : '-' }}</span>
+                        </td>
+                        <td class="px-5 py-4 text-right">
+                            <a href="{{ route('cbt.exams.edit', $exam) }}" class="btn-outline">
+                                {{ in_array($exam->status, ['draft', 'assigned', 'rejected'], true) ? 'Edit' : 'Open' }}
+                            </a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="px-5 py-10 text-center text-sm text-gray-600">No exams yet.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </x-table>
+    </div>
+</div>

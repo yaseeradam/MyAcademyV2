@@ -1,6 +1,10 @@
 <div class="space-y-6">
     <x-page-header title="Users" subtitle="Create accounts, assign roles, and manage activation." accent="settings" />
 
+    @php
+        $permissionDefinitions = (array) config('permissions.definitions', []);
+    @endphp
+
     <div class="card-padded">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
             <div class="lg:col-span-3">
@@ -141,6 +145,49 @@
                                             <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">New Password (optional)</label>
                                             <input wire:model.live="newPassword" type="text" class="mt-2 input-compact" placeholder="Min 8 characters" />
                                         </div>
+
+                                        <div class="lg:col-span-6">
+                                            <div class="mt-2 flex items-center justify-between gap-3">
+                                                <div>
+                                                    <div class="text-sm font-semibold text-gray-900">Permissions</div>
+                                                    <div class="mt-1 text-xs text-gray-600">Default permissions come from the selected role. You can override per user.</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-3 overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                                                <div class="grid grid-cols-1 divide-y divide-gray-100">
+                                                    @forelse ($permissionDefinitions as $key => $def)
+                                                        @php
+                                                            $label = (string) ($def['label'] ?? $key);
+                                                            $roles = (array) ($def['roles'] ?? []);
+                                                            $state = (string) ($editPermissions[$key] ?? 'default');
+                                                            $defaultAllowed = in_array($editRole, $roles, true);
+                                                            $effectiveAllowed = $state === 'revoke' ? false : ($state === 'grant' ? true : $defaultAllowed);
+                                                        @endphp
+                                                        <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                                                            <div class="min-w-0">
+                                                                <div class="text-sm font-semibold text-gray-900">{{ $label }}</div>
+                                                                <div class="mt-1 text-xs text-gray-500 font-mono">{{ $key }}</div>
+                                                            </div>
+
+                                                            <div class="flex flex-wrap items-center gap-2">
+                                                                <x-status-badge variant="{{ $effectiveAllowed ? 'success' : 'warning' }}">
+                                                                    {{ $effectiveAllowed ? 'Allowed' : 'Denied' }}
+                                                                </x-status-badge>
+                                                                <select wire:model.live="editPermissions.{{ $key }}" class="select">
+                                                                    <option value="default">Default</option>
+                                                                    <option value="grant">Grant</option>
+                                                                    <option value="revoke">Revoke</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    @empty
+                                                        <div class="p-4 text-sm text-gray-600">No permissions configured.</div>
+                                                    @endforelse
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="lg:col-span-6 flex flex-wrap justify-end gap-2">
                                             <button type="button" wire:click="cancelEdit" class="btn-outline">Cancel</button>
                                             <button type="button" wire:click="saveEdit" class="btn-primary">Save</button>
@@ -163,4 +210,3 @@
         </div>
     </div>
 </div>
-

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Audit;
 use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\SubjectAllocation;
@@ -34,8 +35,9 @@ class TeacherController extends Controller
             $file = $request->file('photo');
             $ext = $file->getClientOriginalExtension() ?: 'jpg';
             $safeName = Str::of($data['name'])->lower()->replaceMatches('/[^a-z0-9]+/i', '-')->trim('-')->toString();
-            $filename = ($safeName ?: 'teacher').'-'.now()->format('YmdHis').'.'.$ext;
+            $filename = ($safeName ?: 'teacher').'-'.now()->format('YmdHis').'-'.bin2hex(random_bytes(3)).'.'.$ext;
             $profilePhotoPath = $file->storeAs('teacher-photos', $filename, 'uploads');
+            $profilePhotoPath = str_replace('\\', '/', (string) $profilePhotoPath);
         }
 
         User::query()->create([
@@ -81,15 +83,19 @@ class TeacherController extends Controller
         $ext = $file->getClientOriginalExtension() ?: 'jpg';
 
         $safeName = Str::of($teacher->name)->lower()->replaceMatches('/[^a-z0-9]+/i', '-')->trim('-')->toString();
-        $filename = ($safeName ?: 'teacher').'-'.now()->format('YmdHis').'.'.$ext;
+        $filename = ($safeName ?: 'teacher').'-'.$teacher->id.'-'.now()->format('YmdHis').'-'.bin2hex(random_bytes(3)).'.'.$ext;
         $path = $file->storeAs('teacher-photos', $filename, 'uploads');
+        $path = str_replace('\\', '/', (string) $path);
 
-        if ($teacher->profile_photo) {
-            Storage::disk('uploads')->delete($teacher->profile_photo);
+        $old = $teacher->profile_photo ? str_replace('\\', '/', (string) $teacher->profile_photo) : null;
+        if ($old && $old !== $path) {
+            Storage::disk('uploads')->delete($old);
         }
 
         $teacher->profile_photo = $path;
         $teacher->save();
+
+        Audit::log('teacher.photo_updated', $teacher, ['path' => $path]);
 
         return back()->with('status', 'Profile photo updated.');
     }

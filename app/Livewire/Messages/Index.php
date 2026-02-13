@@ -8,27 +8,91 @@ use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 #[Title('Messages')]
 class Index extends Component
 {
+    use WithFileUploads;
+
     public ?int $conversationId = null;
 
     public string $userSearch = '';
     public ?int $recipientId = null;
 
     public string $body = '';
+    public $attachment = null;
 
     public function mount(): void
     {
         $user = auth()->user();
+        abort_unless($user && $user->hasPermission('messages.access'), 403);
+    }
+
+    #[Computed]
+    public function unreadByUser(): array
+    {
+        $user = auth()->user();
         abort_unless($user, 403);
+
+        $rows = Message::query()
+            ->join('conversation_user as cu', function ($join) use ($user) {
+                $join->on('cu.conversation_id', '=', 'messages.conversation_id')
+                    ->where('cu.user_id', '=', $user->id);
+            })
+            ->where('messages.sender_id', '!=', $user->id)
+            ->where(function ($q) {
+                $q->whereNull('cu.last_read_at')
+                    ->orWhereColumn('messages.created_at', '>', 'cu.last_read_at');
+            })
+            ->groupBy('messages.sender_id')
+            ->get([
+                'messages.sender_id as user_id',
+                DB::raw('count(messages.id) as unread'),
+            ]);
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[(int) $row->user_id] = (int) $row->unread;
+        }
+
+        return $map;
+    }
+
+    private function unreadByConversation(): array
+    {
+        $user = auth()->user();
+        abort_unless($user, 403);
+
+        $rows = Message::query()
+            ->join('conversation_user as cu', function ($join) use ($user) {
+                $join->on('cu.conversation_id', '=', 'messages.conversation_id')
+                    ->where('cu.user_id', '=', $user->id);
+            })
+            ->where('messages.sender_id', '!=', $user->id)
+            ->where(function ($q) {
+                $q->whereNull('cu.last_read_at')
+                    ->orWhereColumn('messages.created_at', '>', 'cu.last_read_at');
+            })
+            ->groupBy('messages.conversation_id')
+            ->get([
+                'messages.conversation_id as conversation_id',
+                DB::raw('count(messages.id) as unread'),
+            ]);
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[(int) $row->conversation_id] = (int) $row->unread;
+        }
+
+        return $map;
     }
 
     #[Computed]
@@ -50,10 +114,12 @@ class Index extends Component
         $conversations = Conversation::query()
             ->whereIn('id', $pivots->keys())
             ->with([
-                'participants:id,name,role',
-                'messages' => fn ($q) => $q->latest('id')->limit(1)->with('sender:id,name'),
+                'participants:id,name,role,profile_photo',
+                'messages' => fn ($q) => $q->latest('id')->limit(1)->with('sender:id,name,profile_photo'),
             ])
             ->get();
+
+        $unreadByConversation = $this->unreadByConversation();
 
         return $conversations
             ->filter(function (Conversation $c) use ($user, $allowedRoles) {
@@ -71,8 +137,10 @@ class Index extends Component
                 $lastMessageAt = $lastMessage?->created_at;
 
                 $unread = $lastMessageAt && (! $lastReadAt || $lastMessageAt->gt($lastReadAt));
+                $unreadCount = (int) ($unreadByConversation[$c->id] ?? 0);
 
                 $others = $c->participants->where('id', '!=', $user->id)->values();
+                $otherUser = $others->count() === 1 ? $others->first() : null;
                 $title = $others->isEmpty()
                     ? 'Conversation'
                     : ($others->count() === 1 ? $others->first()->name : $others->pluck('name')->take(3)->join(', '));
@@ -81,7 +149,9 @@ class Index extends Component
                     'id' => $c->id,
                     'title' => $title,
                     'other_user_id' => $others->count() === 1 ? (int) $others->first()->id : null,
+                    'other_user_photo_url' => $otherUser?->profile_photo_url,
                     'unread' => $unread,
+                    'unread_count' => $unreadCount,
                     'last_message' => $lastMessage?->body,
                     'last_message_at' => $lastMessageAt,
                 ];
@@ -115,7 +185,7 @@ class Index extends Component
             });
         }
 
-        return $query->limit(20)->get(['id', 'name', 'role']);
+        return $query->limit(20)->get(['id', 'name', 'role', 'profile_photo']);
     }
 
     #[Computed]
@@ -132,7 +202,7 @@ class Index extends Component
 
         return Message::query()
             ->where('conversation_id', $this->conversationId)
-            ->with('sender:id,name')
+            ->with('sender:id,name,profile_photo')
             ->orderBy('id')
             ->limit(300)
             ->get();
@@ -207,40 +277,77 @@ class Index extends Component
         $this->assertConversationAccess($this->conversationId, $user);
 
         $data = $this->validate([
-            'body' => ['required', 'string', 'max:2000'],
+            'body' => ['nullable', 'string', 'max:2000'],
+            'attachment' => ['nullable', 'file', 'max:51200'],
         ]);
 
-        $message = DB::transaction(function () use ($user, $data) {
-            $m = Message::query()->create([
-                'conversation_id' => $this->conversationId,
-                'sender_id' => $user->id,
-                'body' => trim($data['body']),
-            ]);
+        $body = trim((string) ($data['body'] ?? ''));
+        $hasAttachment = (bool) ($this->attachment);
+        if ($body === '' && ! $hasAttachment) {
+            throw ValidationException::withMessages(['body' => 'Type a message or attach a file.']);
+        }
 
-            DB::table('conversation_user')
-                ->where('conversation_id', $this->conversationId)
-                ->where('user_id', $user->id)
-                ->update(['last_read_at' => now()]);
+        $attachmentPath = null;
+        $attachmentName = null;
+        $attachmentMime = null;
+        $attachmentSize = null;
 
-            $recipientIds = DB::table('conversation_user')
-                ->where('conversation_id', $this->conversationId)
-                ->where('user_id', '!=', $user->id)
-                ->pluck('user_id')
-                ->all();
+        if ($hasAttachment) {
+            $attachmentName = (string) ($this->attachment->getClientOriginalName() ?: 'attachment');
+            $attachmentMime = (string) ($this->attachment->getMimeType() ?: 'application/octet-stream');
+            $attachmentSize = (int) ($this->attachment->getSize() ?: 0);
 
-            foreach ($recipientIds as $rid) {
-                InAppNotification::query()->create([
-                    'user_id' => (int) $rid,
-                    'title' => 'New message',
-                    'body' => $user->name.': '.mb_strimwidth($m->body, 0, 120, '...'),
-                    'link' => route('messages', ['c' => $this->conversationId]),
+            $attachmentPath = $this->attachment->storeAs(
+                'myacademy/messages/'.$this->conversationId,
+                now()->format('YmdHis').'_'.bin2hex(random_bytes(6)).'_'.$attachmentName,
+                'local'
+            );
+        }
+
+        try {
+            $message = DB::transaction(function () use ($user, $body, $attachmentPath, $attachmentName, $attachmentMime, $attachmentSize) {
+                $m = Message::query()->create([
+                    'conversation_id' => $this->conversationId,
+                    'sender_id' => $user->id,
+                    'body' => $body !== '' ? $body : '',
+                    'attachment_path' => $attachmentPath,
+                    'attachment_name' => $attachmentName,
+                    'attachment_mime' => $attachmentMime,
+                    'attachment_size' => $attachmentSize,
                 ]);
+
+                DB::table('conversation_user')
+                    ->where('conversation_id', $this->conversationId)
+                    ->where('user_id', $user->id)
+                    ->update(['last_read_at' => now()]);
+
+                $recipientIds = DB::table('conversation_user')
+                    ->where('conversation_id', $this->conversationId)
+                    ->where('user_id', '!=', $user->id)
+                    ->pluck('user_id')
+                    ->all();
+
+                foreach ($recipientIds as $rid) {
+                    InAppNotification::query()->create([
+                        'user_id' => (int) $rid,
+                        'title' => 'New message',
+                        'body' => $user->name.': '.mb_strimwidth($m->body !== '' ? $m->body : ($m->attachment_name ?: 'Attachment'), 0, 120, '...'),
+                        'link' => route('messages', ['c' => $this->conversationId]),
+                    ]);
+                }
+
+                return $m;
+            });
+        } catch (\Throwable $e) {
+            if ($attachmentPath) {
+                Storage::disk('local')->delete($attachmentPath);
             }
 
-            return $m;
-        });
+            throw $e;
+        }
 
         $this->body = '';
+        $this->attachment = null;
         $this->markConversationRead($this->conversationId);
     }
 
@@ -300,11 +407,7 @@ class Index extends Component
     public function render()
     {
         $user = auth()->user();
-        abort_unless($user, 403);
-
-        if (! in_array($user->role, ['admin', 'teacher', 'bursar'], true)) {
-            abort(403);
-        }
+        abort_unless($user && $user->hasPermission('messages.access'), 403);
 
         $defaultConversation = (int) request('c', 0);
         if (! $this->conversationId && $defaultConversation > 0) {

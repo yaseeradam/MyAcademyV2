@@ -2,6 +2,17 @@
     <x-page-header title="Broadsheet" subtitle="All students (rows) × all subjects (columns)." accent="results">
         <x-slot:actions>
             <a href="{{ route('results.entry') }}" class="btn-outline">Score Entry</a>
+            @php($user = auth()->user())
+            @if ($classId && $user?->hasPermission('results.publish'))
+                <x-status-badge variant="{{ $this->isPublished ? 'success' : 'warning' }}">
+                    {{ $this->isPublished ? 'Published' : 'Unpublished' }}
+                </x-status-badge>
+                @if ($this->isPublished)
+                    <button type="button" wire:click="unpublishResults" class="btn-outline">Unpublish</button>
+                @else
+                    <button type="button" wire:click="publishResults" class="btn-primary">Publish</button>
+                @endif
+            @endif
         </x-slot:actions>
     </x-page-header>
 
@@ -98,12 +109,17 @@
                             </x-status-badge>
                         </td>
                         <td class="px-5 py-4 text-right">
-                            <a
-                                href="{{ route('results.report-card', ['student' => $row['student'], 'term' => $term, 'session' => $session]) }}"
-                                class="text-sm font-semibold text-brand-600 hover:text-brand-700"
-                            >
-                                Report Card
-                            </a>
+                            @php($user = auth()->user())
+                            @if ($this->isPublished || $user?->hasPermission('results.publish'))
+                                <a
+                                    href="{{ route('results.report-card', ['student' => $row['student'], 'term' => $term, 'session' => $session]) }}"
+                                    class="text-sm font-semibold text-brand-600 hover:text-brand-700"
+                                >
+                                    Report Card
+                                </a>
+                            @else
+                                <span class="text-xs font-semibold text-gray-400">Not published</span>
+                            @endif
                         </td>
                     </tr>
                 @empty

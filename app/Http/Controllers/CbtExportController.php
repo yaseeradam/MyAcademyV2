@@ -1,0 +1,106 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\CbtExam;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+class CbtExportController extends Controller
+{
+    public function examResults(CbtExam $exam): StreamedResponse
+    {
+        $answeredSub = DB::table('cbt_answers')
+            ->selectRaw('attempt_id, count(*) as answered')
+            ->whereNotNull('option_id')
+            ->groupBy('attempt_id');
+
+        $query = DB::table('students as s')
+            ->leftJoin('cbt_attempts as a', function ($join) use ($exam) {
+                $join->on('a.student_id', '=', 's.id')
+                    ->where('a.exam_id', '=', $exam->id);
+            })
+            ->leftJoinSub($answeredSub, 'ans', function ($join) {
+                $join->on('ans.attempt_id', '=', 'a.id');
+            })
+            ->where('s.class_id', '=', $exam->class_id)
+            ->where('s.status', '=', 'Active')
+            ->orderBy('s.first_name')
+            ->orderBy('s.last_name')
+            ->select([
+                's.admission_number',
+                's.first_name',
+                's.last_name',
+                'a.started_at',
+                'a.submitted_at',
+                'a.terminated_at',
+                'a.last_activity_at',
+                'a.score',
+                'a.max_score',
+                'a.percent',
+                'a.ip_address',
+                'a.allowed_ip',
+                DB::raw('COALESCE(ans.answered, 0) as answered'),
+            ]);
+
+        $totalQuestions = (int) $exam->questions()->count();
+        $filename = 'cbt-exam-'.$exam->id.'-results-'.now()->format('Ymd-His').'.csv';
+
+        return response()->streamDownload(function () use ($query, $totalQuestions) {
+            $out = fopen('php://output', 'wb');
+
+            fputcsv($out, [
+                'admission_number',
+                'student_name',
+                'state',
+                'answered',
+                'remaining',
+                'score',
+                'max_score',
+                'percent',
+                'started_at',
+                'submitted_at',
+                'last_activity_at',
+                'ip_address',
+                'allowed_ip',
+            ]);
+
+            foreach ($query->cursor() as $row) {
+                $state = 'not_started';
+                if ($row->terminated_at) {
+                    $state = 'terminated';
+                } elseif ($row->submitted_at) {
+                    $state = 'submitted';
+                } elseif ($row->started_at) {
+                    $state = 'in_progress';
+                }
+
+                $answered = (int) ($row->answered ?? 0);
+                $remaining = max(0, $totalQuestions - $answered);
+
+                $name = trim((string) ($row->first_name.' '.$row->last_name));
+
+                fputcsv($out, [
+                    $row->admission_number,
+                    $name,
+                    $state,
+                    $answered,
+                    $remaining,
+                    $row->score !== null ? (string) $row->score : '',
+                    $row->max_score !== null ? (string) $row->max_score : '',
+                    $row->percent !== null ? (string) $row->percent : '',
+                    $row->started_at,
+                    $row->submitted_at,
+                    $row->last_activity_at,
+                    $row->ip_address,
+                    $row->allowed_ip,
+                ]);
+            }
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+}
+

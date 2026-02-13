@@ -1,13 +1,18 @@
 @php
     $user = auth()->user();
     $submissionStatus = $this->submission?->status;
-    $locked = $user?->role === 'teacher' && in_array($submissionStatus, ['submitted', 'approved'], true);
+    $locked = $user?->role === 'teacher' && (in_array($submissionStatus, ['submitted', 'approved'], true) || $this->isPublished);
 @endphp
 
 <div class="space-y-6">
     <x-page-header title="Score Entry" subtitle="Enter CA and Exam scores for a subject." accent="results">
         <x-slot:actions>
             <a href="{{ route('results.broadsheet') }}" class="btn-outline">Open Broadsheet</a>
+            @if ($classId)
+                <x-status-badge variant="{{ $this->isPublished ? 'success' : 'warning' }}">
+                    {{ $this->isPublished ? 'Published' : 'Unpublished' }}
+                </x-status-badge>
+            @endif
         </x-slot:actions>
     </x-page-header>
 
@@ -132,7 +137,7 @@
 
             <div class="mt-4 space-y-4">
                 @forelse ($this->submissions as $submission)
-                    <div class="rounded-2xl border border-gray-100 bg-white p-4">
+                    <div wire:key="score-submission-{{ $submission->id }}" class="rounded-2xl border border-gray-100 bg-white p-4">
                         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                             <div class="min-w-0">
                                 <div class="text-sm font-semibold text-gray-900">
@@ -157,6 +162,7 @@
                                         'submitted' => 'info',
                                         default => 'neutral',
                                     };
+                                    $canReview = $status === 'submitted';
                                 @endphp
                                 <x-status-badge variant="{{ $variant }}">{{ ucfirst($status) }}</x-status-badge>
                                 <a
@@ -165,10 +171,24 @@
                                 >
                                     Open
                                 </a>
-                                <button type="button" wire:click="approveSubmission({{ $submission->id }})" class="btn-primary">
+                                <button
+                                    type="button"
+                                    wire:click="approveSubmission({{ $submission->id }})"
+                                    @disabled(! $canReview)
+                                    wire:loading.attr="disabled"
+                                    wire:target="approveSubmission,confirmReject"
+                                    class="btn-primary"
+                                >
                                     Approve
                                 </button>
-                                <button type="button" wire:click="startReject({{ $submission->id }})" class="btn-outline">
+                                <button
+                                    type="button"
+                                    wire:click="startReject({{ $submission->id }})"
+                                    @disabled(! $canReview)
+                                    wire:loading.attr="disabled"
+                                    wire:target="startReject,confirmReject,approveSubmission"
+                                    class="btn-outline"
+                                >
                                     Reject
                                 </button>
                             </div>
@@ -185,8 +205,8 @@
                                 ></textarea>
                                 @error('rejectNote') <div class="mt-1 text-xs text-orange-700">{{ $message }}</div> @enderror
                                 <div class="mt-3 flex items-center justify-end gap-2">
-                                    <button type="button" wire:click="$set('rejectingId', null)" class="btn-outline">Cancel</button>
-                                    <button type="button" wire:click="confirmReject" class="btn-primary">Confirm Reject</button>
+                                    <button type="button" wire:click="cancelReject" class="btn-outline">Cancel</button>
+                                    <button type="button" wire:click="confirmReject" wire:loading.attr="disabled" wire:target="confirmReject" class="btn-primary">Confirm Reject</button>
                                 </div>
                             </div>
                         @endif

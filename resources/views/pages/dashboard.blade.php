@@ -10,10 +10,6 @@
     $user = auth()->user();
     $schoolName = config('myacademy.school_name', config('app.name', 'MyAcademy'));
 
-    $studentsPresent = 240;
-    $teachersPresent = 58;
-    $classesRunning = 18;
-
     $studentsTotal = Student::query()->count();
     $teachersTotal = User::query()->where('role', 'teacher')->count();
     $classesTotal = SchoolClass::query()->count();
@@ -125,7 +121,7 @@
                             </div>
 
                             <div class="mt-6 flex flex-wrap gap-3">
-                                <a href="{{ route('attendance') }}" class="group/btn inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-indigo-600 shadow-lg transition-all hover:scale-105 hover:shadow-xl">
+                                <a href="{{ route('attendance') }}" class="group/btn inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-indigo-600 shadow-lg transition-shadow duration-200 hover:shadow-xl">
                                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M9 11l3 3L22 4"/>
                                         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
@@ -166,9 +162,9 @@
                     <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-blue-600">Students Present</div>
-                            <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($studentsPresent) }}</div>
-                            <div class="mt-1.5 text-sm text-slate-600">of {{ number_format((int) $studentsTotal) }} enrolled</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-blue-600">Total Students</div>
+                            <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($studentsTotal) }}</div>
+                            <div class="mt-1.5 text-sm text-slate-600">enrolled students</div>
                         </div>
                         <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-lg shadow-blue-500/30">
                             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -184,9 +180,9 @@
                     <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-purple-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-purple-600">Teachers Present</div>
-                            <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($teachersPresent) }}</div>
-                            <div class="mt-1.5 text-sm text-slate-600">of {{ number_format((int) $teachersTotal) }} staff</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-purple-600">Total Teachers</div>
+                            <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($teachersTotal) }}</div>
+                            <div class="mt-1.5 text-sm text-slate-600">teaching staff</div>
                         </div>
                         <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white shadow-lg shadow-purple-500/30">
                             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -201,9 +197,9 @@
                     <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-indigo-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-indigo-600">Classes Running</div>
-                            <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($classesRunning) }}</div>
-                            <div class="mt-1.5 text-sm text-slate-600">of {{ number_format((int) $classesTotal) }} total</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-indigo-600">Total Classes</div>
+                            <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($classesTotal) }}</div>
+                            <div class="mt-1.5 text-sm text-slate-600">active classes</div>
                         </div>
                         <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-lg shadow-indigo-500/30">
                             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -5,6 +5,7 @@ namespace App\Livewire\Announcements;
 use App\Models\Announcement;
 use App\Models\InAppNotification;
 use App\Models\User;
+use App\Support\Audit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
@@ -25,7 +26,7 @@ class Index extends Component
         $user = auth()->user();
         abort_unless($user, 403);
 
-        abort_unless($user->role === 'admin', 403);
+        abort_unless($user->hasPermission('announcements.manage'), 403);
 
         $data = $this->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -43,6 +44,10 @@ class Index extends Component
             ]
         );
 
+        Audit::log($this->editingId ? 'announcement.updated' : 'announcement.created', $announcement, [
+            'audience' => $announcement->audience,
+        ]);
+
         $this->editingId = $announcement->id;
         $this->dispatch('alert', message: 'Announcement saved.', type: 'success');
     }
@@ -50,7 +55,7 @@ class Index extends Component
     public function edit(int $id): void
     {
         $user = auth()->user();
-        abort_unless($user?->role === 'admin', 403);
+        abort_unless($user?->hasPermission('announcements.manage'), 403);
 
         $a = Announcement::query()->findOrFail($id);
         $this->editingId = $a->id;
@@ -70,11 +75,13 @@ class Index extends Component
     public function publish(int $id): void
     {
         $user = auth()->user();
-        abort_unless($user?->role === 'admin', 403);
+        abort_unless($user?->hasPermission('announcements.manage'), 403);
 
         $a = Announcement::query()->findOrFail($id);
         $a->published_at = now();
         $a->save();
+
+        Audit::log('announcement.published', $a, ['audience' => $a->audience]);
 
         $this->notifyAudience($a);
         $this->dispatch('alert', message: 'Announcement published.', type: 'success');
@@ -83,11 +90,13 @@ class Index extends Component
     public function unpublish(int $id): void
     {
         $user = auth()->user();
-        abort_unless($user?->role === 'admin', 403);
+        abort_unless($user?->hasPermission('announcements.manage'), 403);
 
         $a = Announcement::query()->findOrFail($id);
         $a->published_at = null;
         $a->save();
+
+        Audit::log('announcement.unpublished', $a);
 
         $this->dispatch('alert', message: 'Announcement unpublished.', type: 'success');
     }
@@ -95,9 +104,12 @@ class Index extends Component
     public function delete(int $id): void
     {
         $user = auth()->user();
-        abort_unless($user?->role === 'admin', 403);
+        abort_unless($user?->hasPermission('announcements.manage'), 403);
 
-        Announcement::query()->whereKey($id)->delete();
+        $a = Announcement::query()->findOrFail($id);
+        $a->delete();
+
+        Audit::log('announcement.deleted', $a);
 
         if ($this->editingId === $id) {
             $this->clearForm();
@@ -139,9 +151,10 @@ class Index extends Component
         abort_unless($user, 403);
 
         $audience = $user->role;
+        $canManage = $user->hasPermission('announcements.manage');
 
         $announcements = Announcement::query()
-            ->when($user->role !== 'admin', function ($q) use ($audience) {
+            ->when(! $canManage, function ($q) use ($audience) {
                 $q->whereNotNull('published_at')
                     ->where(function ($q) use ($audience) {
                         $q->where('audience', 'all')
@@ -155,8 +168,7 @@ class Index extends Component
 
         return view('livewire.announcements.index', [
             'announcements' => $announcements,
-            'isAdmin' => $user->role === 'admin',
+            'isAdmin' => $canManage,
         ]);
     }
 }
-

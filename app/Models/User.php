@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role',
         'is_active',
         'profile_photo',
+        'permissions',
     ];
 
     /**
@@ -45,7 +46,48 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
+        'permissions' => 'array',
     ];
+
+    public function hasPermission(string $permission): bool
+    {
+        $permission = trim($permission);
+        if ($permission === '') {
+            return false;
+        }
+
+        $definitions = (array) config('permissions.definitions', []);
+        $defaultRoles = (array) ($definitions[$permission]['roles'] ?? []);
+
+        $allowed = in_array($this->role, $defaultRoles, true);
+
+        $overrides = $this->permissions;
+        if (! is_array($overrides)) {
+            $overrides = [];
+        }
+
+        $grants = $overrides['grant'] ?? [];
+        if (! is_array($grants)) {
+            $grants = [];
+        }
+        $revokes = $overrides['revoke'] ?? [];
+        if (! is_array($revokes)) {
+            $revokes = [];
+        }
+
+        $grants = array_values(array_unique(array_filter(array_map('strval', $grants))));
+        $revokes = array_values(array_unique(array_filter(array_map('strval', $revokes))));
+
+        if (in_array($permission, $revokes, true)) {
+            return false;
+        }
+
+        if (in_array($permission, $grants, true)) {
+            return true;
+        }
+
+        return $allowed;
+    }
 
     public function getProfilePhotoUrlAttribute(): ?string
     {

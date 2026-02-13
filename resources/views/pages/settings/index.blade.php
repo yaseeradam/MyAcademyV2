@@ -8,6 +8,7 @@
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('settings.backup') }}" class="btn-outline">Backups</a>
             <a href="{{ route('settings.devices') }}" class="btn-outline">Premium Devices</a>
+            <a href="{{ route('settings.audit-logs') }}" class="btn-outline">Audit Logs</a>
         </div>
 
         @if (session('status'))

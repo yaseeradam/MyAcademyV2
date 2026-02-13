@@ -16,10 +16,10 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" wire:click="markAllRead" class="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 hover:scale-105">
+                    <button type="button" wire:click="markAllRead" class="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-shadow duration-200">
                         Mark all read
                     </button>
-                    <button type="button" wire:click="clearAll" class="rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-500/30 hover:shadow-xl hover:shadow-rose-500/40 transition-all duration-200 hover:scale-105">
+                    <button type="button" wire:click="clearAll" class="rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-500/30 hover:shadow-xl hover:shadow-rose-500/40 transition-shadow duration-200">
                         Clear all
                     </button>
                 </div>
@@ -64,12 +64,12 @@
 
                                 <div class="flex flex-col gap-2">
                                     @if($n->link)
-                                        <a href="{{ $n->link }}" wire:click="markRead({{ $n->id }})" class="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 hover:scale-105 whitespace-nowrap">
+                                        <a href="{{ $n->link }}" wire:click="markRead({{ $n->id }})" class="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-shadow duration-200 whitespace-nowrap">
                                             Open
                                         </a>
                                     @endif
                                     @if(!$n->read_at)
-                                        <button type="button" wire:click="markRead({{ $n->id }})" class="rounded-xl bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-md ring-1 ring-gray-200 hover:bg-gray-50 hover:shadow-lg transition-all duration-200 hover:scale-105 whitespace-nowrap">
+                                        <button type="button" wire:click="markRead({{ $n->id }})" class="rounded-xl bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-md ring-1 ring-gray-200 hover:bg-gray-50 hover:shadow-lg transition-shadow duration-200 whitespace-nowrap">
                                             Mark read
                                         </button>
                                     @endif

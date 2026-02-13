@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Audit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -10,18 +11,29 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
 
 class BackupController extends Controller
 {
     public function index(): Response
     {
+        $user = request()->user();
+        abort_unless($user?->hasPermission('backup.manage'), 403);
+
         return response()->view('pages.settings.backup');
     }
 
-    public function create(): Response
+    public function create(): BinaryFileResponse
     {
+        $user = request()->user();
+        abort_unless($user?->hasPermission('backup.manage'), 403);
+
+        set_time_limit(0);
+
         $driver = (string) config('database.default');
+        $cleanupDirs = [];
+        $broughtDown = false;
 
         $timestamp = now()->format('Y-m-d_H-i-s');
         $zipDir = storage_path('app/backups');
@@ -41,42 +53,70 @@ class BackupController extends Controller
             'laravel' => app()->version(),
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}');
 
-        if ($driver === 'mysql') {
-            $zip->addFromString('database.sql', $this->runMySqlDump());
-        } elseif ($driver === 'sqlite') {
-            $this->addSqliteDatabaseToZip($zip);
-        } else {
+        try {
+            if ($driver === 'mysql') {
+                if (! app()->isDownForMaintenance()) {
+                    Artisan::call('down');
+                    $broughtDown = true;
+                }
+
+                $sqlPath = $this->runMySqlDumpToFile();
+                $cleanupDirs[] = dirname($sqlPath);
+                $zip->addFile($sqlPath, 'database.sql');
+            } elseif ($driver === 'sqlite') {
+                $this->addSqliteDatabaseToZip($zip);
+            } else {
+                abort(500, "Backup is not supported for database driver [{$driver}].");
+            }
+
+            $uploadsDir = public_path('uploads');
+            if (is_dir($uploadsDir)) {
+                $this->addFolderToZip($zip, $uploadsDir, 'uploads');
+            }
+
+            $settingsPath = storage_path('app/myacademy/settings.json');
+            if (is_file($settingsPath)) {
+                $zip->addFile($settingsPath, 'settings.json');
+            }
+        } finally {
             $zip->close();
-            abort(500, "Backup is not supported for database driver [{$driver}].");
+
+            if ($broughtDown) {
+                Artisan::call('up');
+            }
+
+            foreach ($cleanupDirs as $dir) {
+                if (is_dir($dir)) {
+                    File::deleteDirectory($dir);
+                }
+            }
         }
 
-        $uploadsDir = public_path('uploads');
-        if (is_dir($uploadsDir)) {
-            $this->addFolderToZip($zip, $uploadsDir, 'uploads');
-        }
-
-        $settingsPath = storage_path('app/myacademy/settings.json');
-        if (is_file($settingsPath)) {
-            $zip->addFile($settingsPath, 'settings.json');
-        }
-
-        $zip->close();
+        Audit::log('backup.created', null, [
+            'db_driver' => $driver,
+        ]);
 
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 
     public function restore(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        abort_unless($user?->hasPermission('backup.manage'), 403);
+
+        set_time_limit(0);
+
         $driver = (string) config('database.default');
+        $broughtDown = false;
 
         $request->validate([
-            'backup' => ['required', 'file', 'mimetypes:application/zip,application/x-zip-compressed'],
+            'backup' => ['required', 'file', 'mimes:zip'],
         ]);
 
         $tmpDir = storage_path('app/_restore_tmp/'.Str::random(10));
         File::ensureDirectoryExists($tmpDir);
 
-        $zipPath = $request->file('backup')->storeAs('_restore_tmp/'.basename($tmpDir), 'backup.zip');
+        $zipPath = $request->file('backup')->storeAs('_restore_tmp/'.basename($tmpDir), 'backup.zip', 'local');
         $zipPath = storage_path('app/'.$zipPath);
 
         $zip = new ZipArchive();
@@ -98,7 +138,10 @@ class BackupController extends Controller
         $uploadsSrc = $tmpDir.DIRECTORY_SEPARATOR.'uploads';
 
         try {
-            Artisan::call('down');
+            if (! app()->isDownForMaintenance()) {
+                Artisan::call('down');
+                $broughtDown = true;
+            }
 
             if ($driver === 'mysql') {
                 $sqlPath = $tmpDir.DIRECTORY_SEPARATOR.'database.sql';
@@ -120,10 +163,10 @@ class BackupController extends Controller
             }
 
             $uploadsDest = public_path('uploads');
-            if (is_dir($uploadsDest)) {
-                File::deleteDirectory($uploadsDest);
-            }
             if (is_dir($uploadsSrc)) {
+                if (is_dir($uploadsDest)) {
+                    File::deleteDirectory($uploadsDest);
+                }
                 File::ensureDirectoryExists($uploadsDest);
                 File::copyDirectory($uploadsSrc, $uploadsDest);
             }
@@ -139,80 +182,80 @@ class BackupController extends Controller
                 File::copy($settingsSrc, $settingsDest);
             }
         } finally {
-            Artisan::call('up');
+            if ($broughtDown) {
+                Artisan::call('up');
+            }
 
             if (is_dir($tmpDir)) {
                 File::deleteDirectory($tmpDir);
             }
         }
 
+        Audit::log('backup.restored', null, [
+            'db_driver' => $driver,
+        ]);
+
         return redirect()
             ->route('settings.backup')
             ->with('status', 'Backup restored successfully.');
     }
 
-    private function runMySqlDump(): string
+    private function runMySqlDumpToFile(): string
     {
-        $dumpBinary = env('MYACADEMY_MYSQLDUMP', 'mysqldump');
-        $db = config('database.connections.mysql.database');
+        $dumpBinary = $this->resolveMySqlBinary('MYACADEMY_MYSQLDUMP', 'mysqldump');
+        $db = (string) config('database.connections.mysql.database');
+
+        $tmpDir = storage_path('app/backups/_tmp/'.Str::random(10));
+        File::ensureDirectoryExists($tmpDir);
+        $sqlPath = $tmpDir.DIRECTORY_SEPARATOR.'database.sql';
 
         $process = new Process([
             $dumpBinary,
             '--host='.config('database.connections.mysql.host'),
             '--port='.(string) config('database.connections.mysql.port'),
             '--user='.config('database.connections.mysql.username'),
-            '--single-transaction',
+            '--protocol=tcp',
             '--routines',
             '--events',
             '--add-drop-table',
+            '--set-gtid-purged=OFF',
             '--no-tablespaces',
+            '--skip-lock-tables',
+            '--column-statistics=0',
+            '--result-file='.$sqlPath,
             $db,
         ]);
 
         $password = (string) config('database.connections.mysql.password');
-        if ($password !== '') {
-            $process->setEnv(array_merge($this->processEnv(), ['MYSQL_PWD' => $password]));
-        }
+        $process->setTimeout(600);
+        $process->setEnv($this->mysqlClientEnv($password));
 
         $process->run();
 
         if (! $process->isSuccessful()) {
-            abort(500, 'mysqldump failed: '.$process->getErrorOutput());
+            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQLDUMP', 'mysqldump.exe');
+            abort(500, "mysqldump failed: {$process->getErrorOutput()}{$hint}");
         }
 
-        return $process->getOutput();
+        if (! is_file($sqlPath)) {
+            abort(500, 'mysqldump finished but database.sql was not created.');
+        }
+
+        return $sqlPath;
     }
 
     private function wipeDatabase(): void
     {
-        $mysqlBinary = env('MYACADEMY_MYSQL', 'mysql');
-        $db = config('database.connections.mysql.database');
-
-        $process = new Process([
-            $mysqlBinary,
-            '--host='.config('database.connections.mysql.host'),
-            '--port='.(string) config('database.connections.mysql.port'),
-            '--user='.config('database.connections.mysql.username'),
-            '--protocol=tcp',
-            '--execute=DROP DATABASE IF EXISTS `'.$db.'`; CREATE DATABASE `'.$db.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;',
+        Artisan::call('db:wipe', [
+            '--drop-views' => true,
+            '--force' => true,
         ]);
-
-        $password = (string) config('database.connections.mysql.password');
-        if ($password !== '') {
-            $process->setEnv(array_merge($this->processEnv(), ['MYSQL_PWD' => $password]));
-        }
-
-        $process->run();
-
-        if (! $process->isSuccessful()) {
-            abort(500, 'Database wipe failed: '.$process->getErrorOutput());
-        }
     }
 
     private function importSql(string $sqlPath): void
     {
-        $mysqlBinary = env('MYACADEMY_MYSQL', 'mysql');
-        $db = config('database.connections.mysql.database');
+        $mysqlBinary = $this->resolveMySqlBinary('MYACADEMY_MYSQL', 'mysql');
+        $db = (string) config('database.connections.mysql.database');
 
         $process = new Process([
             $mysqlBinary,
@@ -224,16 +267,20 @@ class BackupController extends Controller
         ]);
 
         $password = (string) config('database.connections.mysql.password');
-        if ($password !== '') {
-            $process->setEnv(array_merge($this->processEnv(), ['MYSQL_PWD' => $password]));
+        $process->setEnv($this->mysqlClientEnv($password));
+
+        $fh = fopen($sqlPath, 'rb');
+        if (! is_resource($fh)) {
+            abort(500, 'Unable to read database.sql for import.');
         }
 
-        $process->setInput(file_get_contents($sqlPath));
-        $process->setTimeout(300);
+        $process->setInput($fh);
+        $process->setTimeout(900);
         $process->run();
 
         if (! $process->isSuccessful()) {
-            abort(500, 'SQL import failed: '.$process->getErrorOutput());
+            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQL', 'mysql.exe');
+            abort(500, "SQL import failed: {$process->getErrorOutput()}{$hint}");
         }
     }
 
@@ -253,6 +300,110 @@ class BackupController extends Controller
         return array_merge($_SERVER, $_ENV);
     }
 
+    private function mysqlClientEnv(string $password): array
+    {
+        $env = $this->processEnv();
+        if ($password !== '') {
+            $env['MYSQL_PWD'] = $password;
+        }
+
+        return $env;
+    }
+
+    private function resolveMySqlBinary(string $envKey, string $fallbackName): string
+    {
+        $configured = trim((string) env($envKey, ''), "\"' \t\r\n");
+        if ($configured !== '') {
+            if (is_file($configured)) {
+                return $configured;
+            }
+
+            return $configured;
+        }
+
+        $found = $this->findBinaryOnPath($fallbackName);
+        if ($found !== null) {
+            return $found;
+        }
+
+        foreach ($this->defaultWindowsMySqlBinaries($fallbackName) as $path) {
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+
+        return $fallbackName;
+    }
+
+    private function mysqlBinaryHint(string $envKey, string $exampleExe): string
+    {
+        if (PHP_OS_FAMILY !== 'Windows') {
+            return '';
+        }
+
+        return " (Tip: set {$envKey} in .env to full path, e.g. \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 9.5\\\\bin\\\\{$exampleExe}\")";
+    }
+
+    private function findBinaryOnPath(string $name): ?string
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            $process = new Process(['where', $name]);
+            $process->setTimeout(5);
+            $process->run();
+
+            if (! $process->isSuccessful()) {
+                return null;
+            }
+
+            $lines = preg_split('/\r\n|\r|\n/', trim($process->getOutput())) ?: [];
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if ($line !== '' && is_file($line)) {
+                    return $line;
+                }
+            }
+
+            return null;
+        }
+
+        $process = new Process(['sh', '-lc', 'command -v '.escapeshellarg($name)]);
+        $process->setTimeout(5);
+        $process->run();
+
+        if (! $process->isSuccessful()) {
+            return null;
+        }
+
+        $path = trim($process->getOutput());
+        return $path !== '' ? $path : null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function defaultWindowsMySqlBinaries(string $name): array
+    {
+        if (PHP_OS_FAMILY !== 'Windows') {
+            return [];
+        }
+
+        $exe = str_ends_with(strtolower($name), '.exe') ? $name : ($name.'.exe');
+
+        $patterns = [
+            'C:\\Program Files\\MySQL\\MySQL Server*\\bin\\'.$exe,
+            'C:\\Program Files (x86)\\MySQL\\MySQL Server*\\bin\\'.$exe,
+        ];
+
+        $hits = [];
+        foreach ($patterns as $pattern) {
+            foreach (glob($pattern) ?: [] as $path) {
+                $hits[] = $path;
+            }
+        }
+
+        return $hits;
+    }
+
     private function addSqliteDatabaseToZip(ZipArchive $zip): void
     {
         $dbPath = $this->resolveSqliteDatabasePath();
@@ -264,16 +415,19 @@ class BackupController extends Controller
         DB::disconnect();
         DB::purge();
 
-        $zip->addFromString('database.sqlite', (string) file_get_contents($dbPath));
+        clearstatcache(true, $dbPath);
+        $zip->addFile($dbPath, 'database.sqlite');
 
         $walPath = $dbPath.'-wal';
         if (is_file($walPath)) {
-            $zip->addFromString('database.sqlite-wal', (string) file_get_contents($walPath));
+            clearstatcache(true, $walPath);
+            $zip->addFile($walPath, 'database.sqlite-wal');
         }
 
         $shmPath = $dbPath.'-shm';
         if (is_file($shmPath)) {
-            $zip->addFromString('database.sqlite-shm', (string) file_get_contents($shmPath));
+            clearstatcache(true, $shmPath);
+            $zip->addFile($shmPath, 'database.sqlite-shm');
         }
 
         DB::reconnect();

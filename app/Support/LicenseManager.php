@@ -67,6 +67,17 @@ class LicenseManager
             return ['ok' => false, 'reason' => 'Invalid license payload.'];
         }
 
+        $expectedSchoolId = trim((string) config('myacademy.school_id'));
+        if ($expectedSchoolId !== '') {
+            $licensedSchoolId = trim((string) ($data['school_id'] ?? ''));
+            if ($licensedSchoolId === '') {
+                return ['ok' => false, 'reason' => 'License school_id is missing.'];
+            }
+            if (! hash_equals($expectedSchoolId, $licensedSchoolId)) {
+                return ['ok' => false, 'reason' => 'License does not match this school installation.'];
+            }
+        }
+
         $expiresAt = $this->parseDate($data['expires_at'] ?? null);
         if (! $expiresAt) {
             return ['ok' => false, 'reason' => 'License expiry is missing.'];
@@ -207,4 +218,3 @@ class LicenseManager
         }
     }
 }
-

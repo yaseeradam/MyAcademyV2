@@ -1,6 +1,9 @@
 @php($user = auth()->user())
 
-@php($activeOtherId = $conversationId ? ($this->conversations->firstWhere('id', $conversationId)['other_user_id'] ?? null) : null)
+@php($activeConversation = $conversationId ? $this->conversations->firstWhere('id', $conversationId) : null)
+@php($activeOtherId = data_get($activeConversation, 'other_user_id'))
+@php($activeTitle = data_get($activeConversation, 'title', 'Chat'))
+@php($activePhotoUrl = data_get($activeConversation, 'other_user_photo_url'))
 
 <div class="-mx-6 -my-6 overflow-hidden">
 <div class="bg-gradient-to-br from-slate-100 via-gray-50 to-blue-50 flex h-[calc(100vh-4rem)]">
@@ -39,18 +42,32 @@
         <!-- User List -->
         <div class="flex-1 overflow-y-auto">
             @foreach($this->recipientOptions as $u)
+                @php($unread = (int) ($this->unreadByUser[$u->id] ?? 0))
                 <button
                     type="button"
                     wire:click="startConversation({{ $u->id }})"
                     class="w-full flex items-center gap-3 p-4 border-b transition group {{ (int) $activeOtherId === (int) $u->id ? 'bg-emerald-50 border-emerald-100' : 'hover:bg-gray-50 border-gray-100' }}"
                 >
-                    <div class="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 grid place-items-center text-white font-bold shadow-lg group-hover:scale-110 transition">
-                        {{ strtoupper(substr($u->name, 0, 1)) }}
-                    </div>
+                    @if ($u->profile_photo_url)
+                        <img
+                            src="{{ $u->profile_photo_url }}"
+                            alt="{{ $u->name }}"
+                            class="h-12 w-12 rounded-full object-cover ring-1 ring-inset ring-gray-200 shadow-sm"
+                        />
+                    @else
+                        <div class="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 grid place-items-center text-white font-bold shadow-lg transition">
+                            {{ strtoupper(substr($u->name, 0, 1)) }}
+                        </div>
+                    @endif
                     <div class="flex-1 text-left min-w-0">
                         <div class="font-semibold text-gray-900 truncate">{{ $u->name }}</div>
                         <div class="text-xs text-gray-500 capitalize">{{ $u->role }}</div>
                     </div>
+                    @if($unread > 0)
+                        <div class="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-black leading-none text-white shadow-sm">
+                            {{ $unread > 99 ? '99+' : $unread }}
+                        </div>
+                    @endif
                     @if((int) $activeOtherId === (int) $u->id)
                         <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm"></div>
                     @endif
@@ -88,30 +105,71 @@
                 </div>
             </div>
         @else
-            <!-- Chat Header -->
-            <div class="bg-white border-b border-gray-200 p-4 shadow-sm">
-                <div class="flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 grid place-items-center text-white font-bold">
-                        {{ strtoupper(substr($this->conversations->firstWhere('id', $conversationId)['title'] ?? 'C', 0, 1)) }}
-                    </div>
-                    <div>
-                        <div class="font-semibold text-gray-900">{{ $this->conversations->firstWhere('id', $conversationId)['title'] ?? 'Chat' }}</div>
-                        <div class="text-xs text-gray-500">Online</div>
-                    </div>
-                </div>
-            </div>
+             <!-- Chat Header -->
+             <div class="bg-white border-b border-gray-200 p-4 shadow-sm">
+                 <div class="flex items-center gap-3">
+                     <div class="h-10 w-10 rounded-full overflow-hidden ring-1 ring-inset ring-gray-200 bg-white">
+                         @if ($activePhotoUrl)
+                             <img
+                                 src="{{ $activePhotoUrl }}"
+                                 alt="{{ $activeTitle }}"
+                                 class="h-10 w-10 object-cover"
+                             />
+                         @else
+                             <div class="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 grid place-items-center text-white font-bold">
+                                 {{ strtoupper(substr($activeTitle !== '' ? $activeTitle : 'C', 0, 1)) }}
+                             </div>
+                         @endif
+                     </div>
+                     <div>
+                         <div class="font-semibold text-gray-900">{{ $activeTitle }}</div>
+                         <div class="text-xs text-gray-500">Online</div>
+                     </div>
+                 </div>
+             </div>
 
             <!-- Messages -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-3" wire:poll.5s>
-                @foreach($this->chatMessages as $m)
-                    @php($isMe = (int) $m->sender_id === (int) $me->id)
-                    <div class="flex {{ $isMe ? 'justify-end' : 'justify-start' }}">
-                        <div class="max-w-[75%]">
-                            @if(!$isMe)
-                                <div class="text-xs font-semibold text-gray-600 mb-1 ml-2">{{ $m->sender?->name }}</div>
-                            @endif
-                            <div class="rounded-lg {{ $isMe ? 'bg-[#dcf8c6] rounded-tr-none' : 'bg-white rounded-tl-none' }} px-4 py-2 shadow-sm">
-                                <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ $m->body }}</p>
+             <div class="flex-1 overflow-y-auto p-4 space-y-3" wire:poll.5s>
+                 @foreach($this->chatMessages as $m)
+                     @php($isMe = (int) $m->sender_id === (int) $me->id)
+                     <div class="flex items-end gap-2 {{ $isMe ? 'justify-end' : 'justify-start' }}">
+                         @if(! $isMe)
+                             <div class="shrink-0">
+                                 @if ($m->sender?->profile_photo_url)
+                                     <img
+                                         src="{{ $m->sender?->profile_photo_url }}"
+                                         alt="{{ $m->sender?->name }}"
+                                         class="h-8 w-8 rounded-full object-cover ring-1 ring-inset ring-gray-200 shadow-sm"
+                                     />
+                                 @else
+                                     <x-avatar :name="$m->sender?->name ?? 'User'" size="32" class="ring-1 ring-inset ring-gray-200 shadow-sm" />
+                                 @endif
+                             </div>
+                         @endif
+                         <div class="max-w-[75%]">
+                             @if(!$isMe)
+                                 <div class="text-xs font-semibold text-gray-600 mb-1 ml-2">{{ $m->sender?->name }}</div>
+                             @endif
+                             <div class="rounded-lg {{ $isMe ? 'bg-[#dcf8c6] rounded-tr-none' : 'bg-white rounded-tl-none' }} px-4 py-2 shadow-sm">
+                                @if(trim((string) $m->body) !== '')
+                                    <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ $m->body }}</p>
+                                @endif
+
+                                @if($m->attachment_path)
+                                    <div class="mt-2">
+                                        <a
+                                            class="inline-flex items-center gap-2 rounded-lg bg-black/5 px-3 py-2 text-xs font-bold text-gray-800 hover:bg-black/10"
+                                            href="{{ route('messages.attachments.download', $m) }}"
+                                            target="_blank"
+                                        >
+                                            <span>Download</span>
+                                            <span class="font-mono text-[10px] text-gray-600">{{ $m->attachment_name ?: 'attachment' }}</span>
+                                        </a>
+                                        @if($m->attachment_size)
+                                            <div class="mt-1 text-[10px] text-gray-500">{{ number_format($m->attachment_size / 1024, 1) }} KB</div>
+                                        @endif
+                                    </div>
+                                @endif
                                 <div class="text-[10px] text-gray-500 mt-1 text-right">{{ $m->created_at?->format('g:i A') }}</div>
                             </div>
                         </div>
@@ -122,6 +180,12 @@
             <!-- Input -->
             <div class="bg-white border-t border-gray-200 p-4">
                 <div class="flex items-end gap-2">
+                    <label class="h-12 w-12 rounded-full bg-gray-100 grid place-items-center text-gray-600 shadow-sm hover:bg-gray-200 transition cursor-pointer" title="Attach file">
+                        <input type="file" wire:model="attachment" class="hidden" />
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+                        </svg>
+                    </label>
                     <textarea
                         wire:model="body"
                         rows="1"
@@ -129,13 +193,20 @@
                         placeholder="Type a message..."
                         wire:keydown.enter.prevent="send"
                     ></textarea>
-                    <button type="button" wire:click="send" class="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 grid place-items-center text-white shadow-lg hover:shadow-xl hover:scale-105 transition">
+                    <button type="button" wire:click="send" class="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 grid place-items-center text-white shadow-lg hover:shadow-xl transition-shadow duration-200">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
                     </button>
                 </div>
+                @if($attachment)
+                    <div class="mt-2 flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-700 ring-1 ring-gray-200">
+                        <div class="truncate"><span class="font-bold">Attached:</span> {{ $attachment->getClientOriginalName() }}</div>
+                        <button type="button" class="text-red-600 font-bold" wire:click="$set('attachment', null)">Remove</button>
+                    </div>
+                @endif
                 @error('body') <div class="mt-2 text-xs text-red-600">{{ $message }}</div> @enderror
+                @error('attachment') <div class="mt-2 text-xs text-red-600">{{ $message }}</div> @enderror
             </div>
         @endif
     </div>
