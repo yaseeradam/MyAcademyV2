@@ -7,11 +7,16 @@
 
 @section('content')
     <div class="space-y-6">
-        <x-page-header title="Classes" subtitle="Manage class levels and enrollment structure." accent="classes">
-            <x-slot:actions>
-                <a href="{{ route('subjects.index') }}" class="btn-outline">Subjects</a>
-            </x-slot:actions>
-        </x-page-header>
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-500 via-violet-500 to-indigo-600 p-8 shadow-2xl">
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30"></div>
+            <div class="relative flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-black text-white">Classes</h1>
+                    <p class="mt-2 text-purple-100">Manage class levels and enrollment structure</p>
+                </div>
+                <a href="{{ route('subjects.index') }}" class="rounded-xl bg-white/20 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/30">Subjects</a>
+            </div>
+        </div>
 
         @if (session('status'))
             <div class="card-padded border border-green-200 bg-green-50/60 text-sm text-green-900">
@@ -31,25 +36,37 @@
         @endif
 
         @if ($user?->role === 'admin')
-            <form method="POST" action="{{ route('classes.store') }}" class="card-padded">
+            <form method="POST" action="{{ route('classes.store') }}" class="rounded-2xl border border-purple-100 bg-gradient-to-br from-white to-purple-50/30 p-6 shadow-lg backdrop-blur-sm">
                 @csrf
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div class="flex items-center gap-3">
+                    <div class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold text-purple-900">Add New Class</div>
+                        <div class="text-sm text-purple-700">Create a new class level</div>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div class="sm:col-span-2">
-                        <label class="text-sm font-semibold text-slate-900">Class name</label>
+                        <label class="text-xs font-bold uppercase tracking-wider text-purple-700">Class name</label>
                         <div class="mt-2">
-                            <input name="name" class="input" value="{{ old('name') }}" placeholder="e.g., JSS 1A" required />
+                            <input name="name" class="w-full rounded-lg border border-purple-200 bg-white px-4 py-2.5 text-sm text-gray-700 shadow-sm focus:border-purple-500 focus:ring-purple-500" value="{{ old('name') }}" placeholder="e.g., JSS 1A" required />
                         </div>
                     </div>
                     <div>
-                        <label class="text-sm font-semibold text-slate-900">Level</label>
+                        <label class="text-xs font-bold uppercase tracking-wider text-purple-700">Level</label>
                         <div class="mt-2">
-                            <input name="level" type="number" class="input" value="{{ old('level', 1) }}" min="1" max="30" required />
+                            <input name="level" type="number" class="w-full rounded-lg border border-purple-200 bg-white px-4 py-2.5 text-sm text-gray-700 shadow-sm focus:border-purple-500 focus:ring-purple-500" value="{{ old('level', 1) }}" min="1" max="30" required />
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-4 flex justify-end">
-                    <button type="submit" class="btn-primary">
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg hover:from-purple-600 hover:to-indigo-700">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 5v14" />
                             <path d="M5 12h14" />
@@ -105,18 +122,19 @@
                         </div>
 
                         <div class="mt-6 grid grid-cols-2 gap-4">
-                            <div class="group/stat relative overflow-hidden rounded-2xl bg-white/80 px-5 py-4 ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:shadow-lg">
+                            <a href="{{ route('classes.subjects', $class) }}" class="group/stat relative overflow-hidden rounded-2xl bg-white/80 px-5 py-4 ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:shadow-lg">
                                 <div class="absolute inset-0 bg-gradient-to-br {{ $scheme['from'] }} {{ $scheme['to'] }} opacity-0 transition-opacity duration-300 group-hover/stat:opacity-5"></div>
                                 <div class="relative">
                                     <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider {{ $scheme['iconText'] }}">
                                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                                         </svg>
-                                        Sections
+                                        Subjects
                                     </div>
-                                    <div class="mt-2 text-3xl font-black tracking-tight text-slate-900">{{ number_format((int) $class->sections_count) }}</div>
+                                    <div class="mt-2 text-3xl font-black tracking-tight text-slate-900">{{ number_format((int) $class->defaultSubjects->count()) }}</div>
                                 </div>
-                            </div>
+                            </a>
                             <div class="group/stat relative overflow-hidden rounded-2xl bg-white/80 px-5 py-4 ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:shadow-lg">
                                 <div class="absolute inset-0 bg-gradient-to-br {{ $scheme['from'] }} {{ $scheme['to'] }} opacity-0 transition-opacity duration-300 group-hover/stat:opacity-5"></div>
                                 <div class="relative">

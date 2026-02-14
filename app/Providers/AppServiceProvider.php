@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Student;
+use App\Observers\StudentObserver;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\File;
@@ -23,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Student::observe(StudentObserver::class);
+
         Blade::if('premium', function (string $feature) {
             try {
                 return app(LicenseManager::class)->can($feature);

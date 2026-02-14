@@ -22,7 +22,7 @@
         .btn-ghost,
         .btn-success,
         .btn-warning
-    ):is(:hover, :active) {
+    ):is(:hover, :active, :focus) {
         --tw-scale-x: 1 !important;
         --tw-scale-y: 1 !important;
         transform: translate(var(--tw-translate-x), var(--tw-translate-y))
@@ -31,6 +31,15 @@
             skewY(var(--tw-skew-y))
             scaleX(var(--tw-scale-x))
             scaleY(var(--tw-scale-y)) !important;
+    }
+
+    /* Prevent button size changes on click */
+    button:active,
+    input[type='button']:active,
+    input[type='submit']:active,
+    a:active {
+        transform: none !important;
+        scale: 1 !important;
     }
 }
 

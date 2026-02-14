@@ -3,23 +3,34 @@
 @endphp
 
 <div class="space-y-6">
-    <x-page-header title="CBT" subtitle="Teachers set questions → submit → admin approves → students take exam." accent="results">
-        <x-slot:actions>
-            <a href="{{ route('dashboard') }}" class="btn-outline">Dashboard</a>
-            @if ($me?->role === 'teacher')
-                <button type="button" wire:click="{{ $creating ? 'cancelCreate' : 'startCreate' }}" class="btn-primary">
-                    {{ $creating ? 'Close' : 'New Exam' }}
-                </button>
-            @endif
-            @if ($me?->role === 'admin')
-                <button type="button" wire:click="{{ $requesting ? 'cancelRequest' : 'startRequest' }}" class="btn-primary">
-                    {{ $requesting ? 'Close' : 'Request Teacher' }}
-                </button>
-            @endif
-        </x-slot:actions>
-    </x-page-header>
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-600 p-8 shadow-xl">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
+        <div class="relative">
+            <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">CBT Exam Monitor</h1>
+                    <p class="mt-2 text-base text-pink-50">Teachers set questions → submit → admin approves → students take exam</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="{{ route('dashboard') }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">
+                        Dashboard
+                    </a>
+                    @if ($me?->role === 'teacher')
+                        <button type="button" wire:click="{{ $creating ? 'cancelCreate' : 'startCreate' }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">
+                            {{ $creating ? 'Close' : 'New Exam' }}
+                        </button>
+                    @endif
+                    @if ($me?->role === 'admin')
+                        <button type="button" wire:click="{{ $requesting ? 'cancelRequest' : 'startRequest' }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">
+                            {{ $requesting ? 'Close' : 'Request Teacher' }}
+                        </button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div class="card-padded">
+    <div class="rounded-2xl bg-white p-6 shadow-lg">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <div class="text-sm font-semibold text-gray-900">Exams</div>
@@ -41,7 +52,7 @@
     </div>
 
     @if ($requesting)
-        <div class="card-padded border border-brand-100 bg-brand-50/40">
+        <div class="rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-50 to-fuchsia-50 p-6 shadow-lg">
             <div class="text-sm font-semibold text-gray-900">Request Teacher</div>
             <div class="mt-1 text-sm text-gray-600">Send a CBT question request to a teacher allocated to the class and subject.</div>
 
@@ -129,7 +140,7 @@
     @endif
 
     @if ($creating)
-        <div class="card-padded border border-brand-100 bg-brand-50/40">
+        <div class="rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-50 to-fuchsia-50 p-6 shadow-lg">
             <div class="text-sm font-semibold text-gray-900">Create Exam</div>
             <div class="mt-1 text-sm text-gray-600">Draft an exam first, then add questions.</div>
 
@@ -197,9 +208,9 @@
         </div>
     @endif
 
-    <div class="card-padded">
+    <div class="overflow-hidden rounded-2xl bg-white shadow-lg">
         <x-table>
-            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <thead class="bg-gradient-to-r from-rose-500 to-fuchsia-600 text-xs font-semibold uppercase tracking-wider text-white">
                 <tr>
                     <th class="px-5 py-3">Exam</th>
                     <th class="px-5 py-3">Class / Subject</th>

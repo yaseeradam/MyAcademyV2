@@ -11,55 +11,58 @@
 @endphp
 
 <div class="space-y-6">
-    <x-page-header title="CBT Exam" subtitle="Build questions, submit for approval, and share exam code." accent="results">
-        <x-slot:actions>
-            <a href="{{ route('cbt.index') }}" class="btn-outline">Back</a>
-
-            <x-status-badge variant="{{ $variant }}">{{ ucfirst($status) }}</x-status-badge>
-
-            <button type="button" wire:click="duplicateExam" class="btn-outline">Duplicate</button>
-
-            @if ($status === 'approved' && $exam->access_code)
-                <span class="hidden sm:inline-flex items-center rounded-lg bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-800 ring-1 ring-inset ring-emerald-200">
-                    Code: <span class="ml-2 font-mono">{{ $exam->access_code }}</span>
-                </span>
-                <a href="{{ route('cbt.student', ['code' => $exam->access_code]) }}" target="_blank" class="btn-outline">Student Portal</a>
-            @endif
-
-            @if ($me?->role === 'admin')
-                <a href="{{ route('cbt.exams.export', $exam) }}" class="btn-outline">Export CSV</a>
-            @endif
-
-            @if ($canEdit)
-                <button type="button" wire:click="saveDetails" class="btn-outline">Save Details</button>
-            @endif
-
-            @if ($me?->role === 'teacher' && $canEdit)
-                <button type="button" wire:click="submitToAdmin" class="btn-primary">Submit to Admin</button>
-            @endif
-
-            @if ($me?->role === 'admin' && $status === 'submitted')
-                <button type="button" wire:click="approve" class="btn-primary">Approve</button>
-                <button type="button" wire:click="startReject" class="btn-outline">Reject</button>
-            @endif
-
-            @if ($me?->role === 'admin' && $status === 'approved')
-                <button type="button" wire:click="togglePublish" class="btn-outline">
-                    {{ $exam->published_at ? 'Pause' : 'Go Live' }}
-                </button>
-            @endif
-        </x-slot:actions>
-    </x-page-header>
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-600 p-8 shadow-xl">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
+        <div class="relative">
+            <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">{{ $exam->title }}</h1>
+                    <p class="mt-2 text-base text-pink-50">Build questions, submit for approval, and share exam code</p>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <x-status-badge variant="{{ $variant }}">{{ ucfirst($status) }}</x-status-badge>
+                        @if ($status === 'approved' && $exam->access_code)
+                            <span class="inline-flex items-center rounded-lg bg-white/20 px-3 py-2 text-xs font-black text-white backdrop-blur-sm">
+                                Code: <span class="ml-2 font-mono">{{ $exam->access_code }}</span>
+                            </span>
+                        @endif
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="{{ route('cbt.index') }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Back</a>
+                    <button type="button" wire:click="duplicateExam" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Duplicate</button>
+                    @if ($status === 'approved' && $exam->access_code)
+                        <a href="{{ route('cbt.student', ['code' => $exam->access_code]) }}" target="_blank" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Student Portal</a>
+                    @endif
+                    @if ($me?->role === 'admin')
+                        <a href="{{ route('cbt.exams.export', $exam) }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Export CSV</a>
+                    @endif
+                    @if ($canEdit)
+                        <button type="button" wire:click="saveDetails" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">Save Details</button>
+                    @endif
+                    @if ($me?->role === 'teacher' && $canEdit)
+                        <button type="button" wire:click="submitToAdmin" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">Submit to Admin</button>
+                    @endif
+                    @if ($me?->role === 'admin' && $status === 'submitted')
+                        <button type="button" wire:click="approve" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-emerald-600 hover:shadow-xl">Approve</button>
+                        <button type="button" wire:click="startReject" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">Reject</button>
+                    @endif
+                    @if ($me?->role === 'admin' && $status === 'approved')
+                        <button type="button" wire:click="togglePublish" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">{{ $exam->published_at ? 'Pause' : 'Go Live' }}</button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if ($status === 'rejected' && $exam->note)
-        <div class="card-padded border border-orange-200 bg-orange-50/60 text-sm text-orange-900">
+        <div class="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-red-50 p-6 text-sm text-orange-900 shadow-lg">
             <div class="font-semibold">Admin note</div>
             <div class="mt-1">{{ $exam->note }}</div>
         </div>
     @endif
 
     @if ($status === 'assigned' && $exam->request_note)
-        <div class="card-padded border border-indigo-200 bg-indigo-50/60 text-sm text-indigo-900">
+        <div class="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50 p-6 text-sm text-indigo-900 shadow-lg">
             <div class="font-semibold">Admin request</div>
             <div class="mt-1">{{ $exam->request_note }}</div>
             <div class="mt-2 text-xs text-indigo-800">
@@ -68,7 +71,7 @@
         </div>
     @endif
 
-    <div class="card-padded">
+    <div class="rounded-2xl bg-white p-6 shadow-lg">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div class="min-w-0">
                 <div class="text-sm font-semibold text-gray-900">Exam Details</div>
@@ -194,7 +197,7 @@
     </div>
 
     @if ($me?->role === 'admin' && $showRejectForm)
-        <div class="card-padded border border-orange-100 bg-orange-50/60">
+        <div class="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-red-50 p-6 shadow-lg">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <div class="text-sm font-semibold text-gray-900">Reject Exam</div>
@@ -213,7 +216,7 @@
         </div>
     @endif
 
-    <div class="card-padded">
+    <div class="rounded-2xl bg-white p-6 shadow-lg">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <div class="text-sm font-semibold text-gray-900">Questions</div>
@@ -254,7 +257,7 @@
     </div>
 
     @if ($status === 'approved')
-        <div class="card-padded">
+        <div class="rounded-2xl bg-white p-6 shadow-lg">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <div class="text-sm font-semibold text-gray-900">Exam Monitor</div>
@@ -285,24 +288,24 @@
                         <x-status-badge variant="info">{{ $inProgressCount }} in progress</x-status-badge>
                         <x-status-badge variant="warning">{{ $terminatedCount }} terminated</x-status-badge>
                         <x-status-badge variant="neutral">{{ $notStartedCount }} not started</x-status-badge>
-                        <x-status-badge variant="neutral">{{ $totalQuestions }} question(s)</x-status-badge>
                     </div>
 
-                    <x-table>
-                        <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <tr>
-                                <th class="px-5 py-3">Student</th>
-                                <th class="px-5 py-3">State</th>
-                                <th class="px-5 py-3 text-center">Progress</th>
-                                <th class="px-5 py-3 text-center">Score</th>
-                                <th class="px-5 py-3 text-center">Percent</th>
-                                <th class="px-5 py-3">Started</th>
-                                <th class="px-5 py-3">Submitted</th>
-                                <th class="px-5 py-3">Last Seen</th>
-                                <th class="px-5 py-3">IP</th>
-                                <th class="px-5 py-3 text-right">Action</th>
-                            </tr>
-                        </thead>
+                    <div class="overflow-hidden rounded-2xl border border-gray-100">
+                        <x-table>
+                            <thead class="bg-gradient-to-r from-rose-500 to-fuchsia-600 text-xs font-semibold uppercase tracking-wider text-white">
+                                <tr>
+                                    <th class="px-5 py-3">Student</th>
+                                    <th class="px-5 py-3">State</th>
+                                    <th class="px-5 py-3 text-center">Progress</th>
+                                    <th class="px-5 py-3 text-center">Score</th>
+                                    <th class="px-5 py-3 text-center">Percent</th>
+                                    <th class="px-5 py-3">Started</th>
+                                    <th class="px-5 py-3">Submitted</th>
+                                    <th class="px-5 py-3">Last Seen</th>
+                                    <th class="px-5 py-3">IP</th>
+                                    <th class="px-5 py-3 text-right">Action</th>
+                                </tr>
+                            </thead>
                         <tbody class="divide-y divide-gray-100">
                             @forelse ($roster as $row)
                                 @php
@@ -394,10 +397,11 @@
                                 </tr>
                             @endforelse
                         </tbody>
-                    </x-table>
+                        </x-table>
+                    </div>
 
                     @if ($editingAttemptIpId)
-                        <div class="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                        <div class="mt-4 rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-50 to-fuchsia-50 p-6 shadow-lg">
                             <div class="text-sm font-semibold text-gray-900">Allow IP override</div>
                             <div class="mt-1 text-sm text-gray-600">Enter the student’s current IP to allow access from that device. Leave blank to remove override.</div>
 
@@ -412,15 +416,16 @@
                         </div>
                     @endif
                 @else
-                    <x-table>
-                        <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <tr>
-                                <th class="px-5 py-3">Student</th>
-                                <th class="px-5 py-3 text-center">Score</th>
-                                <th class="px-5 py-3 text-center">Percent</th>
-                                <th class="px-5 py-3">Submitted</th>
-                            </tr>
-                        </thead>
+                    <div class="overflow-hidden rounded-2xl border border-gray-100">
+                        <x-table>
+                            <thead class="bg-gradient-to-r from-rose-500 to-fuchsia-600 text-xs font-semibold uppercase tracking-wider text-white">
+                                <tr>
+                                    <th class="px-5 py-3">Student</th>
+                                    <th class="px-5 py-3 text-center">Score</th>
+                                    <th class="px-5 py-3 text-center">Percent</th>
+                                    <th class="px-5 py-3">Submitted</th>
+                                </tr>
+                            </thead>
                         <tbody class="divide-y divide-gray-100">
                             @forelse ($exam->attempts as $a)
                                 <tr class="bg-white hover:bg-gray-50">
@@ -448,7 +453,8 @@
                                 </tr>
                             @endforelse
                         </tbody>
-                    </x-table>
+                        </x-table>
+                    </div>
                 @endif
             </div>
         </div>
@@ -473,7 +479,7 @@
         </div>
 
         @if ($canEdit)
-            <div class="mt-6 rounded-2xl border border-gray-100 bg-gray-50 p-5">
+            <div class="mt-6 rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-50 to-fuchsia-50 p-6 shadow-lg">
                 <div class="text-sm font-semibold text-gray-900">
                     {{ $editingQuestionId ? 'Edit Question' : 'Add Question' }}
                 </div>

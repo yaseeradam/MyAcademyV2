@@ -207,6 +207,9 @@ class Index extends Component
                 $student->class_id = $toClassId;
                 $student->section_id = $resolvedToSectionId;
                 $student->save();
+
+                // Clear subject overrides when promoted to new class
+                $student->subjectOverrides()->detach();
             }
         });
 

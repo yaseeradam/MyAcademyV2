@@ -17,6 +17,7 @@ use App\Http\Controllers\SchoolClassController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
+use App\Livewire\Classes\ManageSubjects;
 use App\Livewire\Cbt\ExamEditor as CbtExamEditor;
 use App\Livewire\Cbt\Index as CbtIndex;
 use App\Livewire\Cbt\Portal\Start as CbtPortalStart;
@@ -179,6 +180,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::view('/teachers', 'pages.teachers.index')->name('teachers');
         Route::get('/teachers/{teacher}', [TeacherController::class, 'show'])->name('teachers.show');
         Route::get('/classes', [SchoolClassController::class, 'index'])->name('classes.index');
+        Route::get('/classes/{class}/subjects', ManageSubjects::class)->name('classes.subjects');
         Route::get('/subjects', [SubjectController::class, 'index'])->name('subjects.index');
         Route::get('/attendance', AttendanceIndex::class)->name('attendance');
         Route::view('/examination', 'pages.examination.index')->name('examination');

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 
@@ -64,7 +65,14 @@ class Student extends Model
             return null;
         }
 
-        $path = str_replace('\\', '/', $this->passport_photo);
+        // Handle both forward and backward slashes
+        $path = str_replace(['\\', '\\\\'], '/', $this->passport_photo);
+        
+        // Remove 'uploads/' prefix if it exists
+        $path = ltrim($path, '/');
+        if (str_starts_with($path, 'uploads/')) {
+            $path = substr($path, 8);
+        }
 
         return asset('uploads/'.$path);
     }
@@ -72,5 +80,30 @@ class Student extends Model
     public function getRouteKeyName(): string
     {
         return 'admission_number';
+    }
+
+    public function subjectOverrides(): BelongsToMany
+    {
+        return $this->belongsToMany(Subject::class, 'student_subject_overrides')
+            ->withPivot('action')
+            ->withTimestamps();
+    }
+
+    public function getAssignedSubjectsAttribute()
+    {
+        if (!$this->schoolClass) {
+            return collect();
+        }
+
+        $classSubjects = $this->schoolClass->defaultSubjects->pluck('id');
+        $overrides = $this->subjectOverrides;
+        
+        $removed = $overrides->where('pivot.action', 'remove')->pluck('id');
+        $added = $overrides->where('pivot.action', 'add')->pluck('id');
+        
+        return Subject::query()
+            ->whereIn('id', $classSubjects->diff($removed)->merge($added))
+            ->orderBy('name')
+            ->get();
     }
 }

@@ -18,10 +18,15 @@
 
 @section('content')
     <div class="space-y-6">
-        <x-page-header title="Teachers" subtitle="Teaching staff directory and subject coverage." accent="teachers">
-            <x-slot:actions>
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 p-8 shadow-2xl">
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30"></div>
+            <div class="relative flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-black text-white">Teachers</h1>
+                    <p class="mt-2 text-orange-100">Teaching staff directory and subject coverage</p>
+                </div>
                 @if (auth()->user()?->role === 'admin')
-                    <a href="{{ route('teachers.create') }}" class="btn-primary">
+                    <a href="{{ route('teachers.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-orange-600 shadow-lg hover:bg-orange-50">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 5v14" />
                             <path d="M5 12h14" />
@@ -29,8 +34,19 @@
                         Add Teacher
                     </a>
                 @endif
-            </x-slot:actions>
-        </x-page-header>
+            </div>
+
+            <div class="relative mt-6 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                <div class="flex gap-3">
+                    <input type="text" id="teacherSearch" placeholder="Search by name or email..." class="flex-1 rounded-lg border-0 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 placeholder-gray-500 shadow-sm focus:ring-2 focus:ring-white/50" />
+                    <select id="statusFilter" class="rounded-lg border-0 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm focus:ring-2 focus:ring-white/50">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
         @if (session('status'))
             <div class="card-padded border border-green-200 bg-green-50/60 text-sm text-green-900">
@@ -130,3 +146,34 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('teacherSearch');
+    const statusFilter = document.getElementById('statusFilter');
+    const teacherCards = document.querySelectorAll('.grid > a');
+
+    function filterTeachers() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusValue = statusFilter.value;
+
+        teacherCards.forEach(card => {
+            const name = card.querySelector('.text-lg')?.textContent.toLowerCase() || '';
+            const email = card.querySelector('.text-sm.text-slate-600')?.textContent.toLowerCase() || '';
+            const statusBadge = card.querySelector('[class*="status-badge"]')?.textContent.toLowerCase() || '';
+            
+            const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
+            const matchesStatus = statusValue === 'all' || 
+                (statusValue === 'active' && statusBadge.includes('active')) ||
+                (statusValue === 'inactive' && statusBadge.includes('inactive'));
+
+            card.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+        });
+    }
+
+    searchInput?.addEventListener('input', filterTeachers);
+    statusFilter?.addEventListener('change', filterTeachers);
+});
+</script>
+@endpush

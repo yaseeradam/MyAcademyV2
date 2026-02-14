@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BackupOperationException;
+use App\Exceptions\BackupPrerequisiteException;
 use App\Support\Audit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -10,6 +12,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Symfony\Component\Process\Exception\RuntimeException as ProcessRuntimeException;
 use Symfony\Component\Process\Process;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
@@ -24,7 +27,7 @@ class BackupController extends Controller
         return response()->view('pages.settings.backup');
     }
 
-    public function create(): BinaryFileResponse
+    public function create(): BinaryFileResponse|RedirectResponse
     {
         $user = request()->user();
         abort_unless($user?->hasPermission('backup.manage'), 403);
@@ -40,63 +43,75 @@ class BackupController extends Controller
         File::ensureDirectoryExists($zipDir);
         $zipPath = $zipDir.DIRECTORY_SEPARATOR."backup_{$timestamp}.zip";
 
-        $zip = new ZipArchive();
-        if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
-            abort(500, 'Unable to create zip archive.');
-        }
-
-        $zip->addFromString('manifest.json', json_encode([
-            'app' => config('app.name'),
-            'created_at' => now()->toISOString(),
-            'db_driver' => $driver,
-            'php' => PHP_VERSION,
-            'laravel' => app()->version(),
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}');
-
         try {
-            if ($driver === 'mysql') {
-                if (! app()->isDownForMaintenance()) {
-                    Artisan::call('down');
-                    $broughtDown = true;
+            $zip = new ZipArchive();
+            if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
+                throw new BackupOperationException('Unable to create zip archive.');
+            }
+
+            $zip->addFromString('manifest.json', json_encode([
+                'app' => config('app.name'),
+                'created_at' => now()->toISOString(),
+                'db_driver' => $driver,
+                'php' => PHP_VERSION,
+                'laravel' => app()->version(),
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}');
+
+            try {
+                if ($driver === 'mysql') {
+                    $this->assertMySqlToolsAvailableForBackup();
+
+                    if (! app()->isDownForMaintenance()) {
+                        Artisan::call('down');
+                        $broughtDown = true;
+                    }
+
+                    $sqlPath = $this->runMySqlDumpToFile();
+                    $cleanupDirs[] = dirname($sqlPath);
+                    $zip->addFile($sqlPath, 'database.sql');
+                } elseif ($driver === 'sqlite') {
+                    $this->addSqliteDatabaseToZip($zip);
+                } else {
+                    throw new BackupPrerequisiteException("Backup is not supported for database driver [{$driver}].");
                 }
 
-                $sqlPath = $this->runMySqlDumpToFile();
-                $cleanupDirs[] = dirname($sqlPath);
-                $zip->addFile($sqlPath, 'database.sql');
-            } elseif ($driver === 'sqlite') {
-                $this->addSqliteDatabaseToZip($zip);
-            } else {
-                abort(500, "Backup is not supported for database driver [{$driver}].");
-            }
+                $uploadsDir = public_path('uploads');
+                if (is_dir($uploadsDir)) {
+                    $this->addFolderToZip($zip, $uploadsDir, 'uploads');
+                }
 
-            $uploadsDir = public_path('uploads');
-            if (is_dir($uploadsDir)) {
-                $this->addFolderToZip($zip, $uploadsDir, 'uploads');
-            }
+                $settingsPath = storage_path('app/myacademy/settings.json');
+                if (is_file($settingsPath)) {
+                    $zip->addFile($settingsPath, 'settings.json');
+                }
+            } finally {
+                $zip->close();
 
-            $settingsPath = storage_path('app/myacademy/settings.json');
-            if (is_file($settingsPath)) {
-                $zip->addFile($settingsPath, 'settings.json');
-            }
-        } finally {
-            $zip->close();
+                if ($broughtDown) {
+                    Artisan::call('up');
+                }
 
-            if ($broughtDown) {
-                Artisan::call('up');
-            }
-
-            foreach ($cleanupDirs as $dir) {
-                if (is_dir($dir)) {
-                    File::deleteDirectory($dir);
+                foreach ($cleanupDirs as $dir) {
+                    if (is_dir($dir)) {
+                        File::deleteDirectory($dir);
+                    }
                 }
             }
+
+            Audit::log('backup.created', null, [
+                'db_driver' => $driver,
+            ]);
+
+            return response()->download($zipPath)->deleteFileAfterSend(true);
+        } catch (BackupPrerequisiteException|BackupOperationException $e) {
+            report($e);
+
+            if (is_file($zipPath)) {
+                File::delete($zipPath);
+            }
+
+            return back()->withErrors(['backup_create' => $e->getMessage()]);
         }
-
-        Audit::log('backup.created', null, [
-            'db_driver' => $driver,
-        ]);
-
-        return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 
     public function restore(Request $request): RedirectResponse
@@ -138,29 +153,32 @@ class BackupController extends Controller
         $uploadsSrc = $tmpDir.DIRECTORY_SEPARATOR.'uploads';
 
         try {
-            if (! app()->isDownForMaintenance()) {
-                Artisan::call('down');
-                $broughtDown = true;
-            }
-
-            if ($driver === 'mysql') {
-                $sqlPath = $tmpDir.DIRECTORY_SEPARATOR.'database.sql';
-                if (! is_file($sqlPath)) {
-                    return back()->withErrors(['backup' => 'database.sql not found in zip.']);
+            try {
+                if (! app()->isDownForMaintenance()) {
+                    Artisan::call('down');
+                    $broughtDown = true;
                 }
 
-                $this->wipeDatabase();
-                $this->importSql($sqlPath);
-            } elseif ($driver === 'sqlite') {
-                $sqliteSrc = $tmpDir.DIRECTORY_SEPARATOR.'database.sqlite';
-                if (! is_file($sqliteSrc)) {
-                    return back()->withErrors(['backup' => 'database.sqlite not found in zip.']);
-                }
+                if ($driver === 'mysql') {
+                    $this->assertMySqlToolsAvailableForRestore();
 
-                $this->restoreSqliteDatabase($sqliteSrc);
-            } else {
-                abort(500, "Restore is not supported for database driver [{$driver}].");
-            }
+                    $sqlPath = $tmpDir.DIRECTORY_SEPARATOR.'database.sql';
+                    if (! is_file($sqlPath)) {
+                        return back()->withErrors(['backup' => 'database.sql not found in zip.']);
+                    }
+
+                    $this->wipeDatabase();
+                    $this->importSql($sqlPath);
+                } elseif ($driver === 'sqlite') {
+                    $sqliteSrc = $tmpDir.DIRECTORY_SEPARATOR.'database.sqlite';
+                    if (! is_file($sqliteSrc)) {
+                        return back()->withErrors(['backup' => 'database.sqlite not found in zip.']);
+                    }
+
+                    $this->restoreSqliteDatabase($sqliteSrc);
+                } else {
+                    return back()->withErrors(['backup' => "Restore is not supported for database driver [{$driver}]."]);
+                }
 
             $uploadsDest = public_path('uploads');
             if (is_dir($uploadsSrc)) {
@@ -181,14 +199,18 @@ class BackupController extends Controller
                 File::ensureDirectoryExists(dirname($settingsDest));
                 File::copy($settingsSrc, $settingsDest);
             }
-        } finally {
-            if ($broughtDown) {
-                Artisan::call('up');
-            }
+            } finally {
+                if ($broughtDown) {
+                    Artisan::call('up');
+                }
 
-            if (is_dir($tmpDir)) {
-                File::deleteDirectory($tmpDir);
+                if (is_dir($tmpDir)) {
+                    File::deleteDirectory($tmpDir);
+                }
             }
+        } catch (BackupPrerequisiteException|BackupOperationException $e) {
+            report($e);
+            return back()->withErrors(['backup' => $e->getMessage()]);
         }
 
         Audit::log('backup.restored', null, [
@@ -200,9 +222,27 @@ class BackupController extends Controller
             ->with('status', 'Backup restored successfully.');
     }
 
+    private function assertMySqlToolsAvailableForBackup(): void
+    {
+        $mysqldump = $this->resolveMySqlBinaryOrNull('MYACADEMY_MYSQLDUMP', 'mysqldump');
+        if ($mysqldump === null) {
+            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQLDUMP', 'mysqldump.exe');
+            throw new BackupPrerequisiteException("mysqldump is required to create MySQL backups but was not found.{$hint}");
+        }
+    }
+
+    private function assertMySqlToolsAvailableForRestore(): void
+    {
+        $mysql = $this->resolveMySqlBinaryOrNull('MYACADEMY_MYSQL', 'mysql');
+        if ($mysql === null) {
+            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQL', 'mysql.exe');
+            throw new BackupPrerequisiteException("mysql is required to restore MySQL backups but was not found.{$hint}");
+        }
+    }
+
     private function runMySqlDumpToFile(): string
     {
-        $dumpBinary = $this->resolveMySqlBinary('MYACADEMY_MYSQLDUMP', 'mysqldump');
+        $dumpBinary = $this->resolveMySqlBinaryOrThrow('MYACADEMY_MYSQLDUMP', 'mysqldump');
         $db = (string) config('database.connections.mysql.database');
 
         $tmpDir = storage_path('app/backups/_tmp/'.Str::random(10));
@@ -230,15 +270,20 @@ class BackupController extends Controller
         $process->setTimeout(600);
         $process->setEnv($this->mysqlClientEnv($password));
 
-        $process->run();
+        try {
+            $process->run();
+        } catch (ProcessRuntimeException $e) {
+            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQLDUMP', 'mysqldump.exe');
+            throw new BackupOperationException("Unable to execute mysqldump.{$hint}", previous: $e);
+        }
 
         if (! $process->isSuccessful()) {
             $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQLDUMP', 'mysqldump.exe');
-            abort(500, "mysqldump failed: {$process->getErrorOutput()}{$hint}");
+            throw new BackupOperationException('mysqldump failed: '.trim($process->getErrorOutput()).$hint);
         }
 
         if (! is_file($sqlPath)) {
-            abort(500, 'mysqldump finished but database.sql was not created.');
+            throw new BackupOperationException('mysqldump finished but database.sql was not created.');
         }
 
         return $sqlPath;
@@ -254,7 +299,7 @@ class BackupController extends Controller
 
     private function importSql(string $sqlPath): void
     {
-        $mysqlBinary = $this->resolveMySqlBinary('MYACADEMY_MYSQL', 'mysql');
+        $mysqlBinary = $this->resolveMySqlBinaryOrThrow('MYACADEMY_MYSQL', 'mysql');
         $db = (string) config('database.connections.mysql.database');
 
         $process = new Process([
@@ -271,16 +316,21 @@ class BackupController extends Controller
 
         $fh = fopen($sqlPath, 'rb');
         if (! is_resource($fh)) {
-            abort(500, 'Unable to read database.sql for import.');
+            throw new BackupOperationException('Unable to read database.sql for import.');
         }
 
         $process->setInput($fh);
         $process->setTimeout(900);
-        $process->run();
+        try {
+            $process->run();
+        } catch (ProcessRuntimeException $e) {
+            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQL', 'mysql.exe');
+            throw new BackupOperationException("Unable to execute mysql client for import.{$hint}", previous: $e);
+        }
 
         if (! $process->isSuccessful()) {
             $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQL', 'mysql.exe');
-            abort(500, "SQL import failed: {$process->getErrorOutput()}{$hint}");
+            throw new BackupOperationException('SQL import failed: '.trim($process->getErrorOutput()).$hint);
         }
     }
 
@@ -295,22 +345,29 @@ class BackupController extends Controller
         }
     }
 
-    private function processEnv(): array
-    {
-        return array_merge($_SERVER, $_ENV);
-    }
-
     private function mysqlClientEnv(string $password): array
     {
-        $env = $this->processEnv();
-        if ($password !== '') {
-            $env['MYSQL_PWD'] = $password;
+        if ($password === '') {
+            return [];
         }
 
-        return $env;
+        return [
+            'MYSQL_PWD' => $password,
+        ];
     }
 
-    private function resolveMySqlBinary(string $envKey, string $fallbackName): string
+    private function resolveMySqlBinaryOrThrow(string $envKey, string $fallbackName): string
+    {
+        $resolved = $this->resolveMySqlBinaryOrNull($envKey, $fallbackName);
+        if ($resolved === null) {
+            $hint = $this->mysqlBinaryHint($envKey, $fallbackName.'.exe');
+            throw new BackupPrerequisiteException("Unable to locate required MySQL tool [{$fallbackName}].{$hint}");
+        }
+
+        return $resolved;
+    }
+
+    private function resolveMySqlBinaryOrNull(string $envKey, string $fallbackName): ?string
     {
         $configured = trim((string) env($envKey, ''), "\"' \t\r\n");
         if ($configured !== '') {
@@ -318,7 +375,8 @@ class BackupController extends Controller
                 return $configured;
             }
 
-            return $configured;
+            $found = $this->findBinaryOnPath($configured);
+            return $found ?? null;
         }
 
         $found = $this->findBinaryOnPath($fallbackName);
@@ -332,7 +390,7 @@ class BackupController extends Controller
             }
         }
 
-        return $fallbackName;
+        return null;
     }
 
     private function mysqlBinaryHint(string $envKey, string $exampleExe): string
@@ -341,7 +399,7 @@ class BackupController extends Controller
             return '';
         }
 
-        return " (Tip: set {$envKey} in .env to full path, e.g. \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 9.5\\\\bin\\\\{$exampleExe}\")";
+        return " (Tip: set {$envKey} in .env to full path, e.g. \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\{$exampleExe}\")";
     }
 
     private function findBinaryOnPath(string $name): ?string
@@ -392,6 +450,12 @@ class BackupController extends Controller
         $patterns = [
             'C:\\Program Files\\MySQL\\MySQL Server*\\bin\\'.$exe,
             'C:\\Program Files (x86)\\MySQL\\MySQL Server*\\bin\\'.$exe,
+            'C:\\Program Files\\MariaDB*\\bin\\'.$exe,
+            'C:\\Program Files (x86)\\MariaDB*\\bin\\'.$exe,
+            'C:\\xampp\\mysql\\bin\\'.$exe,
+            'C:\\laragon\\bin\\mysql\\mysql*\\bin\\'.$exe,
+            'C:\\wamp64\\bin\\mysql\\mysql*\\bin\\'.$exe,
+            'C:\\wamp\\bin\\mysql\\mysql*\\bin\\'.$exe,
         ];
 
         $hits = [];

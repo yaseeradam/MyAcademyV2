@@ -39,4 +39,12 @@ class SchoolClass extends Model
             ->distinct()
             ->orderBy('name');
     }
+
+    public function defaultSubjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Subject::class, 'class_subject', 'class_id', 'subject_id')
+            ->withPivot('is_core')
+            ->withTimestamps()
+            ->orderBy('name');
+    }
 }

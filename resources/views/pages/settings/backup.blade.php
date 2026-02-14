@@ -31,6 +31,12 @@
                     Creates a zip containing the database, uploads folder, and school settings.
                 </div>
 
+                @error('backup_create')
+                    <div class="mt-4 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm font-medium text-orange-800">
+                        {{ $message }}
+                    </div>
+                @enderror
+
                 <form method="POST" action="{{ route('settings.backup.create') }}" class="mt-5">
                     @csrf
                     <button

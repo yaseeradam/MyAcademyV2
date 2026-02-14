@@ -121,6 +121,11 @@ class ExamEditor extends Component
 
         $exam = $this->exam;
 
+        // Prevent editing if exam has any attempts (students have started)
+        if ($exam->attempts()->exists()) {
+            return false;
+        }
+
         if ($user->role === 'admin') {
             return true;
         }

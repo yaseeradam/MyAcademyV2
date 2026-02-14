@@ -1,69 +1,58 @@
 <div class="space-y-6">
-    <x-page-header title="All Students" subtitle="Manage, search and filter student records." accent="students">
-        <x-slot:actions>
-            <x-export type="students" />
-            @if (auth()->user()?->role === 'admin')
-                <a href="{{ route('students.create') }}" class="btn-primary">Add Student</a>
-            @endif
-        </x-slot:actions>
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 p-8 shadow-2xl">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30"></div>
+        <div class="relative flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-black text-white">All Students</h1>
+                <p class="mt-2 text-blue-100">Manage, search and filter student records</p>
+            </div>
+            <div class="flex gap-3">
+                <x-export type="students" />
+                @if (auth()->user()?->role === 'admin')
+                    <a href="{{ route('students.create') }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-blue-600 shadow-lg hover:bg-blue-50">Add Student</a>
+                @endif
+            </div>
+        </div>
 
-        <x-slot:after>
-            <div class="rounded-2xl bg-white/60 p-4 ring-1 ring-inset ring-white/70">
-                <div class="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-center">
-                    <div class="lg:col-span-2">
-                        <select
-                            wire:model.live="classFilter"
-                            class="select"
-                        >
-                            <option value="all">All Classes</option>
-                            @foreach ($this->classes as $class)
-                                <option value="{{ $class->id }}">{{ $class->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+        <div class="relative mt-6 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+            <div class="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-center">
+                <div class="lg:col-span-2">
+                    <select wire:model.live="classFilter" class="w-full rounded-lg border-0 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm focus:ring-2 focus:ring-white/50">
+                        <option value="all">All Classes</option>
+                        @foreach ($this->classes as $class)
+                            <option value="{{ $class->id }}">{{ $class->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-                    <div class="lg:col-span-2">
-                        <select
-                            wire:model.live="sectionFilter"
-                            class="select"
-                        >
-                            <option value="all">All Sections</option>
-                            @foreach ($this->sections as $section)
-                                @if ($this->classFilter === 'all')
-                                    <option value="{{ $section }}">{{ $section }}</option>
-                                @else
-                                    <option value="{{ $section->id }}">{{ $section->name }}</option>
-                                @endif
-                            @endforeach
-                        </select>
-                    </div>
+                <div class="lg:col-span-2">
+                    <select wire:model.live="sectionFilter" class="w-full rounded-lg border-0 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm focus:ring-2 focus:ring-white/50">
+                        <option value="all">All Sections</option>
+                        @foreach ($this->sections as $section)
+                            @if ($this->classFilter === 'all')
+                                <option value="{{ $section }}">{{ $section }}</option>
+                            @else
+                                <option value="{{ $section->id }}">{{ $section->name }}</option>
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
 
-                    <div class="lg:col-span-2">
-                        <select
-                            wire:model.live="statusFilter"
-                            class="select"
-                        >
-                            <option value="all">Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Graduated">Graduated</option>
-                            <option value="Expelled">Expelled</option>
-                        </select>
-                    </div>
+                <div class="lg:col-span-2">
+                    <select wire:model.live="statusFilter" class="w-full rounded-lg border-0 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm focus:ring-2 focus:ring-white/50">
+                        <option value="all">Status</option>
+                        <option value="Active">Active</option>
+                        <option value="Graduated">Graduated</option>
+                        <option value="Expelled">Expelled</option>
+                    </select>
+                </div>
 
-                    <div class="lg:col-span-6">
-                        <div class="relative">
-                            <input
-                                wire:model.live.debounce.300ms="search"
-                                type="text"
-                                placeholder="Search by name, admission number, class, parent..."
-                                class="input"
-                            />
-                        </div>
-                    </div>
+                <div class="lg:col-span-6">
+                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search by name, admission number, class, parent..." class="w-full rounded-lg border-0 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 placeholder-gray-500 shadow-sm focus:ring-2 focus:ring-white/50" />
                 </div>
             </div>
-        </x-slot:after>
-    </x-page-header>
+        </div>
+    </div>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <x-stat-card
