@@ -158,7 +158,7 @@ class Take extends Component
     {
         return CbtAttempt::query()
             ->with([
-                'student:id,admission_number,first_name,last_name,class_id,status',
+                'student:id,admission_number,first_name,last_name,passport_photo,class_id,status',
                 'exam' => fn ($q) => $q->with(['schoolClass:id,name', 'subject:id,name', 'questions.options']),
             ])
             ->findOrFail($this->attemptId);

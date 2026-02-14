@@ -1,39 +1,40 @@
-<div class="space-y-6">
-    <div class="card-padded">
-        <div class="text-sm font-semibold text-slate-900">Start CBT Exam</div>
-        <div class="mt-1 text-sm text-slate-600">Enter the exam code and your admission number to begin.</div>
-
-        <form wire:submit="start" class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-6">
-            <div class="sm:col-span-2">
-                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Exam Code</label>
-                <input wire:model="examCode" class="mt-2 input w-full font-mono uppercase" placeholder="CBT-ABC123" />
-                @error('examCode') <div class="mt-1 text-xs font-semibold text-rose-700">{{ $message }}</div> @enderror
+<div class="fixed inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('{{ asset('images/cbt.png') }}');">
+    <div class="flex h-screen w-screen items-center justify-center p-6 bg-black/20">
+        <div class="w-full max-w-sm rounded-2xl bg-white/80 backdrop-blur-xl p-6 shadow-2xl">
+            <div class="mb-4 text-center">
+                <h2 class="text-xl font-black text-gray-900">Start Your Exam</h2>
+                <p class="mt-1 text-xs text-gray-600">Enter your credentials</p>
             </div>
 
-            <div class="sm:col-span-2">
-                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Admission Number</label>
-                <input wire:model="admissionNumber" class="mt-2 input w-full" placeholder="e.g. ADM/001" />
-                @error('admissionNumber') <div class="mt-1 text-xs font-semibold text-rose-700">{{ $message }}</div> @enderror
-            </div>
+            <form wire:submit="start" class="space-y-3">
+                <input wire:model="examCode" type="hidden" />
+                <input wire:model="surname" type="hidden" />
 
-            <div class="sm:col-span-2">
-                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Surname (optional)</label>
-                <input wire:model="surname" class="mt-2 input w-full" placeholder="Surname" />
-                @error('surname') <div class="mt-1 text-xs font-semibold text-rose-700">{{ $message }}</div> @enderror
-            </div>
+                @if($examCode)
+                    <div class="rounded-xl bg-blue-50 px-4 py-2.5 text-center border-2 border-blue-200">
+                        <div class="text-xs font-semibold uppercase tracking-wider text-blue-700">Exam Code</div>
+                        <div class="mt-0.5 font-mono text-sm font-black text-blue-900">{{ $examCode }}</div>
+                    </div>
+                @endif
 
-            <div class="sm:col-span-2">
-                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Exam PIN (if required)</label>
-                <input wire:model="pin" class="mt-2 input w-full font-mono" placeholder="PIN" />
-                @error('pin') <div class="mt-1 text-xs font-semibold text-rose-700">{{ $message }}</div> @enderror
-            </div>
-
-            <div class="sm:col-span-6 flex flex-wrap items-center gap-2 pt-1">
-                <button type="submit" class="btn-primary">Start Exam</button>
-                <div class="text-xs text-gray-600">
-                    Tip: If the surname is enabled by your school, it helps confirm identity.
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-gray-700">Admission Number</label>
+                    <input wire:model="admissionNumber" class="mt-1.5 w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition-all focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20" placeholder="e.g. ADM/001" />
+                    @error('admissionNumber') <div class="mt-1.5 text-xs font-semibold text-rose-700">{{ $message }}</div> @enderror
+                    @error('examCode') <div class="mt-1.5 text-xs font-semibold text-rose-700">{{ $message }}</div> @enderror
                 </div>
-            </div>
-        </form>
+
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-gray-700">PIN</label>
+                    <input wire:model="pin" type="password" class="mt-1.5 w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 font-mono text-sm font-semibold text-gray-900 shadow-sm transition-all focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20" placeholder="Enter PIN" />
+                    @error('pin') <div class="mt-1.5 text-xs font-semibold text-rose-700">{{ $message }}</div> @enderror
+                    @error('surname') <div class="mt-1.5 text-xs font-semibold text-rose-700">{{ $message }}</div> @enderror
+                </div>
+
+                <button type="submit" class="w-full rounded-xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-600 px-6 py-2.5 text-sm font-black text-white shadow-lg transition-all hover:shadow-xl hover:scale-[1.02]">
+                    Login
+                </button>
+            </form>
+        </div>
     </div>
 </div>

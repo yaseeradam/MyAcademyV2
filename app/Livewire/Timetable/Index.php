@@ -93,6 +93,9 @@ class Index extends Component
         abort_unless($user, 403);
 
         $this->entryDay = (int) now()->isoWeekday();
+        if ($this->entryDay > 5) {
+            $this->entryDay = 1;
+        }
     }
 
     public function updatedClassId(): void
@@ -109,8 +112,9 @@ class Index extends Component
     {
         $this->editingId = null;
         $this->entryClassId = $this->classId;
-        $this->entrySectionId = $this->sectionId;
-        $this->entryDay = $this->day ?: (int) now()->isoWeekday();
+        $this->entrySectionId = null;
+        $day = (int) now()->isoWeekday();
+        $this->entryDay = $day > 5 ? 1 : $day;
         $this->startsAt = '08:00';
         $this->endsAt = '09:00';
         $this->subjectId = null;
@@ -137,8 +141,6 @@ class Index extends Component
         $e = TimetableEntry::query()->findOrFail($id);
 
         $this->editingId = $e->id;
-        $this->entryClassId = $e->class_id;
-        $this->entrySectionId = $e->section_id;
         $this->entryDay = (int) $e->day_of_week;
         $this->startsAt = substr((string) $e->starts_at, 0, 5);
         $this->endsAt = substr((string) $e->ends_at, 0, 5);
@@ -153,9 +155,7 @@ class Index extends Component
         abort_unless($user?->role === 'admin', 403);
 
         $data = $this->validate([
-            'entryClassId' => ['required', 'integer', 'exists:classes,id'],
-            'entrySectionId' => ['nullable', 'integer', 'exists:sections,id'],
-            'entryDay' => ['required', 'integer', 'between:1,7'],
+            'entryDay' => ['required', 'integer', 'between:1,5'],
             'startsAt' => ['required', 'date_format:H:i'],
             'endsAt' => ['required', 'date_format:H:i'],
             'subjectId' => ['required', 'integer', 'exists:subjects,id'],
@@ -163,18 +163,7 @@ class Index extends Component
             'room' => ['nullable', 'string', 'max:50'],
         ]);
 
-        if ($data['entrySectionId']) {
-            $belongs = Section::query()
-                ->where('id', $data['entrySectionId'])
-                ->where('class_id', $data['entryClassId'])
-                ->exists();
-
-            if (! $belongs) {
-                throw ValidationException::withMessages([
-                    'entrySectionId' => 'Selected section does not belong to the class.',
-                ]);
-            }
-        }
+        abort_unless($this->classId, 400);
 
         $startSec = $this->timeToSeconds($data['startsAt']);
         $endSec = $this->timeToSeconds($data['endsAt']);
@@ -187,8 +176,8 @@ class Index extends Component
 
         $this->ensureNoConflicts(
             editingId: $this->editingId,
-            classId: (int) $data['entryClassId'],
-            sectionId: $data['entrySectionId'] ? (int) $data['entrySectionId'] : null,
+            classId: (int) $this->classId,
+            sectionId: null,
             day: (int) $data['entryDay'],
             startSec: $startSec,
             endSec: $endSec,
@@ -198,8 +187,8 @@ class Index extends Component
         TimetableEntry::query()->updateOrCreate(
             ['id' => $this->editingId],
             [
-                'class_id' => (int) $data['entryClassId'],
-                'section_id' => $data['entrySectionId'] ? (int) $data['entrySectionId'] : null,
+                'class_id' => (int) $this->classId,
+                'section_id' => null,
                 'day_of_week' => (int) $data['entryDay'],
                 'starts_at' => $data['startsAt'],
                 'ends_at' => $data['endsAt'],
@@ -317,7 +306,7 @@ class Index extends Component
     {
         $boundaries = [];
 
-        for ($hour = 8; $hour <= 17; $hour++) {
+        for ($hour = 8; $hour <= 16; $hour++) {
             $boundaries[] = sprintf('%02d:00', $hour);
         }
 
@@ -361,34 +350,21 @@ class Index extends Component
         }
 
         $entries = TimetableEntry::query()
-            ->with([
-                'schoolClass:id,name',
-                'section:id,name',
-                'subject:id,name',
-                'teacher:id,name',
-            ])
+            ->with(['subject:id,name', 'teacher:id,name'])
             ->when($this->classId, fn ($q) => $q->where('class_id', $this->classId))
-            ->when($this->sectionId !== null && $this->sectionId !== 0, fn ($q) => $q->where('section_id', $this->sectionId))
-            ->when($this->day, fn ($q) => $q->where('day_of_week', $this->day))
             ->orderBy('day_of_week')
             ->orderBy('starts_at')
             ->get();
 
-        $daysList = $this->day ? [(int) $this->day] : [1, 2, 3, 4, 5, 6, 7];
-        $days = collect($daysList)->map(fn ($day) => [
+        $days = collect([1, 2, 3, 4, 5])->map(fn ($day) => [
             'day' => $day,
             'label' => $this->dayLabel($day),
         ])->all();
 
         $timeSlots = $this->buildTimeSlots($entries);
 
-        $gridEntries = $entries;
-        if ($this->sectionId === null || (int) $this->sectionId === 0) {
-            $gridEntries = $entries->filter(fn ($entry) => $entry->section_id === null);
-        }
-
         $slotMap = [];
-        foreach ($gridEntries as $entry) {
+        foreach ($entries as $entry) {
             $entryStart = $this->timeToSeconds(substr((string) $entry->starts_at, 0, 5));
             $entryEnd = $this->timeToSeconds(substr((string) $entry->ends_at, 0, 5));
 
@@ -399,22 +375,11 @@ class Index extends Component
             }
         }
 
-        $grouped = $entries->groupBy('day_of_week')->map(function ($rows, $day) {
-            return [
-                'day' => (int) $day,
-                'label' => $this->dayLabel((int) $day),
-                'rows' => $rows,
-            ];
-        })->sortBy('day')->values();
-
         return view('livewire.timetable.index', [
             'isAdmin' => $user->role === 'admin',
-            'grouped' => $grouped,
             'days' => $days,
             'timeSlots' => $timeSlots,
             'slotMap' => $slotMap,
-            'canUseGrid' => (bool) $this->classId,
-            'gridUsesSections' => ! ($this->sectionId === null || (int) $this->sectionId === 0),
         ]);
     }
 }

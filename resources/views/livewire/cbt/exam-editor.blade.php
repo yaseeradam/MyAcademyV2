@@ -29,12 +29,29 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <a href="{{ route('cbt.index') }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Back</a>
+                    @if ($me?->role === 'admin')
+                        <button type="button" wire:click="deleteExam" class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-red-700 hover:shadow-xl" onclick="if (!confirm('Delete this exam? This action cannot be undone.')) { event.stopImmediatePropagation(); }">
+                            Delete Exam
+                        </button>
+                    @endif
                     <button type="button" wire:click="duplicateExam" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Duplicate</button>
+                    @if ($status === 'approved')
+                        <button type="button" wire:click="endAllExams" class="rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-red-600 hover:shadow-xl" onclick="if (!confirm('End this exam? This will submit all active attempts for {{ $exam->title }} and calculate final scores.')) { event.stopImmediatePropagation(); }">
+                            End This Exam
+                        </button>
+                    @endif
+                    <button type="button" wire:click="$toggle('showQuestions')" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">{{ $showQuestions ? 'Hide' : 'Preview' }} Questions</button>
+                    <a href="{{ route('cbt.exams.pdf', $exam) }}" target="_blank" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Download PDF</a>
                     @if ($status === 'approved' && $exam->access_code)
                         <a href="{{ route('cbt.student', ['code' => $exam->access_code]) }}" target="_blank" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Student Portal</a>
                     @endif
                     @if ($me?->role === 'admin')
                         <a href="{{ route('cbt.exams.export', $exam) }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Export CSV</a>
+                        @if ($status === 'approved')
+                            <button type="button" wire:click="transferToResults" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-emerald-600 hover:shadow-xl" onclick="if (!confirm('Transfer CBT scores to academic results? This will update the results table for {{ $exam->session }} Term {{ $exam->term }}.')) { event.stopImmediatePropagation(); }">
+                                Transfer to Results
+                            </button>
+                        @endif
                     @endif
                     @if ($canEdit)
                         <button type="button" wire:click="saveDetails" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">Save Details</button>
@@ -216,48 +233,137 @@
         </div>
     @endif
 
-    <div class="rounded-2xl bg-white p-6 shadow-lg">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <div class="text-sm font-semibold text-gray-900">Questions</div>
-                <div class="mt-1 text-sm text-gray-600">Multiple-choice (4 options). One correct answer.</div>
+    @if (in_array($me?->role, ['teacher', 'admin'], true))
+        <div class="rounded-2xl bg-white p-6 shadow-lg">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <div class="text-sm font-semibold text-gray-900">Questions</div>
+                    <div class="mt-1 text-sm text-gray-600">Multiple-choice (4 options). One correct answer.</div>
+                </div>
+
+                @if ($canEdit)
+                    <button type="button" wire:click="startNewQuestion" class="btn-outline">New Question</button>
+                @endif
+            </div>
+
+            <div class="mt-4 space-y-3">
+                @forelse ($exam->questions as $q)
+                    @php
+                        $correct = $q->options->firstWhere('is_correct', true);
+                    @endphp
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-gray-900">
+                                    Q{{ $loop->iteration }}. {{ $q->prompt }}
+                                </div>
+                                <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    @foreach ($q->options as $opt)
+                                        <div class="rounded-xl bg-gray-50 px-3 py-2 text-sm text-gray-800 ring-1 ring-inset ring-gray-100">
+                                            <span class="font-semibold">{{ chr(65 + $loop->index) }}.</span>
+                                            {{ $opt->label }}
+                                            @if ($opt->is_correct)
+                                                <span class="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-800">Correct</span>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="mt-2 text-xs text-gray-500">
+                                    Marks: <span class="font-semibold text-gray-700">{{ (int) $q->marks }}</span>
+                                    &middot;
+                                    Correct: <span class="font-mono">{{ $correct ? (chr(65 + $q->options->search($correct))) : '-' }}</span>
+                                </div>
+                            </div>
+
+                            @if ($canEdit)
+                                <div class="flex items-center gap-2">
+                                    <button type="button" wire:click="editQuestion({{ $q->id }})" class="btn-outline">Edit</button>
+                                    <button type="button" wire:click="deleteQuestion({{ $q->id }})" class="inline-flex items-center justify-center rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700">
+                                        Delete
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-600">
+                        No questions yet.
+                    </div>
+                @endforelse
             </div>
 
             @if ($canEdit)
-                <button type="button" wire:click="startNewQuestion" class="btn-outline">New Question</button>
+                <div class="mt-6 rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-50 to-fuchsia-50 p-6 shadow-lg">
+                    <div class="text-sm font-semibold text-gray-900">
+                        {{ $editingQuestionId ? 'Edit Question' : 'Add Question' }}
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Question</label>
+                        <textarea wire:model="questionPrompt" rows="3" class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Type the question..."></textarea>
+                        @error('questionPrompt') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+                        <div>
+                            <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Marks</label>
+                            <input wire:model="questionMarks" type="number" min="1" max="100" class="mt-2 input w-full" />
+                            @error('questionMarks') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="lg:col-span-2">
+                            <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Correct Option</label>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                @for ($i = 0; $i < 4; $i++)
+                                    <label class="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-200">
+                                        <input type="radio" wire:model="correctIndex" value="{{ $i }}" />
+                                        {{ chr(65 + $i) }}
+                                    </label>
+                                @endfor
+                            </div>
+                            @error('correctIndex') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        @for ($i = 0; $i < 4; $i++)
+                            <div>
+                                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Option {{ chr(65 + $i) }}</label>
+                                <input wire:model="optionLabels.{{ $i }}" class="mt-2 input w-full" />
+                                @error("optionLabels.$i") <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
+                            </div>
+                        @endfor
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                        <button type="button" wire:click="saveQuestion" class="btn-primary">Save Question</button>
+                        @if ($editingQuestionId)
+                            <button type="button" wire:click="startNewQuestion" class="btn-outline">Cancel Edit</button>
+                        @endif
+                    </div>
+                </div>
             @endif
         </div>
-
-        <div class="mt-4 space-y-3">
-            @forelse ($exam->questions as $q)
-                @php
-                    $correct = $q->options->firstWhere('is_correct', true);
-                @endphp
-                <div class="rounded-2xl border border-gray-100 bg-white p-4">
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div class="min-w-0">
-                            <div class="text-sm font-semibold text-gray-900">
-                                Q{{ $loop->iteration }}. {{ $q->prompt }}
-                            </div>
-                            <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                @foreach ($q->options as $opt)
-                                    <div class="rounded-xl bg-gray-50 px-3 py-2 text-sm text-gray-800 ring-1 ring-inset ring-gray-100">
-                                        <span class="font-semibold">{{ chr(65 + $loop->index) }}.</span>
-                                        {{ $opt->label }}
-                                        @if ($opt->is_correct)
-                                            <span class="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-800">Correct</span>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                            <div class="mt-2 text-xs text-gray-500">
-                                Marks: <span class="font-semibold text-gray-700">{{ (int) $q->marks }}</span>
-                                &middot;
-                                Correct: <span class="font-mono">{{ $correct ? (chr(65 + $q->options->search($correct))) : '-' }}</span>
-    </div>
+    @endif
 
     @if ($status === 'approved')
-        <div class="rounded-2xl bg-white p-6 shadow-lg">
+        @php
+            $roster = collect();
+            $submittedCount = 0;
+            $inProgressCount = 0;
+            $notStartedCount = 0;
+            $terminatedCount = 0;
+            $totalQuestions = 0;
+
+            if ($me?->role === 'admin') {
+                $roster = $this->roster;
+                $submittedCount = (int) $roster->where('state', 'submitted')->count();
+                $inProgressCount = (int) $roster->where('state', 'in_progress')->count();
+                $notStartedCount = (int) $roster->where('state', 'not_started')->count();
+                $terminatedCount = (int) $roster->where('state', 'terminated')->count();
+                $totalQuestions = (int) ($exam?->questions?->count() ?? 0);
+            }
+        @endphp
+        <div class="rounded-2xl bg-white p-8 shadow-lg lg:p-10">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <div class="text-sm font-semibold text-gray-900">Exam Monitor</div>
@@ -273,15 +379,6 @@
 
             <div class="mt-4">
                 @if ($me?->role === 'admin')
-                    @php
-                        $roster = $this->roster;
-                        $submittedCount = (int) $roster->where('state', 'submitted')->count();
-                        $inProgressCount = (int) $roster->where('state', 'in_progress')->count();
-                        $notStartedCount = (int) $roster->where('state', 'not_started')->count();
-                        $terminatedCount = (int) $roster->where('state', 'terminated')->count();
-                        $totalQuestions = (int) ($exam?->questions?->count() ?? 0);
-                    @endphp
-
                     <div class="mb-3 flex flex-wrap items-center gap-2">
                         <x-status-badge variant="neutral">{{ (int) $roster->count() }} student(s)</x-status-badge>
                         <x-status-badge variant="success">{{ $submittedCount }} submitted</x-status-badge>
@@ -290,20 +387,17 @@
                         <x-status-badge variant="neutral">{{ $notStartedCount }} not started</x-status-badge>
                     </div>
 
-                    <div class="overflow-hidden rounded-2xl border border-gray-100">
+                    <div class="overflow-x-auto overflow-hidden rounded-2xl border border-gray-100">
                         <x-table>
                             <thead class="bg-gradient-to-r from-rose-500 to-fuchsia-600 text-xs font-semibold uppercase tracking-wider text-white">
                                 <tr>
-                                    <th class="px-5 py-3">Student</th>
-                                    <th class="px-5 py-3">State</th>
-                                    <th class="px-5 py-3 text-center">Progress</th>
-                                    <th class="px-5 py-3 text-center">Score</th>
-                                    <th class="px-5 py-3 text-center">Percent</th>
-                                    <th class="px-5 py-3">Started</th>
-                                    <th class="px-5 py-3">Submitted</th>
-                                    <th class="px-5 py-3">Last Seen</th>
-                                    <th class="px-5 py-3">IP</th>
-                                    <th class="px-5 py-3 text-right">Action</th>
+                                    <th class="px-3 py-2">Student</th>
+                                    <th class="px-3 py-2">State</th>
+                                    <th class="px-3 py-2 text-center">Progress</th>
+                                    <th class="px-3 py-2">Started</th>
+                                    <th class="px-3 py-2">Submitted</th>
+                                    <th class="px-3 py-2">IP</th>
+                                    <th class="px-3 py-2 text-right">Action</th>
                                 </tr>
                             </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -322,67 +416,62 @@
                                     };
                                 @endphp
                                 <tr class="bg-white hover:bg-gray-50">
-                                    <td class="px-5 py-4">
-                                        <div class="flex items-center gap-3">
+                                    <td class="px-3 py-2">
+                                        <div class="flex items-center gap-2">
                                             @if ($student->passport_photo_url)
-                                                <img
-                                                    src="{{ $student->passport_photo_url }}"
-                                                    alt="{{ $student->full_name ?? 'Student' }}"
-                                                    class="h-10 w-10 rounded-2xl object-cover ring-1 ring-inset ring-slate-200"
-                                                />
+                                                <img src="{{ $student->passport_photo_url }}" alt="{{ $student->full_name ?? 'Student' }}" class="h-8 w-8 rounded-lg object-cover ring-1 ring-inset ring-slate-200" />
                                             @else
-                                                <div class="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200">
+                                                <div class="grid h-8 w-8 place-items-center rounded-lg bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200">
                                                     <span class="text-xs font-black">{{ mb_substr($student->first_name ?? 'S', 0, 1) }}</span>
                                                 </div>
                                             @endif
                                             <div class="min-w-0">
-                                                <div class="truncate text-sm font-semibold text-gray-900">{{ $student->full_name ?? trim($student->first_name.' '.$student->last_name) }}</div>
-                                                <div class="mt-0.5 text-xs font-mono text-gray-500">{{ $student->admission_number }}</div>
+                                                <div class="truncate text-xs font-semibold text-gray-900">{{ $student->full_name ?? trim($student->first_name.' '.$student->last_name) }}</div>
+                                                <div class="text-[10px] font-mono text-gray-500">{{ $student->admission_number }}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-5 py-4">
+                                    <td class="px-3 py-2">
                                         <x-status-badge variant="{{ $stateVariant }}">{{ str_replace('_', ' ', ucfirst($state)) }}</x-status-badge>
                                     </td>
-                                    <td class="px-5 py-4 text-center">
+                                    <td class="px-3 py-2 text-center">
                                         @if ($attempt)
-                                            <div class="text-sm font-semibold text-gray-900">{{ $answered }}/{{ $totalQuestions }}</div>
-                                            <div class="mt-1 text-xs text-gray-600">{{ $rem }} remaining</div>
+                                            <div class="text-xs font-semibold text-gray-900">{{ $answered }}/{{ $totalQuestions }}</div>
                                         @else
                                             <span class="text-xs text-gray-400">-</span>
                                         @endif
                                     </td>
-                                    <td class="px-5 py-4 text-center text-sm font-semibold text-gray-900">
-                                        {{ $attempt ? ((int) $attempt->score).' / '.((int) $attempt->max_score) : '-' }}
+                                    <td class="px-3 py-2 text-xs text-gray-700">
+                                        {{ $attempt?->started_at ? $attempt->started_at->format('g:i A') : '-' }}
                                     </td>
-                                    <td class="px-5 py-4 text-center text-sm font-semibold text-gray-900">
-                                        {{ $attempt ? number_format((float) $attempt->percent, 2).'%' : '-' }}
+                                    <td class="px-3 py-2 text-xs text-gray-700">
+                                        {{ $attempt?->submitted_at ? $attempt->submitted_at->format('g:i A') : '-' }}
                                     </td>
-                                    <td class="px-5 py-4 text-sm text-gray-700">
-                                        {{ $attempt?->started_at ? $attempt->started_at->format('M j, Y g:i A') : '-' }}
-                                    </td>
-                                    <td class="px-5 py-4 text-sm text-gray-700">
-                                        {{ $attempt?->submitted_at ? $attempt->submitted_at->format('M j, Y g:i A') : '-' }}
-                                    </td>
-                                    <td class="px-5 py-4 text-sm text-gray-700">
-                                        {{ $attempt?->last_activity_at ? $attempt->last_activity_at->format('M j, Y g:i A') : '-' }}
-                                    </td>
-                                    <td class="px-5 py-4 text-xs text-gray-700">
+                                    <td class="px-3 py-2 text-[10px] text-gray-700">
                                         <div class="font-mono">{{ $attempt?->ip_address ?: '-' }}</div>
-                                        @if ($attempt?->allowed_ip)
-                                            <div class="mt-1 font-mono text-gray-500">Allow: {{ $attempt->allowed_ip }}</div>
-                                        @endif
                                     </td>
-                                    <td class="px-5 py-4 text-right">
+                                    <td class="px-3 py-2 text-right">
                                         @if ($attempt)
-                                            <div class="flex flex-wrap justify-end gap-2">
-                                                <button type="button" wire:click="startIpOverride({{ $attempt->id }})" class="btn-outline">Change IP</button>
-                                                <button type="button" wire:click="clearIpLock({{ $attempt->id }})" class="btn-outline" onclick="if (!confirm('Clear IP lock? The student will be able to continue from any device/IP.')) { event.stopImmediatePropagation(); }">Clear IP</button>
-                                                @if ($state === 'in_progress')
-                                                    <button type="button" wire:click="forceSubmitAttempt({{ $attempt->id }})" class="btn-outline" onclick="if (!confirm('Force submit this attempt now?')) { event.stopImmediatePropagation(); }">Force Submit</button>
-                                                    <button type="button" wire:click="terminateAttempt({{ $attempt->id }})" class="inline-flex items-center justify-center rounded-lg bg-orange-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-orange-700" onclick="if (!confirm('Terminate this student attempt now?')) { event.stopImmediatePropagation(); }">Terminate</button>
-                                                @endif
-                                                <button type="button" wire:click="resetAttempt({{ $attempt->id }})" class="inline-flex items-center justify-center rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700" onclick="if (!confirm('Reset this attempt? The student will be able to retake.')) { event.stopImmediatePropagation(); }">Reset</button>
+                                            <div class="relative" x-data="{ open: false }">
+                                                <button @click="open = !open" type="button" class="rounded-lg bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-200">
+                                                    Actions ▼
+                                                </button>
+                                                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 z-10 mt-1 w-44 rounded-lg bg-white shadow-xl ring-1 ring-black ring-opacity-5">
+                                                    <button type="button" wire:click="startIpOverride({{ $attempt->id }})" @click="open = false" class="block w-full px-4 py-2.5 text-left text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                                        Change IP
+                                                    </button>
+                                                    @if ($state === 'in_progress')
+                                                        <button type="button" wire:click="forceSubmitAttempt({{ $attempt->id }})" @click="open = false" class="block w-full px-4 py-2.5 text-left text-xs font-semibold text-blue-700 hover:bg-blue-50" onclick="if (!confirm('Force submit?')) { event.stopImmediatePropagation(); }">
+                                                            Force Submit
+                                                        </button>
+                                                        <button type="button" wire:click="terminateAttempt({{ $attempt->id }})" @click="open = false" class="block w-full px-4 py-2.5 text-left text-xs font-semibold text-orange-700 hover:bg-orange-50" onclick="if (!confirm('Terminate?')) { event.stopImmediatePropagation(); }">
+                                                            Terminate
+                                                        </button>
+                                                    @endif
+                                                    <button type="button" wire:click="resetAttempt({{ $attempt->id }})" @click="open = false" class="block w-full px-4 py-2.5 text-left text-xs font-semibold text-rose-700 hover:bg-rose-50" onclick="if (!confirm('Reset?')) { event.stopImmediatePropagation(); }">
+                                                        Reset Attempt
+                                                    </button>
+                                                </div>
                                             </div>
                                         @else
                                             <span class="text-xs text-gray-400">-</span>
@@ -391,7 +480,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="10" class="px-5 py-10 text-center text-sm text-gray-600">
+                                    <td colspan="7" class="px-3 py-6 text-center text-xs text-gray-600">
                                         No students found for this class.
                                     </td>
                                 </tr>
@@ -459,74 +548,5 @@
             </div>
         </div>
     @endif
-</div>
 
-                        @if ($canEdit)
-                            <div class="flex items-center gap-2">
-                                <button type="button" wire:click="editQuestion({{ $q->id }})" class="btn-outline">Edit</button>
-                                <button type="button" wire:click="deleteQuestion({{ $q->id }})" class="inline-flex items-center justify-center rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700">
-                                    Delete
-                                </button>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            @empty
-                <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-600">
-                    No questions yet.
-                </div>
-            @endforelse
-        </div>
-
-        @if ($canEdit)
-            <div class="mt-6 rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-50 to-fuchsia-50 p-6 shadow-lg">
-                <div class="text-sm font-semibold text-gray-900">
-                    {{ $editingQuestionId ? 'Edit Question' : 'Add Question' }}
-                </div>
-
-                <div class="mt-4">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Question</label>
-                    <textarea wire:model="questionPrompt" rows="3" class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Type the question..."></textarea>
-                    @error('questionPrompt') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
-                </div>
-
-                <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <div>
-                        <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Marks</label>
-                        <input wire:model="questionMarks" type="number" min="1" max="100" class="mt-2 input w-full" />
-                        @error('questionMarks') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="lg:col-span-2">
-                        <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Correct Option</label>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            @for ($i = 0; $i < 4; $i++)
-                                <label class="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-200">
-                                    <input type="radio" wire:model="correctIndex" value="{{ $i }}" />
-                                    {{ chr(65 + $i) }}
-                                </label>
-                            @endfor
-                        </div>
-                        @error('correctIndex') <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-
-                <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    @for ($i = 0; $i < 4; $i++)
-                        <div>
-                            <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Option {{ chr(65 + $i) }}</label>
-                            <input wire:model="optionLabels.{{ $i }}" class="mt-2 input w-full" />
-                            @error("optionLabels.$i") <div class="mt-1 text-xs font-semibold text-orange-700">{{ $message }}</div> @enderror
-                        </div>
-                    @endfor
-                </div>
-
-                <div class="mt-4 flex flex-wrap items-center gap-2">
-                    <button type="button" wire:click="saveQuestion" class="btn-primary">Save Question</button>
-                    @if ($editingQuestionId)
-                        <button type="button" wire:click="startNewQuestion" class="btn-outline">Cancel Edit</button>
-                    @endif
-                </div>
-            </div>
-        @endif
-    </div>
 </div>

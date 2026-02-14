@@ -15,6 +15,7 @@ use App\Models\SubjectAllocation;
 use App\Models\User;
 use App\Support\Audit;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -51,6 +52,8 @@ class ExamEditor extends Component
 
     public ?int $editingAttemptIpId = null;
     public string $allowedIp = '';
+
+    public bool $showQuestions = false;
 
     public string $startsAt = '';
     public string $endsAt = '';
@@ -104,7 +107,7 @@ class ExamEditor extends Component
                 'requester:id,name',
                 'questions.options',
                 'attempts' => fn ($q) => $q
-                    ->with(['student:id,admission_number,first_name,last_name'])
+                    ->with(['student:id,admission_number,first_name,last_name,passport_photo'])
                     ->orderByDesc('submitted_at')
                     ->orderByDesc('id'),
             ])
@@ -127,7 +130,7 @@ class ExamEditor extends Component
         }
 
         if ($user->role === 'admin') {
-            return true;
+            return in_array($exam->status, ['draft', 'assigned', 'rejected'], true);
         }
 
         if ($user->role !== 'teacher') {
@@ -456,7 +459,7 @@ class ExamEditor extends Component
             ->where('status', 'Active')
             ->orderBy('first_name')
             ->orderBy('last_name')
-            ->get(['id', 'admission_number', 'first_name', 'last_name', 'status']);
+            ->get(['id', 'admission_number', 'first_name', 'last_name', 'passport_photo', 'status']);
 
         $attempts = CbtAttempt::query()
             ->where('exam_id', $exam->id)
@@ -974,6 +977,131 @@ class ExamEditor extends Component
         }
 
         return 'CBT-'.strtoupper(Str::random(8));
+    }
+
+    public function endAllExams(): void
+    {
+        $user = auth()->user();
+        abort_unless($user?->role === 'admin', 403);
+
+        $exam = $this->exam;
+        $inProgressAttempts = CbtAttempt::query()
+            ->where('exam_id', $exam->id)
+            ->whereNotNull('started_at')
+            ->whereNull('submitted_at')
+            ->whereNull('terminated_at')
+            ->with(['exam.questions.options', 'answers'])
+            ->get();
+
+        if ($inProgressAttempts->isEmpty()) {
+            $this->dispatch('alert', message: 'No active exams to end.', type: 'warning');
+            return;
+        }
+
+        $count = 0;
+        foreach ($inProgressAttempts as $attempt) {
+            DB::transaction(function () use ($attempt) {
+                $attempt->loadMissing(['exam.questions.options', 'answers']);
+                $answers = $attempt->answers->keyBy('question_id');
+                $maxScore = 0;
+                $score = 0;
+
+                foreach ($attempt->exam->questions as $question) {
+                    $maxScore += (int) ($question->marks ?? 0);
+                    $correctOptionId = (int) ($question->options->firstWhere('is_correct', true)?->id ?? 0);
+                    $selectedOptionId = (int) ($answers->get($question->id)?->option_id ?? 0);
+                    if ($selectedOptionId > 0 && ! $question->options->contains('id', $selectedOptionId)) {
+                        $selectedOptionId = 0;
+                    }
+                    $isCorrect = $selectedOptionId > 0 && $selectedOptionId === $correctOptionId;
+                    if ($isCorrect) {
+                        $score += (int) ($question->marks ?? 0);
+                    }
+                    CbtAnswer::query()->updateOrCreate(
+                        ['attempt_id' => $attempt->id, 'question_id' => $question->id],
+                        ['option_id' => $selectedOptionId > 0 ? $selectedOptionId : null, 'is_correct' => $isCorrect]
+                    );
+                }
+
+                $percent = $maxScore > 0 ? round(($score / $maxScore) * 100, 2) : 0;
+                $attempt->forceFill([
+                    'score' => $score,
+                    'max_score' => $maxScore,
+                    'percent' => $percent,
+                    'submitted_at' => now(),
+                ])->save();
+            });
+            $count++;
+        }
+
+        Audit::log('cbt.all_exams_ended', $exam, ['count' => $count]);
+        unset($this->exam);
+        $this->dispatch('alert', message: "Ended {$count} active exam(s).", type: 'success');
+    }
+
+    public function transferToResults(): void
+    {
+        $user = auth()->user();
+        abort_unless($user?->role === 'admin', 403);
+
+        if (! Schema::hasTable('scores')) {
+            $this->dispatch('alert', message: 'Scores table not found. Run migrations or disable CBT-to-results transfer.', type: 'warning');
+            return;
+        }
+
+        $exam = $this->exam;
+        abort_unless($exam->status === 'approved', 403);
+
+        $attempts = CbtAttempt::query()
+            ->where('exam_id', $exam->id)
+            ->whereNotNull('submitted_at')
+            ->with('student')
+            ->get();
+
+        if ($attempts->isEmpty()) {
+            $this->dispatch('alert', message: 'No submitted attempts to transfer.', type: 'warning');
+            return;
+        }
+
+        $count = 0;
+        foreach ($attempts as $attempt) {
+            if (!$attempt->student) continue;
+
+            DB::table('scores')->updateOrInsert(
+                [
+                    'student_id' => $attempt->student_id,
+                    'subject_id' => $exam->subject_id,
+                    'class_id' => $exam->class_id,
+                    'term' => $exam->term,
+                    'session' => $exam->session,
+                ],
+                [
+                    'exam' => $attempt->score,
+                    'updated_at' => now(),
+                ]
+            );
+            $count++;
+        }
+
+        Audit::log('cbt.scores_transferred', $exam, ['count' => $count]);
+        $this->dispatch('alert', message: "Transferred {$count} CBT score(s) to scores.", type: 'success');
+    }
+
+    public function deleteExam()
+    {
+        $user = auth()->user();
+        abort_unless($user?->role === 'admin', 403);
+
+        $exam = $this->exam;
+
+        DB::transaction(function () use ($exam) {
+            $exam->delete();
+        });
+
+        Audit::log('cbt.exam_deleted', null, ['exam_id' => $exam->id, 'title' => $exam->title]);
+
+        $this->dispatch('alert', message: 'Exam deleted successfully.', type: 'success');
+        return redirect()->route('cbt.index');
     }
 
     public function render()

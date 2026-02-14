@@ -35,6 +35,8 @@ class Start extends Component
             'admissionNumber' => ['required', 'string', 'max:50'],
             'surname' => ['nullable', 'string', 'max:100'],
             'pin' => ['nullable', 'string', 'max:20'],
+        ], [
+            'examCode.required' => 'Exam code is missing. Please use the correct exam link provided by your teacher.',
         ]);
 
         $code = strtoupper(trim($data['examCode']));

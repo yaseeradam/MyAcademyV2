@@ -1,22 +1,32 @@
 <div class="space-y-6">
-    <x-page-header title="Broadsheet" subtitle="All students (rows) × all subjects (columns)." accent="results">
-        <x-slot:actions>
-            <a href="{{ route('results.entry') }}" class="btn-outline">Score Entry</a>
-            @php($user = auth()->user())
-            @if ($classId && $user?->hasPermission('results.publish'))
-                <x-status-badge variant="{{ $this->isPublished ? 'success' : 'warning' }}">
-                    {{ $this->isPublished ? 'Published' : 'Unpublished' }}
-                </x-status-badge>
-                @if ($this->isPublished)
-                    <button type="button" wire:click="unpublishResults" class="btn-outline">Unpublish</button>
-                @else
-                    <button type="button" wire:click="publishResults" class="btn-primary">Publish</button>
-                @endif
-            @endif
-        </x-slot:actions>
-    </x-page-header>
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-8 shadow-xl">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
+        <div class="relative">
+            <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">Broadsheet</h1>
+                    <p class="mt-2 text-base text-emerald-50">All students (rows) × all subjects (columns)</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="{{ route('results.entry') }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Score Entry</a>
+                    @php($user = auth()->user())
+                    @if ($classId && $user?->hasPermission('results.publish'))
+                        <x-status-badge variant="{{ $this->isPublished ? 'success' : 'warning' }}">
+                            {{ $this->isPublished ? 'Published' : 'Unpublished' }}
+                        </x-status-badge>
+                        @if ($this->isPublished)
+                            <button type="button" wire:click="unpublishResults" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-600 shadow-lg transition-all hover:bg-emerald-50 hover:shadow-xl">Unpublish</button>
+                        @else
+                            <button type="button" wire:click="publishResults" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-600 shadow-lg transition-all hover:bg-emerald-50 hover:shadow-xl">Publish</button>
+                        @endif
+                        <a href="{{ route('results.bulk-report-cards', ['class_id' => $classId, 'term' => $term, 'session' => $session]) }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-600 shadow-lg transition-all hover:bg-emerald-50 hover:shadow-xl">Bulk Report Cards</a>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div class="card-padded">
+    <div class="rounded-2xl bg-white p-6 shadow-lg">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
                 <div class="text-sm font-semibold text-slate-900">Filters</div>
@@ -63,18 +73,19 @@
     </div>
 
     @if (! $classId)
-        <div class="card-padded text-center">
+        <div class="rounded-2xl bg-white p-8 text-center shadow-lg">
             <div class="text-lg font-semibold text-gray-900">Select a class</div>
             <div class="mt-2 text-sm text-gray-600">Choose a class to generate the broadsheet.</div>
         </div>
     @elseif ($this->subjects->isEmpty())
-        <div class="card-padded text-center">
+        <div class="rounded-2xl bg-white p-8 text-center shadow-lg">
             <div class="text-lg font-semibold text-gray-900">No subjects</div>
             <div class="mt-2 text-sm text-gray-600">Allocate subjects to this class to populate the broadsheet.</div>
         </div>
     @else
-        <x-table class="text-xs">
-            <thead class="bg-gray-50 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+        <div class="overflow-x-auto overflow-hidden rounded-2xl bg-white shadow-lg">
+            <x-table class="text-xs">
+                <thead class="bg-gradient-to-r from-emerald-500 to-cyan-600 text-[11px] font-semibold uppercase tracking-wider text-white">
                 <tr>
                     <th class="px-5 py-3">Student</th>
                     @foreach ($this->subjects as $subject)
@@ -130,6 +141,7 @@
                     </tr>
                 @endforelse
             </tbody>
-        </x-table>
+            </x-table>
+        </div>
     @endif
 </div>

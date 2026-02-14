@@ -123,9 +123,25 @@ class Broadsheet extends Component
             'session' => $publication->session,
         ]);
 
+        // Notify teachers
+        $class = SchoolClass::find($this->classId);
+        $teacherIds = SubjectAllocation::query()
+            ->where('class_id', $this->classId)
+            ->pluck('teacher_id')
+            ->unique();
+        
+        foreach ($teacherIds as $teacherId) {
+            \App\Models\Notification::create([
+                'user_id' => $teacherId,
+                'title' => 'Results Published',
+                'message' => "Results for {$class->name} - Term {$this->term} ({$this->session}) have been published. You can now view student results.",
+                'type' => 'info',
+            ]);
+        }
+
         unset($this->publication);
         unset($this->isPublished);
-        $this->dispatch('alert', message: 'Results published.', type: 'success');
+        $this->dispatch('alert', message: 'Results published and teachers notified.', type: 'success');
     }
 
     public function unpublishResults(): void

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CbtExam;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -102,5 +103,14 @@ class CbtExportController extends Controller
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
-}
 
+    public function examPdf(CbtExam $exam)
+    {
+        $exam->load(['questions.options', 'schoolClass', 'subject']);
+
+        $pdf = Pdf::loadView('pdf.cbt-exam', ['exam' => $exam]);
+        $filename = 'exam-'.str_replace(' ', '-', strtolower($exam->title)).'.pdf';
+
+        return $pdf->download($filename);
+    }
+}

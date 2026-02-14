@@ -10,10 +10,10 @@
 
 	        ['route' => 'promotions', 'title' => 'Promote Students', 'desc' => 'Move students between classes/grades', 'icon' => 'M12 2l4 4h-3v7h-2V6H8l4-4zm-7 9h2v9h10v-9h2v11H5V11z', 'color' => 'emerald', 'roles' => ['admin']],
 	        ['route' => 'promotions', 'title' => 'Bulk Promotion', 'desc' => 'Promote multiple students at once', 'icon' => 'M16 7h5v5h-2V9h-3V7zM3 12h10v2H3v-2zm0 5h10v2H3v-2zM3 7h10v2H3V7z', 'color' => 'indigo', 'roles' => ['admin']],
-	        ['route' => 'events', 'title' => 'Event Scheduling', 'desc' => 'Plan and manage school events', 'icon' => 'M7 2v2H5a2 2 0 0 0-2 2v2h18V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm14 8H3v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V10z', 'color' => 'purple', 'roles' => ['admin', 'teacher']],
+	        ['route' => 'events', 'title' => 'Event Scheduling', 'desc' => 'Plan and manage school events', 'icon' => 'M7 2v2H5a2 2 0 0 0-2 2v2h18V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm14 8H3v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V10z', 'color' => 'purple', 'roles' => ['admin']],
 	        ['route' => 'academic-sessions', 'title' => 'Academic Year Management', 'desc' => 'Sessions and active academic year', 'icon' => 'M4 19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7H4v12zm16-14V3h-2v2H6V3H4v2a2 2 0 0 0-2 2v2h20V7a2 2 0 0 0-2-2z', 'color' => 'cyan', 'roles' => ['admin']],
-	        ['route' => 'timetable', 'title' => 'Timetable', 'desc' => 'Class scheduling and time slots', 'icon' => 'M7 11h5v5H7v-5zm7 0h5v5h-5v-5zM7 4v2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2V4h-2v2H9V4H7z', 'color' => 'blue', 'roles' => ['admin', 'teacher']],
-	        ['route' => 'certificates', 'title' => 'Certificates', 'desc' => 'Certificate generation and printing', 'icon' => 'M6 2h9l3 3v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 0v4h4', 'color' => 'orange', 'roles' => ['admin', 'teacher']],
+	        ['route' => 'timetable', 'title' => 'Timetable', 'desc' => 'Class scheduling and time slots', 'icon' => 'M7 11h5v5H7v-5zm7 0h5v5h-5v-5zM7 4v2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2V4h-2v2H9V4H7z', 'color' => 'blue', 'roles' => ['admin']],
+	        ['route' => 'certificates', 'title' => 'Certificates', 'desc' => 'Certificate generation and printing', 'icon' => 'M6 2h9l3 3v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 0v4h4', 'color' => 'orange', 'roles' => ['admin']],
 	    ];
 	    
 	    $colors = [

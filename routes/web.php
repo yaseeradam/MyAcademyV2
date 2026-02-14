@@ -97,9 +97,6 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
 Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/dashboard', function () {
         $user = auth()->user();
-        if (config('myacademy.mode') === 'cbt' && in_array($user?->role, ['admin', 'teacher'], true)) {
-            return redirect()->route('cbt.index');
-        }
         if ($user?->role === 'teacher') {
             return view('pages.dashboard-teacher');
         }
@@ -197,6 +194,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         Route::get('/events', EventsIndex::class)->name('events');
         Route::get('/timetable', TimetableIndex::class)->name('timetable');
+        Route::get('/timetable/pdf', [\App\Http\Controllers\TimetableController::class, 'downloadPdf'])->name('timetable.pdf');
         Route::get('/certificates', CertificatesIndex::class)->name('certificates');
         Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
     });
@@ -226,5 +224,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/cbt/exams/{exam}/export', [CbtExportController::class, 'examResults'])
             ->middleware(config('myacademy.premium_enforce', true) ? ['premium:cbt'] : [])
             ->name('cbt.exams.export');
+        Route::get('/cbt/exams/{exam}/pdf', [CbtExportController::class, 'examPdf'])
+            ->middleware(config('myacademy.premium_enforce', true) ? ['premium:cbt'] : [])
+            ->name('cbt.exams.pdf');
     });
 });
