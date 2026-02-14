@@ -7,7 +7,7 @@
 @endphp
 
 <div class="space-y-6">
-    <x-page-header title="Billing" subtitle="Record fees and expenses (offline)." accent="billing">
+    <x-page-header title="Billing" subtitle="Record fees and expenses" accent="billing">
         <x-slot:actions>
             @if ($canTransactions)
                 <a href="{{ route('accounts') }}" class="btn-outline">Accounts</a>
@@ -15,151 +15,47 @@
         </x-slot:actions>
     </x-page-header>
 
-    <div class="card-padded">
-        @if ($canTransactions)
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div class="min-w-0">
-                    <div class="text-sm font-semibold text-slate-900">New Transaction</div>
-                    <div class="mt-1 text-sm text-slate-600">Save income (fees) or expenses.</div>
-                </div>
+    @if ($canTransactions)
+        <div class="rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-6 shadow-sm ring-1 ring-emerald-200/50">
+            <div class="text-sm font-semibold text-emerald-900">New Transaction</div>
+            <div class="mt-1 text-xs text-emerald-700">Record income (fees) or expenses</div>
 
-                <form wire:submit="saveTransaction" class="grid w-full gap-3 sm:grid-cols-6 lg:max-w-4xl">
-                    <select
-                        wire:model.live="type"
-                        class="sm:col-span-1 select"
-                    >
-                        <option value="Income">Income</option>
-                        <option value="Expense">Expense</option>
-                    </select>
+            <form wire:submit="saveTransaction" class="mt-4 grid gap-3 sm:grid-cols-6">
+                <select wire:model.live="type" class="sm:col-span-1 select">
+                    <option value="Income">Income</option>
+                    <option value="Expense">Expense</option>
+                </select>
 
-                    <select
-                        wire:model.live="studentId"
-                        @disabled($type !== 'Income')
-                        class="sm:col-span-2 select"
-                    >
-                        <option value="">Student (Income only)</option>
-                        @foreach ($this->students as $student)
-                            <option value="{{ $student->id }}">
-                                {{ $student->full_name }} ({{ $student->admission_number }})
-                            </option>
-                        @endforeach
-                    </select>
+                <select wire:model.live="studentId" @disabled($type !== 'Income') class="sm:col-span-2 select">
+                    <option value="">Student (Income only)</option>
+                    @foreach ($this->students as $student)
+                        <option value="{{ $student->id }}">{{ $student->full_name }} ({{ $student->admission_number }})</option>
+                    @endforeach
+                </select>
 
-                    <input
-                        wire:model.live="category"
-                        type="text"
-                        placeholder="Category (e.g. Tuition)"
-                        class="sm:col-span-1 input-compact"
-                    />
+                <input wire:model.live="category" type="text" placeholder="Category (e.g. Tuition)" class="sm:col-span-1 input-compact" />
+                <input wire:model.live="amountPaid" type="number" step="0.01" placeholder="Amount" class="sm:col-span-1 input-compact" />
+                <button type="submit" class="sm:col-span-1 btn-primary">Save</button>
 
-                    <input
-                        wire:model.live="amountPaid"
-                        type="number"
-                        step="0.01"
-                        placeholder="Amount"
-                        class="sm:col-span-1 input-compact"
-                    />
+                <select wire:model.live="paymentMethod" @disabled($type !== 'Income') class="sm:col-span-1 select">
+                    <option value="Cash">Cash</option>
+                    <option value="Transfer">Transfer</option>
+                    <option value="POS">POS</option>
+                </select>
 
-                    <button
-                        type="submit"
-                        class="sm:col-span-1 btn-primary"
-                    >
-                        Save
-                    </button>
-                </form>
-            </div>
+                <input wire:model.live="session" @disabled($type !== 'Income') type="text" placeholder="2025/2026" class="sm:col-span-2 input-compact" />
 
-            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-6">
-                <div class="sm:col-span-2">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Payment Method</label>
-                    <select
-                        wire:model.live="paymentMethod"
-                        @disabled($type !== 'Income')
-                        class="mt-2 select"
-                    >
-                        <option value="Cash">Cash</option>
-                        <option value="Transfer">Transfer</option>
-                        <option value="POS">POS</option>
-                    </select>
-                </div>
+                <select wire:model.live="term" @disabled($type !== 'Income') class="sm:col-span-1 select">
+                    <option value="">-</option>
+                    <option value="1">Term 1</option>
+                    <option value="2">Term 2</option>
+                    <option value="3">Term 3</option>
+                </select>
 
-                <div class="sm:col-span-2">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Session</label>
-                    <input
-                        wire:model.live="session"
-                        @disabled($type !== 'Income')
-                        type="text"
-                        placeholder="2025/2026"
-                        class="mt-2 input-compact"
-                    />
-                </div>
-
-                <div class="sm:col-span-1">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Term</label>
-                    <select
-                        wire:model.live="term"
-                        @disabled($type !== 'Income')
-                        class="mt-2 select"
-                    >
-                        <option value="">-</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                    </select>
-                </div>
-
-                <div class="sm:col-span-1">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Date</label>
-                    <input
-                        wire:model.live="date"
-                        type="date"
-                        class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                    />
-                </div>
-            </div>
-        @else
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div class="min-w-0">
-                    <div class="text-sm font-semibold text-slate-900">Fee Management</div>
-                    <div class="mt-1 text-sm text-slate-600">Your account cannot record transactions.</div>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <x-status-badge variant="warning">Transactions disabled</x-status-badge>
-                    @if ($canFees)
-                        <x-status-badge variant="success">Fees enabled</x-status-badge>
-                    @endif
-                </div>
-            </div>
-        @endif
-
-        <div class="mt-6 flex gap-6 border-b border-gray-100">
-            @if ($canTransactions)
-                <button
-                    type="button"
-                    wire:click="$set('tab', 'transactions')"
-                    class="{{ $tab === 'transactions' ? 'border-b-2 border-brand-500 text-brand-700' : 'border-b-2 border-transparent text-gray-600 hover:text-gray-900' }} -mb-px pb-3 text-sm font-semibold"
-                >
-                    Transactions
-                </button>
-            @endif
-            <button
-                type="button"
-                wire:click="$set('tab', 'debtors')"
-                class="{{ $tab === 'debtors' ? 'border-b-2 border-brand-500 text-brand-700' : 'border-b-2 border-transparent text-gray-600 hover:text-gray-900' }} -mb-px pb-3 text-sm font-semibold"
-            >
-                Debtors
-            </button>
-            @if ($canFees)
-                <button
-                    type="button"
-                    wire:click="$set('tab', 'fees')"
-                    class="{{ $tab === 'fees' ? 'border-b-2 border-brand-500 text-brand-700' : 'border-b-2 border-transparent text-gray-600 hover:text-gray-900' }} -mb-px pb-3 text-sm font-semibold"
-                >
-                    Fees
-                </button>
-            @endif
+                <input wire:model.live="date" type="date" class="sm:col-span-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
+            </form>
         </div>
-    </div>
+    @endif
 
     @if ($tab === 'transactions' && $canTransactions)
         <div class="card-padded">
@@ -255,71 +151,63 @@
     @endif
 
     @if ($tab === 'debtors')
-        <div class="card-padded">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div class="min-w-0">
-                    <div class="text-sm font-semibold text-gray-900">
-                        Debtors ({{ trim($debtorsCategory) !== '' ? trim($debtorsCategory) : 'Tuition' }})
+        <div>
+            <div class="card-padded">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div class="min-w-0">
+                        <div class="text-sm font-semibold text-gray-900">
+                            Debtors ({{ trim($debtorsCategory) !== '' ? trim($debtorsCategory) : 'Tuition' }})
+                        </div>
+                        <div class="mt-1 text-sm text-gray-600">Uses the configured fee structure per class and sums recorded payments.</div>
                     </div>
-                    <div class="mt-1 text-sm text-gray-600">Uses the configured fee structure per class and sums recorded payments.</div>
-                </div>
 
-                <div class="grid w-full gap-3 sm:grid-cols-3 lg:max-w-4xl">
-                    <input
-                        wire:model.live.debounce.300ms="debtorsCategory"
-                        type="text"
-                        placeholder="Category (e.g. Tuition)"
-                        class="input-compact"
-                    />
-                    <input
-                        wire:model.live.debounce.300ms="debtorsSession"
-                        type="text"
-                        placeholder="Session (e.g. 2025/2026)"
-                        class="input-compact"
-                    />
-                    <select wire:model.live="debtorsTerm" class="select">
-                        <option value="">All terms</option>
-                        <option value="1">Term 1</option>
-                        <option value="2">Term 2</option>
-                        <option value="3">Term 3</option>
-                    </select>
+                    <div class="grid w-full gap-3 sm:grid-cols-3 lg:max-w-4xl">
+                        <input wire:model.live.debounce.300ms="debtorsCategory" type="text" placeholder="Category (e.g. Tuition)" class="input-compact" />
+                        <input wire:model.live.debounce.300ms="debtorsSession" type="text" placeholder="Session (e.g. 2025/2026)" class="input-compact" />
+                        <select wire:model.live="debtorsTerm" class="select">
+                            <option value="">All terms</option>
+                            <option value="1">Term 1</option>
+                            <option value="2">Term 2</option>
+                            <option value="3">Term 3</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <x-table>
-            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                <tr>
-                    <th class="px-5 py-3">Student</th>
-                    <th class="px-5 py-3">Class</th>
-                    <th class="px-5 py-3 text-right">Due</th>
-                    <th class="px-5 py-3 text-right">Paid</th>
-                    <th class="px-5 py-3 text-right">Balance</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @forelse ($this->debtors as $row)
-                    <tr class="bg-white hover:bg-gray-50">
-                        <td class="px-5 py-4">
-                            <div class="text-sm font-semibold text-gray-900">{{ $row['student']->full_name }}</div>
-                            <div class="mt-1 text-xs text-gray-500">{{ $row['student']->admission_number }}</div>
-                        </td>
-                        <td class="px-5 py-4 text-sm text-gray-700">
-                            {{ $row['student']->schoolClass?->name }} / {{ $row['student']->section?->name }}
-                        </td>
-                        <td class="px-5 py-4 text-right text-sm font-semibold text-gray-900">{{ config('myacademy.currency_symbol') }}{{ number_format($row['due'], 2) }}</td>
-                        <td class="px-5 py-4 text-right text-sm font-semibold text-gray-900">{{ config('myacademy.currency_symbol') }}{{ number_format($row['paid'], 2) }}</td>
-                        <td class="px-5 py-4 text-right">
-                            <x-status-badge variant="warning">{{ config('myacademy.currency_symbol') }}{{ number_format($row['balance'], 2) }}</x-status-badge>
-                        </td>
-                    </tr>
-                @empty
+            <x-table>
+                <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     <tr>
-                        <td colspan="5" class="px-5 py-10 text-center text-sm text-gray-500">No debtors found.</td>
+                        <th class="px-5 py-3">Student</th>
+                        <th class="px-5 py-3">Class</th>
+                        <th class="px-5 py-3 text-right">Due</th>
+                        <th class="px-5 py-3 text-right">Paid</th>
+                        <th class="px-5 py-3 text-right">Balance</th>
                     </tr>
-                @endforelse
-            </tbody>
-        </x-table>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse ($this->debtors as $row)
+                        <tr class="bg-white hover:bg-gray-50">
+                            <td class="px-5 py-4">
+                                <div class="text-sm font-semibold text-gray-900">{{ $row['student']->full_name }}</div>
+                                <div class="mt-1 text-xs text-gray-500">{{ $row['student']->admission_number }}</div>
+                            </td>
+                            <td class="px-5 py-4 text-sm text-gray-700">
+                                {{ $row['student']->schoolClass?->name }} / {{ $row['student']->section?->name }}
+                            </td>
+                            <td class="px-5 py-4 text-right text-sm font-semibold text-gray-900">{{ config('myacademy.currency_symbol') }}{{ number_format($row['due'], 2) }}</td>
+                            <td class="px-5 py-4 text-right text-sm font-semibold text-gray-900">{{ config('myacademy.currency_symbol') }}{{ number_format($row['paid'], 2) }}</td>
+                            <td class="px-5 py-4 text-right">
+                                <x-status-badge variant="warning">{{ config('myacademy.currency_symbol') }}{{ number_format($row['balance'], 2) }}</x-status-badge>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-5 py-10 text-center text-sm text-gray-500">No debtors found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </x-table>
+        </div>
     @elseif ($tab === 'fees')
         @if (! $canFees)
             <div class="card-padded text-sm text-gray-600">You do not have permission to manage fee structures.</div>

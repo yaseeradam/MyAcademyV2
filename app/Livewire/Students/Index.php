@@ -23,6 +23,8 @@ class Index extends Component
     public string $sectionFilter = 'all';
     public string $statusFilter = 'all';
     public string $search = '';
+    public string $sortBy = 'last_name';
+    public string $sortDir = 'asc';
 
     private ?Collection $teacherClassIdsCache = null;
 
@@ -127,7 +129,7 @@ class Index extends Component
             });
         }
 
-        return $query->orderBy('last_name')->paginate(15);
+        return $query->orderBy($this->sortBy, $this->sortDir)->paginate(15);
     }
 
     #[Computed]
@@ -166,6 +168,16 @@ class Index extends Component
     {
         if (in_array($name, ['classFilter', 'sectionFilter', 'statusFilter', 'search'], true)) {
             $this->resetPage();
+        }
+    }
+
+    public function sortBy($field): void
+    {
+        if ($this->sortBy === $field) {
+            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $field;
+            $this->sortDir = 'asc';
         }
     }
 

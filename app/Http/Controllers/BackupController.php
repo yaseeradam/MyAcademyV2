@@ -235,18 +235,22 @@ class BackupController extends Controller
     private function runMySqlDumpToFile(): string
     {
         $db = (string) config('database.connections.mysql.database');
+        $charset = (string) config('database.connections.mysql.charset', 'utf8mb4');
+        $collation = (string) config('database.connections.mysql.collation', 'utf8mb4_unicode_ci');
 
         $tmpDir = storage_path('app/backups/_tmp/'.Str::random(10));
         File::ensureDirectoryExists($tmpDir);
         $sqlPath = $tmpDir.DIRECTORY_SEPARATOR.'database.sql';
 
-        $tables = DB::select('SHOW TABLES');
         $sql = "-- MySQL dump via Laravel\n";
         $sql .= "-- Database: {$db}\n";
         $sql .= "-- Date: ".now()->toDateTimeString()."\n\n";
         $sql .= "SET FOREIGN_KEY_CHECKS=0;\n";
-        $sql .= "SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";\n\n";
+        $sql .= "SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";\n";
+        $sql .= "SET NAMES {$charset} COLLATE {$collation};\n\n";
 
+        // Backup tables
+        $tables = DB::select('SHOW TABLES');
         foreach ($tables as $table) {
             $tableName = array_values((array)$table)[0];
             
@@ -277,6 +281,50 @@ class BackupController extends Controller
                 }
                 $sql .= "\n";
             }
+        }
+
+        // Backup views
+        $views = DB::select("SELECT TABLE_NAME FROM information_schema.VIEWS WHERE TABLE_SCHEMA = ?", [$db]);
+        foreach ($views as $view) {
+            $viewName = $view->TABLE_NAME;
+            $sql .= "DROP VIEW IF EXISTS `{$viewName}`;\n";
+            
+            $createView = DB::select("SHOW CREATE VIEW `{$viewName}`");
+            $createStatement = array_values((array)$createView[0])[1];
+            $sql .= $createStatement . ";\n\n";
+        }
+
+        // Backup triggers
+        $triggers = DB::select("SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = ?", [$db]);
+        foreach ($triggers as $trigger) {
+            $triggerName = $trigger->TRIGGER_NAME;
+            $sql .= "DROP TRIGGER IF EXISTS `{$triggerName}`;\n";
+            
+            $createTrigger = DB::select("SHOW CREATE TRIGGER `{$triggerName}`");
+            $createStatement = array_values((array)$createTrigger[0])[2];
+            $sql .= $createStatement . ";\n\n";
+        }
+
+        // Backup procedures
+        $procedures = DB::select("SELECT ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = ? AND ROUTINE_TYPE = 'PROCEDURE'", [$db]);
+        foreach ($procedures as $procedure) {
+            $procName = $procedure->ROUTINE_NAME;
+            $sql .= "DROP PROCEDURE IF EXISTS `{$procName}`;\n";
+            
+            $createProc = DB::select("SHOW CREATE PROCEDURE `{$procName}`");
+            $createStatement = array_values((array)$createProc[0])[2];
+            $sql .= "DELIMITER ;;\n{$createStatement};;\nDELIMITER ;\n\n";
+        }
+
+        // Backup functions
+        $functions = DB::select("SELECT ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = ? AND ROUTINE_TYPE = 'FUNCTION'", [$db]);
+        foreach ($functions as $function) {
+            $funcName = $function->ROUTINE_NAME;
+            $sql .= "DROP FUNCTION IF EXISTS `{$funcName}`;\n";
+            
+            $createFunc = DB::select("SHOW CREATE FUNCTION `{$funcName}`");
+            $createStatement = array_values((array)$createFunc[0])[2];
+            $sql .= "DELIMITER ;;\n{$createStatement};;\nDELIMITER ;\n\n";
         }
 
         $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";

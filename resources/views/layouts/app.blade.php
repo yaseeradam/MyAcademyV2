@@ -222,7 +222,7 @@
                             @endif
                             
                             @if ($user?->role === 'admin')
-                                <a href="{{ route('settings') }}" class="card-interactive p-4 text-center">
+                                <a href="{{ route('settings.index') }}" class="card-interactive p-4 text-center">
                                     <div class="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-lg bg-gray-50 text-gray-600">
                                         <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <circle cx="12" cy="12" r="3" />
@@ -413,8 +413,8 @@
                     @endif
 
                     @if ($user?->role === 'admin')
-                        <a href="{{ route('settings') }}" class="{{ request()->routeIs('settings') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
-                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('settings') ? '' : 'text-gray-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <a href="{{ route('settings.index') }}" class="{{ request()->routeIs('settings*') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('settings*') ? '' : 'text-gray-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <circle cx="12" cy="12" r="3"/>
                                 <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
                             </svg>

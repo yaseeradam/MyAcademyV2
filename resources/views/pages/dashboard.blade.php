@@ -1,4 +1,6 @@
 @php
+    use App\Models\AttendanceMark;
+    use App\Models\CbtExam;
     use App\Models\SchoolClass;
     use App\Models\Score;
     use App\Models\Student;
@@ -11,8 +13,25 @@
     $schoolName = config('myacademy.school_name', config('app.name', 'MyAcademy'));
 
     $studentsTotal = Student::query()->count();
+    $studentsBoys = Student::query()->where('gender', 'Male')->count();
+    $studentsGirls = Student::query()->where('gender', 'Female')->count();
     $teachersTotal = User::query()->where('role', 'teacher')->count();
     $classesTotal = SchoolClass::query()->count();
+
+    // Today's attendance
+    $attendanceToday = AttendanceMark::query()
+        ->whereHas('sheet', fn($q) => $q->whereDate('date', today()))
+        ->count();
+    $presentToday = AttendanceMark::query()
+        ->whereHas('sheet', fn($q) => $q->whereDate('date', today()))
+        ->where('status', 'Present')
+        ->count();
+    $attendanceRate = $attendanceToday > 0 ? round(($presentToday / $attendanceToday) * 100, 1) : 0;
+
+    // Active CBT exams
+    $activeExams = CbtExam::query()
+        ->where('status', 'published')
+        ->count();
 
     $feesCollectedToday = (float) Transaction::query()
         ->where('type', 'Income')
@@ -24,6 +43,13 @@
         ->where('type', 'Income')
         ->where('is_void', false)
         ->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()])
+        ->sum('amount_paid');
+
+    $feesCollectedThisMonth = (float) Transaction::query()
+        ->where('type', 'Income')
+        ->where('is_void', false)
+        ->whereMonth('date', now()->month)
+        ->whereYear('date', now()->year)
         ->sum('amount_paid');
 
     $estimatedTuitionDueAllTime = (float) DB::table('students')
@@ -70,6 +96,30 @@
         ->latest('updated_at')
         ->limit(6)
         ->get();
+
+    // Attendance data for last 7 days
+    $attendanceData = [];
+    for ($i = 6; $i >= 0; $i--) {
+        $date = now()->subDays($i);
+        $present = AttendanceMark::query()
+            ->whereHas('sheet', fn($q) => $q->whereDate('date', $date))
+            ->where('status', 'Present')
+            ->count();
+        $absent = AttendanceMark::query()
+            ->whereHas('sheet', fn($q) => $q->whereDate('date', $date))
+            ->where('status', 'Absent')
+            ->count();
+        $attendanceData[] = [
+            'label' => $date->format('D'),
+            'present' => $present,
+            'absent' => $absent,
+        ];
+    }
+
+    // Exam performance data
+    $totalScores = Score::query()->count();
+    $passScores = Score::query()->where('total', '>=', 50)->count();
+    $failScores = $totalScores - $passScores;
 @endphp
 
 @extends('layouts.app')
@@ -157,14 +207,14 @@
                 <div class="text-xs text-slate-500">Signed in as {{ $user?->name ?? 'Admin' }}</div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 p-6 shadow-sm ring-1 ring-blue-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                     <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <div class="text-xs font-medium uppercase tracking-wide text-blue-600">Total Students</div>
                             <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($studentsTotal) }}</div>
-                            <div class="mt-1.5 text-sm text-slate-600">enrolled students</div>
+                            <div class="mt-1.5 text-xs text-slate-600">{{ $studentsBoys }}M / {{ $studentsGirls }}F</div>
                         </div>
                         <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-lg shadow-blue-500/30">
                             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -180,9 +230,9 @@
                     <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-purple-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-purple-600">Total Teachers</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-purple-600">Teachers</div>
                             <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($teachersTotal) }}</div>
-                            <div class="mt-1.5 text-sm text-slate-600">teaching staff</div>
+                            <div class="mt-1.5 text-xs text-slate-600">teaching staff</div>
                         </div>
                         <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white shadow-lg shadow-purple-500/30">
                             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -197,9 +247,9 @@
                     <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-indigo-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-indigo-600">Total Classes</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-indigo-600">Classes</div>
                             <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($classesTotal) }}</div>
-                            <div class="mt-1.5 text-sm text-slate-600">active classes</div>
+                            <div class="mt-1.5 text-xs text-slate-600">active classes</div>
                         </div>
                         <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-lg shadow-indigo-500/30">
                             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -212,22 +262,42 @@
                     </div>
                 </div>
 
-                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100/50 p-6 shadow-sm ring-1 ring-orange-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-orange-500/5"></div>
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-50 to-green-100/50 p-6 shadow-sm ring-1 ring-green-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-green-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-orange-600">Pending Actions</div>
-                            <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format((int) $overdueInvoices) }}</div>
-                            <div class="mt-1.5 text-sm text-slate-600">overdue invoices</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-green-600">Attendance</div>
+                            <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ $attendanceRate }}%</div>
+                            <div class="mt-1.5 text-xs text-slate-600">{{ $presentToday }}/{{ $attendanceToday }} today</div>
                         </div>
-                        <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-lg shadow-orange-500/30">
+                        <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg shadow-green-500/30">
                             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
+                                <path d="M9 11l3 3L22 4"/>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                             </svg>
                         </div>
                     </div>
                 </div>
+
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/50 p-6 shadow-sm ring-1 ring-amber-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-500/5"></div>
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-amber-600">Active Exams</div>
+                            <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ number_format($activeExams) }}</div>
+                            <div class="mt-1.5 text-xs text-slate-600">ongoing CBT</div>
+                        </div>
+                        <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/30">
+                            <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -321,9 +391,9 @@
                     <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-500/5"></div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <div class="text-xs font-medium uppercase tracking-wide text-emerald-600">Fees Collected</div>
-                            <div class="mt-2.5 text-3xl font-bold tracking-tight text-slate-900">{{ config('myacademy.currency_symbol') }}{{ number_format($feesCollectedToday, 2) }}</div>
-                            <div class="mt-1.5 text-sm text-slate-600">Week: {{ config('myacademy.currency_symbol') }}{{ number_format($feesCollectedThisWeek, 2) }}</div>
+                            <div class="text-xs font-medium uppercase tracking-wide text-emerald-600">Collected Today</div>
+                            <div class="mt-2.5 text-2xl font-bold tracking-tight text-slate-900">{{ config('myacademy.currency_symbol') }}{{ number_format($feesCollectedToday, 2) }}</div>
+                            <div class="mt-1.5 text-xs text-slate-600">Week: {{ config('myacademy.currency_symbol') }}{{ number_format($feesCollectedThisWeek, 2) }}</div>
                         </div>
                         <div class="icon-3d grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/30">
                             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -374,5 +444,12 @@
 @endsection
 
 @push('scripts')
+    <script>
+        window.dashboardData = {
+            attendance: @json($attendanceData),
+            examPass: {{ $passScores }},
+            examFail: {{ $failScores }}
+        };
+    </script>
     @vite('resources/js/pages/dashboard.js')
 @endpush

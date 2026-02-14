@@ -211,7 +211,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
 
     Route::middleware('role:admin')->group(function () {
-        Route::view('/settings', 'pages.settings.index')->name('settings');
+        Route::view('/settings', 'pages.settings.index')->name('settings.index');
+        Route::view('/settings/results', 'pages.settings.results')->name('settings.results');
+        Route::view('/settings/certificates', 'pages.settings.certificates')->name('settings.certificates');
         Route::get('/settings/devices', PremiumDevices::class)->name('settings.devices');
         Route::get('/settings/backup', [BackupController::class, 'index'])->middleware('permission:backup.manage')->name('settings.backup');
         Route::post('/settings/backup', [BackupController::class, 'create'])->middleware('permission:backup.manage')->name('settings.backup.create');

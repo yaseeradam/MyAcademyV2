@@ -131,12 +131,64 @@
                 <th class="px-5 py-3">
                     <input type="checkbox" class="checkbox-custom" value="all" />
                 </th>
-                <th class="px-5 py-3">Student</th>
-                <th class="px-5 py-3">Admission No</th>
+                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('last_name')">
+                    <div class="flex items-center gap-1">
+                        Student
+                        @if($sortBy === 'last_name')
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                @if($sortDir === 'asc')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                @endif
+                            </svg>
+                        @endif
+                    </div>
+                </th>
+                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('admission_number')">
+                    <div class="flex items-center gap-1">
+                        Admission No
+                        @if($sortBy === 'admission_number')
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                @if($sortDir === 'asc')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                @endif
+                            </svg>
+                        @endif
+                    </div>
+                </th>
                 <th class="px-5 py-3">Class / Section</th>
-                <th class="px-5 py-3">Gender</th>
+                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('gender')">
+                    <div class="flex items-center gap-1">
+                        Gender
+                        @if($sortBy === 'gender')
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                @if($sortDir === 'asc')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                @endif
+                            </svg>
+                        @endif
+                    </div>
+                </th>
                 <th class="px-5 py-3">Guardian</th>
-                <th class="px-5 py-3">Status</th>
+                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('status')">
+                    <div class="flex items-center gap-1">
+                        Status
+                        @if($sortBy === 'status')
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                @if($sortDir === 'asc')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                @endif
+                            </svg>
+                        @endif
+                    </div>
+                </th>
                 <th class="px-5 py-3 text-right">Profile</th>
             </tr>
         </thead>

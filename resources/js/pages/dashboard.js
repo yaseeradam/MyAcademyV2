@@ -4,6 +4,10 @@ function renderDonut() {
     const canvas = document.getElementById('examPerformanceChart');
     if (!canvas) return;
 
+    const data = window.dashboardData || {};
+    const pass = data.examPass || 0;
+    const fail = data.examFail || 0;
+
     // eslint-disable-next-line no-new
     new Chart(canvas, {
         type: 'doughnut',
@@ -11,7 +15,7 @@ function renderDonut() {
             labels: ['Pass', 'Fail'],
             datasets: [
                 {
-                    data: [78, 22],
+                    data: [pass, fail],
                     backgroundColor: ['#22c55e', '#e5e7eb'],
                     borderWidth: 0,
                 },
@@ -34,15 +38,22 @@ function renderLine() {
     const canvas = document.getElementById('attendanceTrendChart');
     if (!canvas) return;
 
+    const data = window.dashboardData || {};
+    const attendance = data.attendance || [];
+
+    const labels = attendance.map(d => d.label);
+    const presentData = attendance.map(d => d.present);
+    const absentData = attendance.map(d => d.absent);
+
     // eslint-disable-next-line no-new
     new Chart(canvas, {
         type: 'line',
         data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            labels: labels,
             datasets: [
                 {
                     label: 'Present',
-                    data: [240, 252, 248, 260, 255, 210, 198],
+                    data: presentData,
                     borderColor: '#2563eb',
                     backgroundColor: 'rgba(37, 99, 235, 0.12)',
                     tension: 0.35,
@@ -51,7 +62,7 @@ function renderLine() {
                 },
                 {
                     label: 'Absent',
-                    data: [18, 14, 16, 12, 15, 40, 46],
+                    data: absentData,
                     borderColor: '#f97316',
                     backgroundColor: 'rgba(249, 115, 22, 0.10)',
                     tension: 0.35,

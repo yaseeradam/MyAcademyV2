@@ -5,125 +5,80 @@
 @endphp
 
 <div class="space-y-6">
-    <x-page-header title="Score Entry" subtitle="Enter CA and Exam scores for a subject." accent="results">
+    <x-page-header title="Score Entry" subtitle="Enter CA and Exam scores for students" accent="results">
         <x-slot:actions>
-            <a href="{{ route('results.broadsheet') }}" class="btn-outline">Open Broadsheet</a>
-            @if ($classId)
-                <x-status-badge variant="{{ $this->isPublished ? 'success' : 'warning' }}">
-                    {{ $this->isPublished ? 'Published' : 'Unpublished' }}
-                </x-status-badge>
-            @endif
+            <a href="{{ route('results.broadsheet') }}" class="btn-outline">Broadsheet</a>
         </x-slot:actions>
     </x-page-header>
 
     <div class="card-padded">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-                <div class="text-sm font-semibold text-slate-900">Filters</div>
-                <div class="mt-1 text-sm text-slate-600">Pick class, subject, session, and term.</div>
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-6">
+            <div class="lg:col-span-2">
+                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Class</label>
+                <select wire:model.live="classId" class="mt-2 select">
+                    <option value="">Select class</option>
+                    @foreach ($this->classes as $class)
+                        <option value="{{ $class->id }}">{{ $class->name }}</option>
+                    @endforeach
+                </select>
             </div>
 
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
-                <div>
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Class</label>
-                    <select
-                        wire:model.live="classId"
-                        class="mt-2 select min-w-52"
-                    >
-                        <option value="">Select class</option>
-                        @foreach ($this->classes as $class)
-                            <option value="{{ $class->id }}">{{ $class->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+            <div class="lg:col-span-2">
+                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Subject</label>
+                <select wire:model.live="subjectId" @disabled(! $classId) class="mt-2 select">
+                    <option value="">Select subject</option>
+                    @foreach ($this->subjects as $subject)
+                        <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-                <div>
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Subject</label>
-                    <select
-                        wire:model.live="subjectId"
-                        @disabled(! $classId)
-                        class="mt-2 select min-w-52"
-                    >
-                        <option value="">Select subject</option>
-                        @foreach ($this->subjects as $subject)
-                            <option value="{{ $subject->id }}">{{ $subject->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+            <div>
+                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Term</label>
+                <select wire:model.live="term" class="mt-2 select">
+                    <option value="1">Term 1</option>
+                    <option value="2">Term 2</option>
+                    <option value="3">Term 3</option>
+                </select>
+            </div>
 
-                <div>
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Session</label>
-                    <input
-                        wire:model.live.debounce.300ms="session"
-                        type="text"
-                        placeholder="2025/2026"
-                        class="mt-2 input-compact min-w-40"
-                    />
-                </div>
-
-                <div>
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Term</label>
-                    <select
-                        wire:model.live="term"
-                        class="mt-2 select min-w-24"
-                    >
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                    </select>
-                </div>
-
-                <button
-                    type="button"
-                    wire:click="save"
-                    @disabled(! $classId || ! $subjectId || $locked)
-                    class="btn-primary"
-                >
-                    Save Scores
-                </button>
-
-                @if ($user?->role === 'teacher')
-                    <button
-                        type="button"
-                        wire:click="submitScores"
-                        @disabled(! $classId || ! $subjectId || $locked)
-                        class="btn-outline"
-                    >
-                        Submit to Admin
-                    </button>
-                @endif
+            <div>
+                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Session</label>
+                <input wire:model.live.debounce.300ms="session" type="text" placeholder="2025/2026" class="mt-2 input-compact" />
             </div>
         </div>
 
-        @if ($user?->role === 'teacher')
-            <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
-                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Submission</span>
-                @if ($this->submission)
-                    @php
-                        $status = $this->submission->status ?? 'submitted';
-                        $variant = match ($status) {
-                            'approved' => 'success',
-                            'rejected' => 'warning',
-                            'submitted' => 'info',
-                            default => 'neutral',
-                        };
-                    @endphp
-                    <x-status-badge variant="{{ $variant }}">
-                        {{ ucfirst($status) }}
-                    </x-status-badge>
-                    <span class="text-xs text-gray-500">
-                        Last submitted {{ $this->submission->submitted_at?->diffForHumans() ?? '-' }}
-                    </span>
-                    @if ($status === 'rejected' && $this->submission->note)
-                        <span class="text-xs text-orange-700">
-                            Rejection note: {{ $this->submission->note }}
-                        </span>
-                    @endif
-                @else
-                    <x-status-badge variant="neutral">Not submitted</x-status-badge>
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+            <button type="button" wire:click="save" @disabled(! $classId || ! $subjectId || $locked) class="btn-primary">
+                Save Scores
+            </button>
+
+            @if ($user?->role === 'teacher')
+                <button type="button" wire:click="submitScores" @disabled(! $classId || ! $subjectId || $locked) class="btn-outline">
+                    Submit to Admin
+                </button>
+            @endif
+
+            @if ($this->isPublished)
+                <x-status-badge variant="success">Published</x-status-badge>
+            @endif
+
+            @if ($user?->role === 'teacher' && $this->submission)
+                @php
+                    $status = $this->submission->status ?? 'submitted';
+                    $variant = match ($status) {
+                        'approved' => 'success',
+                        'rejected' => 'warning',
+                        'submitted' => 'info',
+                        default => 'neutral',
+                    };
+                @endphp
+                <x-status-badge variant="{{ $variant }}">{{ ucfirst($status) }}</x-status-badge>
+                @if ($status === 'rejected' && $this->submission->note)
+                    <span class="text-xs text-orange-700">Note: {{ $this->submission->note }}</span>
                 @endif
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 
     @if ($user?->role === 'admin')
