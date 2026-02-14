@@ -11,7 +11,7 @@
 @endphp
 
 <div class="space-y-6">
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-600 p-8 shadow-xl">
+    <div class="relative overflow-hidden rounded-2xl bg-violet-600 p-8 shadow-xl">
         <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
         <div class="relative">
             <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -29,43 +29,56 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <a href="{{ route('cbt.index') }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Back</a>
-                    @if ($me?->role === 'admin')
-                        <button type="button" wire:click="deleteExam" class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-red-700 hover:shadow-xl" onclick="if (!confirm('Delete this exam? This action cannot be undone.')) { event.stopImmediatePropagation(); }">
-                            Delete Exam
-                        </button>
-                    @endif
-                    <button type="button" wire:click="duplicateExam" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Duplicate</button>
-                    @if ($status === 'approved')
-                        <button type="button" wire:click="endAllExams" class="rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-red-600 hover:shadow-xl" onclick="if (!confirm('End this exam? This will submit all active attempts for {{ $exam->title }} and calculate final scores.')) { event.stopImmediatePropagation(); }">
-                            End This Exam
-                        </button>
-                    @endif
-                    <button type="button" wire:click="$toggle('showQuestions')" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">{{ $showQuestions ? 'Hide' : 'Preview' }} Questions</button>
-                    <a href="{{ route('cbt.exams.pdf', $exam) }}" target="_blank" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Download PDF</a>
-                    @if ($status === 'approved' && $exam->access_code)
-                        <a href="{{ route('cbt.student', ['code' => $exam->access_code]) }}" target="_blank" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Student Portal</a>
-                    @endif
-                    @if ($me?->role === 'admin')
-                        <a href="{{ route('cbt.exams.export', $exam) }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Export CSV</a>
-                        @if ($status === 'approved')
-                            <button type="button" wire:click="transferToResults" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-emerald-600 hover:shadow-xl" onclick="if (!confirm('Transfer CBT scores to academic results? This will update the results table for {{ $exam->session }} Term {{ $exam->term }}.')) { event.stopImmediatePropagation(); }">
-                                Transfer to Results
-                            </button>
-                        @endif
-                    @endif
+                    
                     @if ($canEdit)
                         <button type="button" wire:click="saveDetails" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">Save Details</button>
                     @endif
+                    
                     @if ($me?->role === 'teacher' && $canEdit)
                         <button type="button" wire:click="submitToAdmin" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">Submit to Admin</button>
                     @endif
+                    
                     @if ($me?->role === 'admin' && $status === 'submitted')
                         <button type="button" wire:click="approve" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-emerald-600 hover:shadow-xl">Approve</button>
-                        <button type="button" wire:click="startReject" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">Reject</button>
+                        <button type="button" wire:click="startReject" class="rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-orange-600 hover:shadow-xl">Reject</button>
                     @endif
+                    
                     @if ($me?->role === 'admin' && $status === 'approved')
                         <button type="button" wire:click="togglePublish" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">{{ $exam->published_at ? 'Pause' : 'Go Live' }}</button>
                     @endif
+                    
+                    <!-- Actions Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" type="button" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">
+                            Actions ▼
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 z-50 mt-2 w-56 rounded-xl bg-white shadow-xl ring-1 ring-black ring-opacity-5">
+                            <a href="{{ route('cbt.exams.pdf', $exam) }}" target="_blank" @click="open = false" class="block px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 first:rounded-t-xl">
+                                📄 Download PDF
+                            </a>
+                            @if ($status === 'approved' && $exam->access_code)
+                                <a href="{{ route('cbt.student', ['code' => $exam->access_code]) }}" target="_blank" @click="open = false" class="block px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                                    🎓 Student Portal
+                                </a>
+                            @endif
+                            @if ($me?->role === 'admin')
+                                <a href="{{ route('cbt.exams.export', $exam) }}" @click="open = false" class="block px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                                    📊 Export CSV
+                                </a>
+                                @if ($status === 'approved')
+                                    <button type="button" wire:click="transferToResults" @click="open = false" class="block w-full px-4 py-3 text-left text-sm font-semibold text-emerald-700 hover:bg-emerald-50" onclick="if (!confirm('Transfer CBT scores to academic results? This will update the results table for {{ $exam->session }} Term {{ $exam->term }}.')) { event.stopImmediatePropagation(); }">
+                                        ✅ Transfer to Results
+                                    </button>
+                                    <button type="button" wire:click="endAllExams" @click="open = false" class="block w-full px-4 py-3 text-left text-sm font-semibold text-orange-700 hover:bg-orange-50" onclick="if (!confirm('End this exam? This will submit all active attempts for {{ $exam->title }} and calculate final scores.')) { event.stopImmediatePropagation(); }">
+                                        ⏹️ End This Exam
+                                    </button>
+                                @endif
+                                <button type="button" wire:click="deleteExam" @click="open = false" class="block w-full px-4 py-3 text-left text-sm font-semibold text-red-700 hover:bg-red-50 last:rounded-b-xl" onclick="if (!confirm('Delete this exam? This action cannot be undone.')) { event.stopImmediatePropagation(); }">
+                                    🗑️ Delete Exam
+                                </button>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -233,7 +246,7 @@
         </div>
     @endif
 
-    @if (in_array($me?->role, ['teacher', 'admin'], true))
+    @if (in_array($me?->role, ['teacher'], true) || $canEdit)
         <div class="rounded-2xl bg-white p-6 shadow-lg">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>

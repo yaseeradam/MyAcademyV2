@@ -3,7 +3,7 @@
 	        <x-slot:actions>
 	            <a href="{{ route('more-features') }}" class="btn-outline">Back</a>
 	            @if(auth()->user()?->role === 'admin')
-	                <a href="{{ route('settings') }}" class="btn-outline">Design Settings</a>
+	                <a href="{{ route('settings.certificates') }}" class="btn-outline">Design Settings</a>
 	            @endif
 	        </x-slot:actions>
 	    </x-page-header>

@@ -12,9 +12,6 @@
                     <p class="mt-2 text-base text-pink-50">Teachers set questions → submit → admin approves → students take exam</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <a href="{{ route('dashboard') }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">
-                        Dashboard
-                    </a>
                     @if ($me?->role === 'teacher')
                         <button type="button" wire:click="{{ $creating ? 'cancelCreate' : 'startCreate' }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:bg-pink-50 hover:shadow-xl">
                             {{ $creating ? 'Close' : 'New Exam' }}
