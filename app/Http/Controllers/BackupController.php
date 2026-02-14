@@ -224,66 +224,67 @@ class BackupController extends Controller
 
     private function assertMySqlToolsAvailableForBackup(): void
     {
-        $mysqldump = $this->resolveMySqlBinaryOrNull('MYACADEMY_MYSQLDUMP', 'mysqldump');
-        if ($mysqldump === null) {
-            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQLDUMP', 'mysqldump.exe');
-            throw new BackupPrerequisiteException("mysqldump is required to create MySQL backups but was not found.{$hint}");
-        }
+        // No longer needed - using Laravel's database connection
     }
 
     private function assertMySqlToolsAvailableForRestore(): void
     {
-        $mysql = $this->resolveMySqlBinaryOrNull('MYACADEMY_MYSQL', 'mysql');
-        if ($mysql === null) {
-            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQL', 'mysql.exe');
-            throw new BackupPrerequisiteException("mysql is required to restore MySQL backups but was not found.{$hint}");
-        }
+        // No longer needed - using Laravel's database connection
     }
 
     private function runMySqlDumpToFile(): string
     {
-        $dumpBinary = $this->resolveMySqlBinaryOrThrow('MYACADEMY_MYSQLDUMP', 'mysqldump');
         $db = (string) config('database.connections.mysql.database');
 
         $tmpDir = storage_path('app/backups/_tmp/'.Str::random(10));
         File::ensureDirectoryExists($tmpDir);
         $sqlPath = $tmpDir.DIRECTORY_SEPARATOR.'database.sql';
 
-        $process = new Process([
-            $dumpBinary,
-            '--host='.config('database.connections.mysql.host'),
-            '--port='.(string) config('database.connections.mysql.port'),
-            '--user='.config('database.connections.mysql.username'),
-            '--protocol=tcp',
-            '--routines',
-            '--events',
-            '--add-drop-table',
-            '--set-gtid-purged=OFF',
-            '--no-tablespaces',
-            '--skip-lock-tables',
-            '--column-statistics=0',
-            '--result-file='.$sqlPath,
-            $db,
-        ]);
+        $tables = DB::select('SHOW TABLES');
+        $sql = "-- MySQL dump via Laravel\n";
+        $sql .= "-- Database: {$db}\n";
+        $sql .= "-- Date: ".now()->toDateTimeString()."\n\n";
+        $sql .= "SET FOREIGN_KEY_CHECKS=0;\n";
+        $sql .= "SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";\n\n";
 
-        $password = (string) config('database.connections.mysql.password');
-        $process->setTimeout(600);
-        $process->setEnv($this->mysqlClientEnv($password));
-
-        try {
-            $process->run();
-        } catch (ProcessRuntimeException $e) {
-            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQLDUMP', 'mysqldump.exe');
-            throw new BackupOperationException("Unable to execute mysqldump.{$hint}", previous: $e);
+        foreach ($tables as $table) {
+            $tableName = array_values((array)$table)[0];
+            
+            $sql .= "DROP TABLE IF EXISTS `{$tableName}`;\n";
+            
+            $createTable = DB::select("SHOW CREATE TABLE `{$tableName}`");
+            $createStatement = array_values((array)$createTable[0])[1];
+            $sql .= $createStatement . ";\n\n";
+            
+            $columns = DB::select("SHOW COLUMNS FROM `{$tableName}`");
+            $columnNames = array_map(fn($col) => "`{$col->Field}`", $columns);
+            $columnList = implode(', ', $columnNames);
+            
+            $rows = DB::table($tableName)->get();
+            if ($rows->isNotEmpty()) {
+                foreach ($rows->chunk(100) as $batch) {
+                    $values = [];
+                    foreach ($batch as $row) {
+                        $rowValues = collect((array)$row)->map(function ($value) {
+                            if ($value === null) return 'NULL';
+                            return "'" . str_replace(["'", "\\"], ["\\'", "\\\\"], (string)$value) . "'";
+                        })->implode(', ');
+                        $values[] = "({$rowValues})";
+                    }
+                    
+                    $sql .= "INSERT INTO `{$tableName}` ({$columnList}) VALUES \n";
+                    $sql .= implode(",\n", $values) . ";\n";
+                }
+                $sql .= "\n";
+            }
         }
 
-        if (! $process->isSuccessful()) {
-            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQLDUMP', 'mysqldump.exe');
-            throw new BackupOperationException('mysqldump failed: '.trim($process->getErrorOutput()).$hint);
-        }
+        $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
+
+        file_put_contents($sqlPath, $sql);
 
         if (! is_file($sqlPath)) {
-            throw new BackupOperationException('mysqldump finished but database.sql was not created.');
+            throw new BackupOperationException('Database dump failed to create SQL file.');
         }
 
         return $sqlPath;
@@ -299,39 +300,61 @@ class BackupController extends Controller
 
     private function importSql(string $sqlPath): void
     {
-        $mysqlBinary = $this->resolveMySqlBinaryOrThrow('MYACADEMY_MYSQL', 'mysql');
-        $db = (string) config('database.connections.mysql.database');
-
-        $process = new Process([
-            $mysqlBinary,
-            '--host='.config('database.connections.mysql.host'),
-            '--port='.(string) config('database.connections.mysql.port'),
-            '--user='.config('database.connections.mysql.username'),
-            '--protocol=tcp',
-            $db,
-        ]);
-
-        $password = (string) config('database.connections.mysql.password');
-        $process->setEnv($this->mysqlClientEnv($password));
-
-        $fh = fopen($sqlPath, 'rb');
-        if (! is_resource($fh)) {
+        // Read SQL file
+        $sql = file_get_contents($sqlPath);
+        if ($sql === false) {
             throw new BackupOperationException('Unable to read database.sql for import.');
         }
 
-        $process->setInput($fh);
-        $process->setTimeout(900);
-        try {
-            $process->run();
-        } catch (ProcessRuntimeException $e) {
-            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQL', 'mysql.exe');
-            throw new BackupOperationException("Unable to execute mysql client for import.{$hint}", previous: $e);
+        // Disable foreign key checks
+        DB::unprepared('SET FOREIGN_KEY_CHECKS=0');
+        DB::unprepared('SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO"');
+
+        // Remove comments and split into statements
+        $lines = explode("\n", $sql);
+        $statement = '';
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            
+            // Skip comments and empty lines
+            if (empty($line) || str_starts_with($line, '--') || str_starts_with($line, '/*')) {
+                continue;
+            }
+            
+            // Accumulate statement
+            $statement .= $line . "\n";
+            
+            // Execute when we hit a semicolon at end of line
+            if (str_ends_with($line, ';')) {
+                $statement = trim($statement);
+                
+                if (!empty($statement)) {
+                    try {
+                        DB::unprepared($statement);
+                    } catch (\Exception $e) {
+                        // Log but continue for SET statements
+                        if (!str_contains($statement, 'SET ')) {
+                            report($e);
+                        }
+                    }
+                }
+                
+                $statement = '';
+            }
         }
 
-        if (! $process->isSuccessful()) {
-            $hint = $this->mysqlBinaryHint('MYACADEMY_MYSQL', 'mysql.exe');
-            throw new BackupOperationException('SQL import failed: '.trim($process->getErrorOutput()).$hint);
+        // Execute any remaining statement
+        if (!empty(trim($statement))) {
+            try {
+                DB::unprepared(trim($statement));
+            } catch (\Exception $e) {
+                report($e);
+            }
         }
+
+        // Re-enable foreign key checks
+        DB::unprepared('SET FOREIGN_KEY_CHECKS=1');
     }
 
     private function addFolderToZip(ZipArchive $zip, string $folder, string $zipPrefix): void
