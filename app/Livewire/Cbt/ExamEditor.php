@@ -41,6 +41,7 @@ class ExamEditor extends Component
     public ?int $editingQuestionId = null;
     public string $questionPrompt = '';
     public int $questionMarks = 1;
+    public string $questionType = 'mcq';
 
     /** @var array<int,string> */
     public array $optionLabels = ['', '', '', ''];
@@ -60,6 +61,10 @@ class ExamEditor extends Component
     public string $pin = '';
     public int $graceMinutes = 0;
     public string $allowedCidrs = '';
+    public bool $showScore = false;
+    public ?int $reviewAttemptId = null;
+    /** @var array<int, int|string|null> */
+    public array $theoryMarks = [];
 
     public function mount(CbtExam $exam): void
     {
@@ -93,6 +98,7 @@ class ExamEditor extends Component
         $this->pin = (string) ($exam->pin ?? '');
         $this->graceMinutes = (int) ($exam->grace_minutes ?? 0);
         $this->allowedCidrs = (string) ($exam->allowed_cidrs ?? '');
+        $this->showScore = (bool) ($exam->show_score ?? false);
     }
 
     #[Computed]
@@ -272,6 +278,7 @@ class ExamEditor extends Component
 
             $allowed = trim((string) ($data['allowedCidrs'] ?? ''));
             $attrs['allowed_cidrs'] = $allowed !== '' ? $allowed : null;
+            $attrs['show_score'] = (bool) ($this->showScore ?? false);
         }
 
         $exam->forceFill($attrs)->save();
@@ -294,13 +301,16 @@ class ExamEditor extends Component
         $this->editingQuestionId = $q->id;
         $this->questionPrompt = (string) $q->prompt;
         $this->questionMarks = (int) $q->marks;
+        $this->questionType = (string) ($q->type ?: 'mcq');
 
         $labels = [];
         $correctIndex = 0;
-        foreach ($q->options as $idx => $opt) {
-            $labels[$idx] = (string) $opt->label;
-            if ($opt->is_correct) {
-                $correctIndex = (int) $idx;
+        if ($this->questionType === 'mcq') {
+            foreach ($q->options as $idx => $opt) {
+                $labels[$idx] = (string) $opt->label;
+                if ($opt->is_correct) {
+                    $correctIndex = (int) $idx;
+                }
             }
         }
 
@@ -317,6 +327,7 @@ class ExamEditor extends Component
         $this->editingQuestionId = null;
         $this->questionPrompt = '';
         $this->questionMarks = 1;
+        $this->questionType = 'mcq';
         $this->optionLabels = ['', '', '', ''];
         $this->correctIndex = 0;
         $this->resetValidation();
@@ -329,19 +340,14 @@ class ExamEditor extends Component
         $data = $this->validate([
             'questionPrompt' => ['required', 'string', 'max:5000'],
             'questionMarks' => ['required', 'integer', 'min:1', 'max:100'],
-            'optionLabels' => ['required', 'array', 'size:4'],
-            'optionLabels.*' => ['required', 'string', 'max:1000'],
-            'correctIndex' => ['required', 'integer', 'min:0', 'max:3'],
+            'questionType' => ['required', 'string', 'in:mcq,theory'],
+            'optionLabels' => [$this->questionType === 'mcq' ? 'required' : 'nullable', 'array', 'size:4'],
+            'optionLabels.*' => [$this->questionType === 'mcq' ? 'required' : 'nullable', 'string', 'max:1000'],
+            'correctIndex' => [$this->questionType === 'mcq' ? 'required' : 'nullable', 'integer', 'min:0', 'max:3'],
         ]);
 
         $prompt = trim($data['questionPrompt']);
-        $labels = array_map(fn ($v) => trim((string) $v), (array) $data['optionLabels']);
-
-        foreach ($labels as $idx => $label) {
-            if ($label === '') {
-                throw ValidationException::withMessages(["optionLabels.{$idx}" => 'Option is required.']);
-            }
-        }
+        $labels = array_map(fn ($v) => trim((string) $v), (array) ($data['optionLabels'] ?? []));
 
         DB::transaction(function () use ($prompt, $labels, $data) {
             if ($this->editingQuestionId) {
@@ -352,7 +358,7 @@ class ExamEditor extends Component
                 $nextPos = (int) CbtQuestion::query()->where('exam_id', $this->examId)->max('position') + 1;
                 $question = CbtQuestion::query()->create([
                     'exam_id' => $this->examId,
-                    'type' => 'mcq',
+                    'type' => (string) $data['questionType'],
                     'prompt' => $prompt,
                     'marks' => (int) $data['questionMarks'],
                     'position' => max(1, $nextPos),
@@ -360,35 +366,46 @@ class ExamEditor extends Component
             }
 
             $question->forceFill([
+                'type' => (string) $data['questionType'],
                 'prompt' => $prompt,
                 'marks' => (int) $data['questionMarks'],
             ])->save();
 
-            $existing = CbtOption::query()
-                ->where('question_id', $question->id)
-                ->orderBy('position')
-                ->get();
-
-            for ($i = 0; $i < 4; $i++) {
-                $opt = $existing->get($i);
-                $attrs = [
-                    'label' => $labels[$i],
-                    'is_correct' => $i === (int) $data['correctIndex'],
-                    'position' => $i + 1,
-                ];
-
-                if ($opt) {
-                    $opt->forceFill($attrs)->save();
-                } else {
-                    CbtOption::query()->create(array_merge($attrs, [
-                        'question_id' => $question->id,
-                    ]));
+            if ($data['questionType'] === 'mcq') {
+                foreach ($labels as $idx => $label) {
+                    if ($label === '') {
+                        throw ValidationException::withMessages(["optionLabels.{$idx}" => 'Option is required.']);
+                    }
                 }
-            }
 
-            if ($existing->count() > 4) {
-                $ids = $existing->slice(4)->pluck('id')->all();
-                CbtOption::query()->whereIn('id', $ids)->delete();
+                $existing = CbtOption::query()
+                    ->where('question_id', $question->id)
+                    ->orderBy('position')
+                    ->get();
+
+                for ($i = 0; $i < 4; $i++) {
+                    $opt = $existing->get($i);
+                    $attrs = [
+                        'label' => $labels[$i],
+                        'is_correct' => $i === (int) $data['correctIndex'],
+                        'position' => $i + 1,
+                    ];
+
+                    if ($opt) {
+                        $opt->forceFill($attrs)->save();
+                    } else {
+                        CbtOption::query()->create(array_merge($attrs, [
+                            'question_id' => $question->id,
+                        ]));
+                    }
+                }
+
+                if ($existing->count() > 4) {
+                    $ids = $existing->slice(4)->pluck('id')->all();
+                    CbtOption::query()->whereIn('id', $ids)->delete();
+                }
+            } else {
+                CbtOption::query()->where('question_id', $question->id)->delete();
             }
         });
 
@@ -471,7 +488,10 @@ class ExamEditor extends Component
             ? CbtAnswer::query()
                 ->selectRaw('attempt_id, count(*) as answered')
                 ->whereIn('attempt_id', $attemptIds)
-                ->whereNotNull('option_id')
+                ->where(function ($q) {
+                    $q->whereNotNull('option_id')
+                        ->orWhereNotNull('text_answer');
+                })
                 ->groupBy('attempt_id')
                 ->pluck('answered', 'attempt_id')
             : collect();
@@ -501,6 +521,179 @@ class ExamEditor extends Component
                 'remaining' => $attempt ? max(0, $totalQuestions - $answered) : $totalQuestions,
             ];
         });
+    }
+
+    #[Computed]
+    public function reviewAttempt(): ?CbtAttempt
+    {
+        if (! $this->reviewAttemptId) {
+            return null;
+        }
+
+        return CbtAttempt::query()
+            ->where('exam_id', $this->examId)
+            ->with(['student:id,admission_number,first_name,last_name', 'answers'])
+            ->find($this->reviewAttemptId);
+    }
+
+    public function startReview(int $attemptId): void
+    {
+        $user = auth()->user();
+        abort_unless($user && in_array($user->role, ['admin', 'teacher'], true), 403);
+
+        if ($user->role === 'teacher') {
+            $exam = $this->exam;
+            $canAccess = (int) $exam->created_by === (int) $user->id
+                || (int) ($exam->assigned_teacher_id ?? 0) === (int) $user->id;
+            abort_unless($canAccess, 403);
+        }
+
+        $attempt = CbtAttempt::query()
+            ->where('exam_id', $this->examId)
+            ->with(['answers', 'student:id,admission_number,first_name,last_name'])
+            ->findOrFail($attemptId);
+
+        if (! $attempt->submitted_at && ! $attempt->terminated_at) {
+            $this->dispatch('alert', message: 'Only submitted attempts can be reviewed.', type: 'warning');
+            return;
+        }
+
+        $exam = $this->exam;
+        if (! $exam->questions->contains('type', 'theory')) {
+            $this->dispatch('alert', message: 'This exam has no theory questions.', type: 'warning');
+            return;
+        }
+
+        $this->reviewAttemptId = $attempt->id;
+        $this->theoryMarks = [];
+
+        foreach ($exam->questions->where('type', 'theory') as $question) {
+            $answer = $attempt->answers->firstWhere('question_id', $question->id);
+            $this->theoryMarks[$question->id] = $answer?->awarded_marks;
+        }
+    }
+
+    public function cancelReview(): void
+    {
+        $this->reviewAttemptId = null;
+        $this->theoryMarks = [];
+        $this->resetValidation();
+    }
+
+    public function saveTheoryMarks(): void
+    {
+        $user = auth()->user();
+        abort_unless($user && in_array($user->role, ['admin', 'teacher'], true), 403);
+        abort_unless($this->reviewAttemptId, 422);
+
+        if ($user->role === 'teacher') {
+            $exam = $this->exam;
+            $canAccess = (int) $exam->created_by === (int) $user->id
+                || (int) ($exam->assigned_teacher_id ?? 0) === (int) $user->id;
+            abort_unless($canAccess, 403);
+        }
+
+        $attempt = CbtAttempt::query()
+            ->where('exam_id', $this->examId)
+            ->with(['exam.questions.options', 'answers'])
+            ->findOrFail((int) $this->reviewAttemptId);
+
+        $questions = $attempt->exam->questions->where('type', 'theory');
+        $errors = [];
+
+        foreach ($questions as $question) {
+            $raw = $this->theoryMarks[$question->id] ?? null;
+            if ($raw === '' || $raw === null) {
+                continue;
+            }
+
+            if (! is_numeric($raw)) {
+                $errors["theoryMarks.{$question->id}"] = 'Marks must be a number.';
+                continue;
+            }
+
+            $value = (int) $raw;
+            $maxMark = (int) ($question->marks ?? 0);
+            if ($value < 0 || $value > $maxMark) {
+                $errors["theoryMarks.{$question->id}"] = "Marks must be between 0 and {$maxMark}.";
+            }
+        }
+
+        if ($errors) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        $answers = $attempt->answers->keyBy('question_id');
+
+        foreach ($questions as $question) {
+            $raw = $this->theoryMarks[$question->id] ?? null;
+            $value = ($raw === '' || $raw === null) ? null : (int) $raw;
+            $maxMark = (int) ($question->marks ?? 0);
+            if ($value !== null) {
+                $value = max(0, min($value, $maxMark));
+            }
+
+            $textAnswer = trim((string) ($answers->get($question->id)?->text_answer ?? ''));
+
+            CbtAnswer::query()->updateOrCreate(
+                [
+                    'attempt_id' => $attempt->id,
+                    'question_id' => $question->id,
+                ],
+                [
+                    'option_id' => null,
+                    'text_answer' => $textAnswer !== '' ? $textAnswer : null,
+                    'awarded_marks' => $value,
+                    'is_correct' => null,
+                ]
+            );
+        }
+
+        $attempt->refresh();
+        $this->recalculateAttemptScore($attempt);
+
+        $this->dispatch('alert', message: 'Theory marks saved.', type: 'success');
+    }
+
+    private function recalculateAttemptScore(CbtAttempt $attempt): void
+    {
+        $attempt->loadMissing(['exam.questions.options', 'answers']);
+        $answers = $attempt->answers->keyBy('question_id');
+        $maxScore = 0;
+        $score = 0;
+
+        foreach ($attempt->exam->questions as $question) {
+            $questionType = $question->type ?? 'mcq';
+            $maxScore += (int) ($question->marks ?? 0);
+
+            if ($questionType === 'theory') {
+                $awarded = $answers->get($question->id)?->awarded_marks;
+                if (is_numeric($awarded)) {
+                    $score += max(0, min((int) $awarded, (int) ($question->marks ?? 0)));
+                }
+                continue;
+            }
+
+            $correctOptionId = (int) ($question->options->firstWhere('is_correct', true)?->id ?? 0);
+            $selectedOptionId = (int) ($answers->get($question->id)?->option_id ?? 0);
+            if ($selectedOptionId > 0 && ! $question->options->contains('id', $selectedOptionId)) {
+                $selectedOptionId = 0;
+            }
+
+            $isCorrect = $selectedOptionId > 0 && $selectedOptionId === $correctOptionId;
+            if ($isCorrect) {
+                $score += (int) ($question->marks ?? 0);
+            }
+        }
+
+        $percent = $maxScore > 0 ? round(($score / $maxScore) * 100, 2) : 0;
+        $attempt->forceFill([
+            'score' => $score,
+            'max_score' => $maxScore,
+            'percent' => $percent,
+        ])->save();
+
+        unset($this->exam);
     }
 
     public function startIpOverride(int $attemptId): void
@@ -608,7 +801,36 @@ class ExamEditor extends Component
             $score = 0;
 
             foreach ($attempt->exam->questions as $question) {
+                $questionType = $question->type ?? 'mcq';
                 $maxScore += (int) ($question->marks ?? 0);
+
+                if ($questionType === 'theory') {
+                    $textAnswer = trim((string) ($answers->get($question->id)?->text_answer ?? ''));
+                    $existingAwarded = $answers->get($question->id)?->awarded_marks;
+                    $maxMark = (int) ($question->marks ?? 0);
+                    $awardedScore = is_numeric($existingAwarded)
+                        ? max(0, min((int) $existingAwarded, $maxMark))
+                        : 0;
+
+                    if (is_numeric($existingAwarded)) {
+                        $score += $awardedScore;
+                    }
+
+                    CbtAnswer::query()->updateOrCreate(
+                        [
+                            'attempt_id' => $attempt->id,
+                            'question_id' => $question->id,
+                        ],
+                        [
+                            'option_id' => null,
+                            'text_answer' => $textAnswer !== '' ? $textAnswer : null,
+                            'awarded_marks' => is_numeric($existingAwarded) ? $awardedScore : null,
+                            'is_correct' => null,
+                        ]
+                    );
+
+                    continue;
+                }
 
                 $correctOptionId = (int) ($question->options->firstWhere('is_correct', true)?->id ?? 0);
                 $selectedOptionId = (int) ($answers->get($question->id)?->option_id ?? 0);
@@ -628,6 +850,8 @@ class ExamEditor extends Component
                     ],
                     [
                         'option_id' => $selectedOptionId > 0 ? $selectedOptionId : null,
+                        'text_answer' => null,
+                        'awarded_marks' => null,
                         'is_correct' => $isCorrect,
                     ]
                 );
@@ -682,7 +906,36 @@ class ExamEditor extends Component
             $score = 0;
 
             foreach ($attempt->exam->questions as $question) {
+                $questionType = $question->type ?? 'mcq';
                 $maxScore += (int) ($question->marks ?? 0);
+
+                if ($questionType === 'theory') {
+                    $textAnswer = trim((string) ($answers->get($question->id)?->text_answer ?? ''));
+                    $existingAwarded = $answers->get($question->id)?->awarded_marks;
+                    $maxMark = (int) ($question->marks ?? 0);
+                    $awardedScore = is_numeric($existingAwarded)
+                        ? max(0, min((int) $existingAwarded, $maxMark))
+                        : 0;
+
+                    if (is_numeric($existingAwarded)) {
+                        $score += $awardedScore;
+                    }
+
+                    CbtAnswer::query()->updateOrCreate(
+                        [
+                            'attempt_id' => $attempt->id,
+                            'question_id' => $question->id,
+                        ],
+                        [
+                            'option_id' => null,
+                            'text_answer' => $textAnswer !== '' ? $textAnswer : null,
+                            'awarded_marks' => is_numeric($existingAwarded) ? $awardedScore : null,
+                            'is_correct' => null,
+                        ]
+                    );
+
+                    continue;
+                }
 
                 $correctOptionId = (int) ($question->options->firstWhere('is_correct', true)?->id ?? 0);
                 $selectedOptionId = (int) ($answers->get($question->id)?->option_id ?? 0);
@@ -702,6 +955,8 @@ class ExamEditor extends Component
                     ],
                     [
                         'option_id' => $selectedOptionId > 0 ? $selectedOptionId : null,
+                        'text_answer' => null,
+                        'awarded_marks' => null,
                         'is_correct' => $isCorrect,
                     ]
                 );
@@ -797,6 +1052,10 @@ class ExamEditor extends Component
         }
 
         foreach ($questions as $q) {
+            if ($q->type === 'theory') {
+                continue;
+            }
+
             $options = $q->options;
             if ($options->count() < 2) {
                 $this->dispatch('alert', message: 'Each question must have options.', type: 'warning');
@@ -1007,7 +1266,32 @@ class ExamEditor extends Component
                 $score = 0;
 
                 foreach ($attempt->exam->questions as $question) {
+                    $questionType = $question->type ?? 'mcq';
                     $maxScore += (int) ($question->marks ?? 0);
+
+                    if ($questionType === 'theory') {
+                        $textAnswer = trim((string) ($answers->get($question->id)?->text_answer ?? ''));
+                        $existingAwarded = $answers->get($question->id)?->awarded_marks;
+                        $maxMark = (int) ($question->marks ?? 0);
+                        $awardedScore = is_numeric($existingAwarded)
+                            ? max(0, min((int) $existingAwarded, $maxMark))
+                            : 0;
+
+                        if (is_numeric($existingAwarded)) {
+                            $score += $awardedScore;
+                        }
+
+                        CbtAnswer::query()->updateOrCreate(
+                            ['attempt_id' => $attempt->id, 'question_id' => $question->id],
+                            [
+                                'option_id' => null,
+                                'text_answer' => $textAnswer !== '' ? $textAnswer : null,
+                                'awarded_marks' => is_numeric($existingAwarded) ? $awardedScore : null,
+                                'is_correct' => null,
+                            ]
+                        );
+                        continue;
+                    }
                     $correctOptionId = (int) ($question->options->firstWhere('is_correct', true)?->id ?? 0);
                     $selectedOptionId = (int) ($answers->get($question->id)?->option_id ?? 0);
                     if ($selectedOptionId > 0 && ! $question->options->contains('id', $selectedOptionId)) {
@@ -1019,7 +1303,12 @@ class ExamEditor extends Component
                     }
                     CbtAnswer::query()->updateOrCreate(
                         ['attempt_id' => $attempt->id, 'question_id' => $question->id],
-                        ['option_id' => $selectedOptionId > 0 ? $selectedOptionId : null, 'is_correct' => $isCorrect]
+                        [
+                            'option_id' => $selectedOptionId > 0 ? $selectedOptionId : null,
+                            'text_answer' => null,
+                            'awarded_marks' => null,
+                            'is_correct' => $isCorrect,
+                        ]
                     );
                 }
 

@@ -69,7 +69,7 @@
 
                     <div>
                         <label class="text-xs font-bold uppercase tracking-wider text-gray-700">Session</label>
-                        <input name="session" type="text" class="mt-2 w-full rounded-xl border-0 bg-white/80 px-4 py-3 text-sm font-semibold text-gray-900 ring-1 ring-white/60 backdrop-blur-sm focus:ring-2 focus:ring-indigo-500" value="{{ old('session', config('myacademy.current_session', now()->year)) }}" placeholder="e.g., 2024" required />
+                        <input name="session" type="text" class="mt-2 w-full rounded-xl border-0 bg-white/80 px-4 py-3 text-sm font-semibold text-gray-900 ring-1 ring-white/60 backdrop-blur-sm focus:ring-2 focus:ring-indigo-500" value="{{ old('session', config('myacademy.current_session', '2025/2026')) }}" placeholder="2025/2026" required />
                     </div>
 
                     <div>

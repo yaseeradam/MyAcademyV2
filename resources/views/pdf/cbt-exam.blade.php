@@ -81,7 +81,7 @@
     </div>
 
     <div class="instructions">
-        <strong>Instructions:</strong> Read each question carefully and select the best answer from the options provided. Each question carries the marks indicated. Write your answers clearly.
+        <strong>Instructions:</strong> Read each question carefully and select the best answer from the options provided. Theory questions should be answered in the space provided. Each question carries the marks indicated. Write your answers clearly.
     </div>
 
     @foreach ($exam->questions as $q)
@@ -91,14 +91,23 @@
                 <span class="marks">{{ $q->marks }} mark{{ $q->marks > 1 ? 's' : '' }}</span>
             </div>
             <div class="question-text">{{ $q->prompt }}</div>
-            <div class="options">
-                @foreach ($q->options as $opt)
-                    <div class="option">
-                        <span class="option-label">{{ chr(65 + $loop->index) }}.</span>
-                        <span>{{ $opt->label }}</span>
-                    </div>
-                @endforeach
-            </div>
+            @if ($q->type === 'theory')
+                <div style="margin-top: 10px;">
+                    <div style="font-weight: bold; color: #667eea; margin-bottom: 6px;">Answer:</div>
+                    <div style="border-bottom: 1px solid #e2e8f0; height: 18px;"></div>
+                    <div style="border-bottom: 1px solid #e2e8f0; height: 18px;"></div>
+                    <div style="border-bottom: 1px solid #e2e8f0; height: 18px;"></div>
+                </div>
+            @else
+                <div class="options">
+                    @foreach ($q->options as $opt)
+                        <div class="option">
+                            <span class="option-label">{{ chr(65 + $loop->index) }}.</span>
+                            <span>{{ $opt->label }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
     @endforeach
 

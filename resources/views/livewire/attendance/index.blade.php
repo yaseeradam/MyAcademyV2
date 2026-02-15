@@ -1,4 +1,4 @@
-<div class="space-y-6" x-data="{ showModal: false, studentId: null, studentName: '' }">
+<div class="space-y-6">
     <x-page-header title="Attendance" subtitle="Take daily attendance for your class" accent="attendance" />
 
     <div class="card-padded">
@@ -37,7 +37,7 @@
             <button type="button" wire:click="start" class="btn-primary" @disabled(! $classId)>
                 Load Students
             </button>
-            <button type="button" wire:click="save" class="btn-outline" @disabled(! $classId)>
+            <button type="button" wire:click="save" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold bg-white text-green-700 border-2 border-green-200 hover:bg-green-50" @disabled(! $classId)>
                 Save Attendance
             </button>
 
@@ -47,9 +47,6 @@
                 </button>
                 <button type="button" wire:click="markAll('Absent')" class="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100" @disabled(! $classId)>
                     All Absent
-                </button>
-                <button type="button" wire:click="markAll('Late')" class="rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700 hover:bg-orange-100" @disabled(! $classId)>
-                    All Late
                 </button>
             </div>
         </div>
@@ -62,79 +59,41 @@
         </div>
     </div>
 
-    <x-table>
-        <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
-            <tr>
-                <th class="px-5 py-3">#</th>
-                <th class="px-5 py-3">Student</th>
-                <th class="px-5 py-3">Admission No</th>
-                <th class="px-5 py-3">Status</th>
-                <th class="px-5 py-3">Note</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            @forelse ($this->students as $index => $student)
-                <tr class="bg-white hover:bg-gray-50">
-                    <td class="px-5 py-4 text-sm text-gray-500">{{ $index + 1 }}</td>
-                    <td class="px-5 py-4">
-                        <div class="text-sm font-semibold text-gray-900">{{ $student->full_name }}</div>
-                    </td>
-                    <td class="px-5 py-4 text-sm text-gray-700">{{ $student->admission_number }}</td>
-                    <td class="px-5 py-4">
-                        <div class="flex gap-2">
-                            <button type="button" wire:click="$set('marks.{{ $student->id }}.status', 'Present')" class="rounded-lg px-3 py-1.5 text-xs font-semibold {{ ($marks[$student->id]['status'] ?? 'Present') === 'Present' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                                P
-                            </button>
-                            <button type="button" wire:click="$set('marks.{{ $student->id }}.status', 'Absent')" class="rounded-lg px-3 py-1.5 text-xs font-semibold {{ ($marks[$student->id]['status'] ?? 'Present') === 'Absent' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                                A
-                            </button>
-                            <button type="button" wire:click="$set('marks.{{ $student->id }}.status', 'Late')" class="rounded-lg px-3 py-1.5 text-xs font-semibold {{ ($marks[$student->id]['status'] ?? 'Present') === 'Late' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                                L
-                            </button>
-                            <button type="button" wire:click="$set('marks.{{ $student->id }}.status', 'Excused')" class="rounded-lg px-3 py-1.5 text-xs font-semibold {{ ($marks[$student->id]['status'] ?? 'Present') === 'Excused' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                                E
-                            </button>
-                        </div>
-                    </td>
-                    <td class="px-5 py-4">
-                        <button type="button" @click="showModal = true; studentId = {{ $student->id }}; studentName = '{{ $student->full_name }}'" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                            {{ isset($marks[$student->id]['note']) && $marks[$student->id]['note'] ? 'Edit note' : 'Add note' }}
-                        </button>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="5" class="px-5 py-10 text-center text-sm text-gray-500">
-                        Select a class and click "Load Students" to begin.
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-    </x-table>
-
-    <!-- Note Modal -->
-    <div x-show="showModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showModal = false">
-        <div class="rounded-xl bg-white p-6 shadow-xl max-w-md w-full mx-4">
-            <h3 class="text-lg font-semibold text-gray-900">Add Note</h3>
-            <p class="mt-1 text-sm text-gray-600" x-text="studentName"></p>
-            
-            <div class="mt-4">
-                <textarea 
-                    :wire:model="'marks.' + studentId + '.note'"
-                    rows="3" 
-                    placeholder="Enter optional note..."
-                    class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-brand-500 focus:ring-brand-500"
-                ></textarea>
-            </div>
-
-            <div class="mt-4 flex gap-3">
-                <button @click="showModal = false" class="btn-primary flex-1">
-                    Save
-                </button>
-                <button @click="showModal = false" class="btn-outline flex-1">
-                    Cancel
+    <div class="space-y-3">
+        @forelse ($this->students as $student)
+            <div class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                <div class="grid h-10 w-10 place-items-center rounded-full bg-blue-50 text-sm font-bold text-blue-600 flex-shrink-0">
+                    {{ mb_substr($student->full_name, 0, 1) }}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="truncate text-sm font-semibold text-gray-900">{{ $student->full_name }}</div>
+                    <div class="text-xs text-gray-500">{{ $student->admission_number }}</div>
+                </div>
+                @php
+                    $status = $marks[$student->id]['status'] ?? 'Present';
+                    $statusStyles = [
+                        'Present' => 'bg-green-600 text-white',
+                        'Absent' => 'bg-red-600 text-white',
+                        'Late' => 'bg-orange-600 text-white',
+                        'Excused' => 'bg-slate-600 text-white',
+                    ];
+                    $statusStyle = $statusStyles[$status] ?? $statusStyles['Present'];
+                @endphp
+                <button
+                    type="button"
+                    wire:click="cycleStatus({{ $student->id }})"
+                    class="flex-shrink-0 rounded-lg px-4 py-2 text-xs font-semibold transition-colors {{ $statusStyle }}"
+                    aria-label="Cycle attendance status for {{ $student->full_name }}"
+                    title="Click to cycle status"
+                >
+                    {{ $status }}
                 </button>
             </div>
-        </div>
+        @empty
+            <div class="card-padded text-center text-sm text-gray-500">
+                Select a class and click "Load Students" to begin.
+            </div>
+        @endforelse
     </div>
+
 </div>

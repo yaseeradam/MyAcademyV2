@@ -1,6 +1,17 @@
 @props(['type' => 'students', 'filters' => []])
 
-<div x-data="exportManager()" class="relative">
+@php
+    $exportEndpoint = match ($type) {
+        'students' => route('students.export'),
+        default => null,
+    };
+@endphp
+
+<div x-data="exportManager({
+    endpoint: @js($exportEndpoint),
+    filters: @js($filters),
+    type: @js($type)
+})" class="relative">
     <!-- Export Button -->
     <button @click="showExportMenu = !showExportMenu" class="btn-outline text-xs flex items-center gap-2">
         <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -29,7 +40,7 @@
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="format" value="excel" x-model="selectedFormat" class="checkbox-custom">
-                    <span class="text-sm text-gray-700 dark:text-dark-300">Excel (.xlsx)</span>
+                    <span class="text-sm text-gray-700 dark:text-dark-300">Excel (.xls)</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="format" value="pdf" x-model="selectedFormat" class="checkbox-custom">
@@ -83,94 +94,63 @@
 </div>
 
 <script>
-function exportManager() {
+function exportManager(config = {}) {
     return {
+        endpoint: config.endpoint || null,
+        filters: config.filters || {},
+        type: config.type || 'students',
         showExportMenu: false,
         selectedFormat: 'csv',
         dateFrom: '',
         dateTo: '',
         includeHeaders: true,
-        includeFilters: false,
+        includeFilters: true,
         includeMetadata: false,
-        
+
         performExport() {
-            const options = {
-                format: this.selectedFormat,
-                dateFrom: this.dateFrom,
-                dateTo: this.dateTo,
-                includeHeaders: this.includeHeaders,
-                includeFilters: this.includeFilters,
-                includeMetadata: this.includeMetadata
-            };
-            
-            // Show progress
-            const progress = showProgressNotification('Preparing export...', 0);
-            
-            // Simulate export progress
-            let currentProgress = 0;
-            const interval = setInterval(() => {
-                currentProgress += Math.random() * 30;
-                if (currentProgress >= 100) {
-                    currentProgress = 100;
-                    clearInterval(interval);
-                    
-                    // Complete export
-                    progress.updateProgress(100);
-                    showSuccessNotification(
-                        `Export completed!`, 
-                        () => this.downloadFile(options.format),
-                        'Download'
-                    );
-                    
-                    this.showExportMenu = false;
-                } else {
-                    progress.updateProgress(currentProgress);
-                }
-            }, 500);
-        },
-        
-        scheduleExport() {
-            showNotification('Export scheduled for daily at 2:00 AM', 'success');
+            if (!this.endpoint) {
+                showNotification('Export is not configured for this page.', 'error');
+                return;
+            }
+
+            const allowedFormats = ['csv', 'json', 'excel', 'pdf'];
+            if (!allowedFormats.includes(this.selectedFormat)) {
+                showNotification('Only CSV and JSON exports are currently supported.', 'warning');
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.set('format', this.selectedFormat);
+            params.set('include_headers', this.includeHeaders ? '1' : '0');
+
+            if (this.dateFrom) {
+                params.set('from', this.dateFrom);
+            }
+
+            if (this.dateTo) {
+                params.set('to', this.dateTo);
+            }
+
+            if (this.includeFilters && this.filters) {
+                Object.entries(this.filters).forEach(([key, value]) => {
+                    if (value !== null && value !== undefined && value !== '' && value !== 'all') {
+                        params.set(key, value);
+                    }
+                });
+            }
+
+            if (this.includeMetadata) {
+                params.set('include_metadata', '1');
+            }
+
+            showNotification(`Preparing ${this.type} export...`, 'info');
+            window.location = `${this.endpoint}?${params.toString()}`;
             this.showExportMenu = false;
         },
-        
-        downloadFile(format) {
-            // Create sample file based on format
-            const filename = `export_${new Date().toISOString().split('T')[0]}.${format}`;
-            
-            if (format === 'csv') {
-                this.downloadCSV(filename);
-            } else if (format === 'json') {
-                this.downloadJSON(filename);
-            } else {
-                showNotification(`Downloading ${filename}...`, 'info');
-            }
-        },
-        
-        downloadCSV(filename) {
-            const csv = 'Name,Email,Class,Status\nJohn Doe,john@example.com,JSS1,Active\nJane Smith,jane@example.com,JSS2,Active';
-            const blob = new Blob([csv], { type: 'text/csv' });
-            this.downloadBlob(blob, filename);
-        },
-        
-        downloadJSON(filename) {
-            const json = JSON.stringify([
-                { name: 'John Doe', email: 'john@example.com', class: 'JSS1', status: 'Active' },
-                { name: 'Jane Smith', email: 'jane@example.com', class: 'JSS2', status: 'Active' }
-            ], null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            this.downloadBlob(blob, filename);
-        },
-        
-        downloadBlob(blob, filename) {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+
+        scheduleExport() {
+            showNotification('Export scheduling is not available yet.', 'warning');
+            this.showExportMenu = false;
         }
     }
 }

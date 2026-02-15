@@ -13,7 +13,10 @@ class CbtExportController extends Controller
     {
         $answeredSub = DB::table('cbt_answers')
             ->selectRaw('attempt_id, count(*) as answered')
-            ->whereNotNull('option_id')
+            ->where(function ($q) {
+                $q->whereNotNull('option_id')
+                    ->orWhereNotNull('text_answer');
+            })
             ->groupBy('attempt_id');
 
         $query = DB::table('students as s')

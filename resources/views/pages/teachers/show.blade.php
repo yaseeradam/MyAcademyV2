@@ -28,6 +28,18 @@
                 <x-status-badge variant="{{ $teacher->is_active ? 'success' : 'warning' }}">
                     {{ $teacher->is_active ? 'Active' : 'Inactive' }}
                 </x-status-badge>
+                @if ($user?->role === 'admin')
+                    <form
+                        method="POST"
+                        action="{{ route('teachers.destroy', $teacher) }}"
+                        class="inline"
+                        onsubmit="return confirm('Delete this teacher? This action cannot be undone.')"
+                    >
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn-warning">Delete</button>
+                    </form>
+                @endif
                 <a href="{{ route('teachers') }}" class="btn-outline">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M19 12H5M12 19l-7-7 7-7"/>

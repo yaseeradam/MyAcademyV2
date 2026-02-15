@@ -39,7 +39,7 @@
                     <button type="button" wire:click="save" class="btn-primary">
                         {{ $editingId ? 'Update' : 'Create' }}
                     </button>
-                    <button type="button" wire:click="clearForm" class="btn-outline">Clear</button>
+                    <button type="button" wire:click="clearForm" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold bg-white text-indigo-600 border-2 border-indigo-200 hover:bg-indigo-50">Clear</button>
                 </div>
             </div>
         </div>
@@ -71,7 +71,7 @@
                                         Set active
                                     </button>
                                 @endif
-                                <button type="button" wire:click="edit({{ $s->id }})" class="btn-outline">Edit</button>
+                                <button type="button" wire:click="edit({{ $s->id }})" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold bg-white text-indigo-600 border-2 border-indigo-200 hover:bg-indigo-50">Edit</button>
                                 <button type="button" wire:click="delete({{ $s->id }})" class="inline-flex items-center justify-center rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700">
                                     Delete
                                 </button>

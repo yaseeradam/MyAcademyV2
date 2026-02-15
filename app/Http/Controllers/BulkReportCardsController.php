@@ -43,6 +43,7 @@ class BulkReportCardsController extends Controller
         $classId = (int) $data['class_id'];
         $session = (string) $data['session'];
         $term = (int) $data['term'];
+        $safeSession = str_replace('/', '-', $session);
 
         $students = Student::query()
             ->where('class_id', $classId)
@@ -72,7 +73,7 @@ class BulkReportCardsController extends Controller
         $timestamp = now()->format('Y-m-d_H-i-s');
         $zipDir = storage_path('app/report-cards');
         File::ensureDirectoryExists($zipDir);
-        $zipPath = $zipDir.DIRECTORY_SEPARATOR."report_cards_class{$classId}_{$session}_T{$term}_{$timestamp}.zip";
+        $zipPath = $zipDir.DIRECTORY_SEPARATOR."report_cards_class{$classId}_{$safeSession}_T{$term}_{$timestamp}.zip";
 
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
@@ -89,7 +90,7 @@ class BulkReportCardsController extends Controller
                 ])->setPaper('a4');
 
                 $safeAdm = preg_replace('/[^A-Za-z0-9\\-_.]+/', '-', (string) $student->admission_number) ?: (string) $student->id;
-                $filename = "report-card-{$safeAdm}-{$session}-T{$term}.pdf";
+                $filename = "report-card-{$safeAdm}-{$safeSession}-T{$term}.pdf";
                 $path = $pdfDir.DIRECTORY_SEPARATOR.$filename;
                 File::put($path, $pdf->output());
 
@@ -110,4 +111,3 @@ class BulkReportCardsController extends Controller
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 }
-

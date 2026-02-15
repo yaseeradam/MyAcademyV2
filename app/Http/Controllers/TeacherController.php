@@ -131,4 +131,25 @@ class TeacherController extends Controller
 
         return back()->with('status', 'Allocation removed.');
     }
+
+    public function destroy(User $teacher)
+    {
+        abort_unless($teacher->role === 'teacher', 404);
+
+        $photo = $teacher->profile_photo ? str_replace('\\', '/', (string) $teacher->profile_photo) : null;
+
+        try {
+            $teacher->delete();
+        } catch (QueryException $e) {
+            return back()->withErrors(['teacher' => 'Unable to delete this teacher. Remove dependent records first.']);
+        }
+
+        if ($photo) {
+            Storage::disk('uploads')->delete($photo);
+        }
+
+        return redirect()
+            ->route('teachers')
+            ->with('status', 'Teacher deleted.');
+    }
 }

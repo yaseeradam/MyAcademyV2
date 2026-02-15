@@ -1,23 +1,30 @@
 <div class="space-y-6">
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 p-8 shadow-2xl">
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30"></div>
-        <div class="relative flex items-center justify-between">
+    <div class="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 shadow-sm">
+        <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-black text-white">All Students</h1>
-                <p class="mt-2 text-blue-100">Manage, search and filter student records</p>
+                <h1 class="text-2xl font-bold text-gray-900">All Students</h1>
+                <p class="mt-1 text-sm text-gray-600">Manage, search and filter student records</p>
             </div>
             <div class="flex gap-3">
-                <x-export type="students" />
+                <x-export
+                    type="students"
+                    :filters="[
+                        'class' => $this->classFilter,
+                        'section' => $this->sectionFilter,
+                        'status' => $this->statusFilter,
+                        'search' => $this->search,
+                    ]"
+                />
                 @if (auth()->user()?->role === 'admin')
-                    <a href="{{ route('students.create') }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-blue-600 shadow-lg hover:bg-blue-50">Add Student</a>
+                    <a href="{{ route('students.create') }}" class="btn-primary">Add Student</a>
                 @endif
             </div>
         </div>
 
-        <div class="relative mt-6 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+        <div class="mt-6 rounded-xl border border-gray-200 bg-white p-4">
             <div class="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-center">
                 <div class="lg:col-span-2">
-                    <select wire:model.live="classFilter" class="w-full rounded-lg border-0 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm focus:ring-2 focus:ring-white/50">
+                    <select wire:model.live="classFilter" class="select">
                         <option value="all">All Classes</option>
                         @foreach ($this->classes as $class)
                             <option value="{{ $class->id }}">{{ $class->name }}</option>
@@ -26,7 +33,7 @@
                 </div>
 
                 <div class="lg:col-span-2">
-                    <select wire:model.live="sectionFilter" class="w-full rounded-lg border-0 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm focus:ring-2 focus:ring-white/50">
+                    <select wire:model.live="sectionFilter" class="select">
                         <option value="all">All Sections</option>
                         @foreach ($this->sections as $section)
                             @if ($this->classFilter === 'all')
@@ -39,7 +46,7 @@
                 </div>
 
                 <div class="lg:col-span-2">
-                    <select wire:model.live="statusFilter" class="w-full rounded-lg border-0 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm focus:ring-2 focus:ring-white/50">
+                    <select wire:model.live="statusFilter" class="select">
                         <option value="all">Status</option>
                         <option value="Active">Active</option>
                         <option value="Graduated">Graduated</option>
@@ -48,11 +55,17 @@
                 </div>
 
                 <div class="lg:col-span-6">
-                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search by name, admission number, class, parent..." class="w-full rounded-lg border-0 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 placeholder-gray-500 shadow-sm focus:ring-2 focus:ring-white/50" />
+                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search by name, admission number, class, parent..." class="input" />
                 </div>
             </div>
         </div>
     </div>
+
+    @if (session('status'))
+        <div class="card-padded border border-green-200 bg-green-50/60 text-sm text-green-900">
+            {{ session('status') }}
+        </div>
+    @endif
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <x-stat-card
@@ -126,12 +139,12 @@
     </div>
 
     <x-table sortable selectable :items="$this->students">
-        <thead class="bg-gray-50 dark:bg-dark-200 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-dark-400">
+        <thead class="bg-gradient-to-r from-blue-500 to-indigo-600 text-xs font-semibold uppercase tracking-wider text-white">
             <tr>
                 <th class="px-5 py-3">
                     <input type="checkbox" class="checkbox-custom" value="all" />
                 </th>
-                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('last_name')">
+                <th class="px-5 py-3 cursor-pointer hover:bg-blue-600/50" wire:click="sortBy('last_name')">
                     <div class="flex items-center gap-1">
                         Student
                         @if($sortBy === 'last_name')
@@ -145,7 +158,7 @@
                         @endif
                     </div>
                 </th>
-                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('admission_number')">
+                <th class="px-5 py-3 cursor-pointer hover:bg-blue-600/50" wire:click="sortBy('admission_number')">
                     <div class="flex items-center gap-1">
                         Admission No
                         @if($sortBy === 'admission_number')
@@ -160,7 +173,7 @@
                     </div>
                 </th>
                 <th class="px-5 py-3">Class / Section</th>
-                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('gender')">
+                <th class="px-5 py-3 cursor-pointer hover:bg-blue-600/50" wire:click="sortBy('gender')">
                     <div class="flex items-center gap-1">
                         Gender
                         @if($sortBy === 'gender')
@@ -175,7 +188,7 @@
                     </div>
                 </th>
                 <th class="px-5 py-3">Guardian</th>
-                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('status')">
+                <th class="px-5 py-3 cursor-pointer hover:bg-blue-600/50" wire:click="sortBy('status')">
                     <div class="flex items-center gap-1">
                         Status
                         @if($sortBy === 'status')

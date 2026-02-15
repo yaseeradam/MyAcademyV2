@@ -109,6 +109,16 @@
                 <x-status-badge variant="{{ $statusVariant }}">{{ $student->status }}</x-status-badge>
                 @if (auth()->user()?->role === 'admin')
                     <a href="{{ route('students.edit', $student) }}" class="btn-outline">Edit</a>
+                    <form
+                        method="POST"
+                        action="{{ route('students.destroy', $student) }}"
+                        class="inline"
+                        onsubmit="return confirm('Delete this student? This action cannot be undone.')"
+                    >
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn-warning">Delete</button>
+                    </form>
                 @endif
                 <a href="{{ route('students.index') }}" class="btn-outline">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -118,6 +128,17 @@
                 </a>
             </x-slot:actions>
         </x-page-header>
+
+        @if ($errors->any())
+            <div class="card-padded border border-orange-200 bg-orange-50/60">
+                <div class="text-sm font-semibold text-orange-900">Please fix the following:</div>
+                <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-orange-900">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         <div class="card">
             <div class="px-6">

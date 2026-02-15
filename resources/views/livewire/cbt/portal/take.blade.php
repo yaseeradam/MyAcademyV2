@@ -2,7 +2,14 @@
     $submitted = (bool) $attempt->submitted_at;
     $questions = $exam?->questions?->values() ?? collect();
     $totalQuestions = $questions->count();
-    $answered = count(array_filter($this->answers, fn ($v) => (int) $v > 0));
+    $answered = $questions->filter(function ($q) {
+        $questionType = strtolower((string) ($q->type ?? 'mcq'));
+        if ($questionType === 'theory') {
+            return trim((string) ($this->theoryAnswers[$q->id] ?? '')) !== '';
+        }
+
+        return (int) ($this->answers[$q->id] ?? 0) > 0;
+    })->count();
     $remaining = $submitted ? 0 : (int) $this->remainingSeconds();
     $mm = str_pad((string) intdiv($remaining, 60), 2, '0', STR_PAD_LEFT);
     $ss = str_pad((string) ($remaining % 60), 2, '0', STR_PAD_LEFT);
@@ -12,6 +19,7 @@
     $currentIndex = max(0, min((int) $this->currentIndex, max(0, $totalQuestions - 1)));
     $currentQuestion = $totalQuestions > 0 ? $questions->get($currentIndex) : null;
     $progressPercent = $totalQuestions > 0 ? round(($answered / $totalQuestions) * 100, 1) : 0;
+    $hasTheory = $questions->contains(fn ($q) => $q->type === 'theory');
 @endphp
 
 <div class="cbt-take-root h-screen overflow-hidden bg-gradient-to-br from-amber-50 via-white to-teal-50 text-slate-900" @if(! $submitted) wire:poll.1s="tick" @endif x-data="examKeyboard" @keydown.window="handleKeyPress($event)">
@@ -81,13 +89,18 @@
                 </div>
 
                 <div class="mt-8 grid gap-5 sm:grid-cols-2">
-                    <div class="rounded-2xl bg-emerald-50 p-6 text-center shadow-sm">
-                        <div class="text-xs font-semibold uppercase tracking-wider text-slate-600">Your Score</div>
-                        <div class="mt-3 text-5xl font-bold text-emerald-700">
-                            {{ (int) $attempt->score }}
-                            <span class="text-3xl text-slate-400">/{{ (int) $attempt->max_score }}</span>
+                    @if ($exam->show_score)
+                        <div class="rounded-2xl bg-emerald-50 p-6 text-center shadow-sm">
+                            <div class="text-xs font-semibold uppercase tracking-wider text-slate-600">Your Score</div>
+                            <div class="mt-3 text-5xl font-bold text-emerald-700">
+                                {{ (int) $attempt->score }}
+                                <span class="text-3xl text-slate-400">/{{ (int) $attempt->max_score }}</span>
+                            </div>
+                            @if ($hasTheory)
+                                <div class="mt-2 text-xs font-semibold text-slate-500">Theory answers are not auto-graded.</div>
+                            @endif
                         </div>
-                    </div>
+                    @endif
                     <div class="rounded-2xl bg-sky-50 p-6 text-center shadow-sm">
                         <div class="text-xs font-semibold uppercase tracking-wider text-slate-600">Submitted At</div>
                         <div class="mt-3 text-xl font-bold text-slate-900">{{ $attempt->submitted_at?->format('g:i A') }}</div>
@@ -112,7 +125,10 @@
                         <div class="mt-4 grid grid-cols-5 gap-2">
                             @foreach ($questions as $idx => $q)
                                 @php
-                                    $isAnswered = (int) ($this->answers[$q->id] ?? 0) > 0;
+                                    $questionType = strtolower((string) ($q->type ?? 'mcq'));
+                                    $isAnswered = $questionType === 'theory'
+                                        ? trim((string) ($this->theoryAnswers[$q->id] ?? '')) !== ''
+                                        : (int) ($this->answers[$q->id] ?? 0) > 0;
                                     $isCurrent = (int) $idx === (int) $currentIndex;
                                 @endphp
                                 <button
@@ -148,7 +164,10 @@
                             <p class="text-lg text-slate-500">No questions available.</p>
                         </div>
                     @else
-                        @php($selected = (int) ($this->answers[$currentQuestion->id] ?? 0))
+                        @php
+                            $selected = (int) ($this->answers[$currentQuestion->id] ?? 0);
+                            $currentQuestionType = strtolower((string) ($currentQuestion->type ?? 'mcq'));
+                        @endphp
 
                         <div class="h-full rounded-2xl bg-white p-5 shadow-md ring-1 ring-slate-100 flex flex-col">
                             <div class="flex flex-1 flex-col gap-5 min-h-0">
@@ -164,32 +183,44 @@
                                     </div>
                                 </div>
 
-                                <div class="grid gap-2.5 sm:grid-cols-2">
-                                    @foreach ($currentQuestion->options as $opt)
-                                        @php($isSelected = $selected === (int) $opt->id)
-                                        <label
-                                            class="group flex cursor-pointer items-start gap-3 rounded-xl border border-slate-100 p-3.5 transition-all {{ $isSelected ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-50 hover:bg-white hover:shadow-sm' }}"
-                                            data-option-index="{{ $loop->index }}"
-                                            data-option-id="{{ $opt->id }}"
-                                            data-question-id="{{ $currentQuestion->id }}"
-                                        >
-                                            <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold {{ $isSelected ? 'bg-white text-amber-700' : 'bg-white text-slate-700 group-hover:text-amber-700' }}">
-                                                {{ chr(65 + $loop->index) }}
-                                            </div>
-                                            <input
-                                                type="radio"
-                                                name="q{{ $currentQuestion->id }}"
-                                                value="{{ $opt->id }}"
-                                                @checked($isSelected)
-                                            wire:click="selectOption({{ $currentQuestion->id }}, {{ $opt->id }})"
-                                            class="sr-only"
-                                        />
-                                            <span class="min-w-0 flex-1 text-sm leading-relaxed {{ $isSelected ? 'font-semibold text-white' : 'font-medium text-slate-800' }}">
-                                                {{ $opt->label }}
-                                            </span>
-                                        </label>
-                                    @endforeach
-                                </div>
+                                @if ($currentQuestionType === 'theory')
+                                    <div class="space-y-2">
+                                        <textarea
+                                            wire:model.debounce.600ms="theoryAnswers.{{ $currentQuestion->id }}"
+                                            rows="6"
+                                            class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm focus:border-amber-400 focus:ring-amber-300"
+                                            placeholder="Type your answer here..."
+                                        ></textarea>
+                                        <div class="text-xs text-slate-500">Your response is saved automatically.</div>
+                                    </div>
+                                @else
+                                    <div class="grid gap-2.5 sm:grid-cols-2 overflow-y-auto max-h-96">
+                                        @foreach ($currentQuestion->options as $opt)
+                                            @php($isSelected = $selected === (int) $opt->id)
+                                            <label
+                                                class="group flex cursor-pointer items-start gap-3 rounded-xl border border-slate-100 p-3.5 transition-all {{ $isSelected ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-50 hover:bg-white hover:shadow-sm' }}"
+                                                data-option-index="{{ $loop->index }}"
+                                                data-option-id="{{ $opt->id }}"
+                                                data-question-id="{{ $currentQuestion->id }}"
+                                            >
+                                                <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold {{ $isSelected ? 'bg-white text-amber-700' : 'bg-white text-slate-700 group-hover:text-amber-700' }}">
+                                                    {{ chr(65 + $loop->index) }}
+                                                </div>
+                                                <input
+                                                    type="radio"
+                                                    name="q{{ $currentQuestion->id }}"
+                                                    value="{{ $opt->id }}"
+                                                    @checked($isSelected)
+                                                wire:click="selectOption({{ $currentQuestion->id }}, {{ $opt->id }})"
+                                                class="sr-only"
+                                            />
+                                                <span class="min-w-0 flex-1 text-sm leading-relaxed {{ $isSelected ? 'font-semibold text-white' : 'font-medium text-slate-800' }}">
+                                                    {{ $opt->label }}
+                                                </span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @endif
 
                                 <div class="mt-auto flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div class="text-sm font-semibold text-slate-700">

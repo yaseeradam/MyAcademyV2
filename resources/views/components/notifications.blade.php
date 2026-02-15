@@ -1,5 +1,34 @@
 <!-- Notification Container -->
-<div id="notificationContainer" class="fixed top-20 right-6 z-50 space-y-2"></div>
+<div id="notificationContainer" class="fixed top-20 right-6 z-50 space-y-3 max-w-sm"></div>
+
+<style>
+@keyframes slideIn {
+    from {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+@keyframes slideOut {
+    from {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(120%) scale(0.95);
+        opacity: 0;
+    }
+}
+.notification-enter {
+    animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.notification-exit {
+    animation: slideOut 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+</style>
 
 <script>
 // Enhanced notification system
@@ -12,31 +41,33 @@ window.showNotification = function(message, type = 'info', options = {}) {
     notification.id = id;
     
     const icons = {
-        success: '<path d="M20 6 9 17l-5-5" />',
-        error: '<path d="M6 18L18 6M6 6l12 12" />',
-        warning: '<path d="M12 9v2m0 4h.01" />',
-        info: '<path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />'
+        success: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
+        error: '<path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
+        warning: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />',
+        info: '<path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />'
     };
     
-    const colors = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        warning: 'bg-orange-500',
-        info: 'bg-brand-500'
+    const gradients = {
+        success: 'bg-gradient-to-r from-emerald-500 to-teal-500',
+        error: 'bg-gradient-to-r from-rose-500 to-red-500',
+        warning: 'bg-gradient-to-r from-amber-500 to-orange-500',
+        info: 'bg-gradient-to-r from-blue-500 to-indigo-500'
     };
     
-    notification.className = `p-4 rounded-lg shadow-lg text-white ${colors[type]} animate-slide-up max-w-sm`;
+    notification.className = `notification-enter p-4 rounded-2xl shadow-2xl text-white ${gradients[type]} backdrop-blur-sm border border-white/20`;
     notification.innerHTML = `
         <div class="flex items-start gap-3">
-            <svg class="h-5 w-5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                ${icons[type]}
-            </svg>
-            <div class="flex-1">
-                <p class="text-sm font-medium">${message}</p>
-                ${options.action ? `<button class="mt-2 text-xs underline hover:no-underline" onclick="${options.action}">${options.actionText || 'View'}</button>` : ''}
+            <div class="flex-shrink-0 mt-0.5">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    ${icons[type]}
+                </svg>
             </div>
-            <button onclick="closeNotification('${id}')" class="flex-shrink-0 ml-2">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold leading-snug">${message}</p>
+                ${options.action ? `<button class="mt-2 text-xs font-medium underline hover:no-underline opacity-90 hover:opacity-100 transition-opacity" onclick="${options.action}">${options.actionText || 'View'}</button>` : ''}
+            </div>
+            <button onclick="closeNotification('${id}')" class="flex-shrink-0 ml-2 opacity-70 hover:opacity-100 transition-opacity rounded-lg hover:bg-white/10 p-1">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                     <path d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -46,7 +77,7 @@ window.showNotification = function(message, type = 'info', options = {}) {
     container.appendChild(notification);
     
     // Auto-remove after duration
-    const duration = options.duration || (type === 'error' ? 5000 : 3000);
+    const duration = options.duration || (type === 'error' ? 5000 : 3500);
     setTimeout(() => {
         closeNotification(id);
     }, duration);
@@ -57,8 +88,8 @@ window.showNotification = function(message, type = 'info', options = {}) {
 window.closeNotification = function(id) {
     const notification = document.getElementById(id);
     if (notification) {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
+        notification.classList.remove('notification-enter');
+        notification.classList.add('notification-exit');
         setTimeout(() => notification.remove(), 300);
     }
 };
@@ -69,10 +100,9 @@ window.showProgressNotification = function(message, progress = 0) {
     const notification = document.getElementById(id);
     
     if (notification) {
-        // Add progress bar
         const progressBar = document.createElement('div');
-        progressBar.className = 'mt-2 bg-white/20 rounded-full h-1';
-        progressBar.innerHTML = `<div class="bg-white rounded-full h-1 transition-all duration-300" style="width: ${progress}%"></div>`;
+        progressBar.className = 'mt-2.5 bg-white/20 rounded-full h-1.5 overflow-hidden';
+        progressBar.innerHTML = `<div class="bg-white rounded-full h-full transition-all duration-500 ease-out" style="width: ${progress}%"></div>`;
         notification.querySelector('.flex-1').appendChild(progressBar);
     }
     
@@ -82,7 +112,7 @@ window.showProgressNotification = function(message, progress = 0) {
             const bar = notification?.querySelector('.bg-white');
             if (bar) bar.style.width = `${newProgress}%`;
             if (newProgress >= 100) {
-                setTimeout(() => closeNotification(id), 1000);
+                setTimeout(() => closeNotification(id), 1200);
             }
         }
     };

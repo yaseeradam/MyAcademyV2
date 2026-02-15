@@ -28,9 +28,9 @@
 
         <div class="space-y-4">
             @forelse($items as $n)
-                <div class="group relative rounded-2xl bg-white/90 backdrop-blur-sm p-5 shadow-xl shadow-gray-900/5 ring-1 ring-black/5 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/20 hover:-translate-y-1 {{ !$n->read_at ? 'ring-2 ring-indigo-500/20' : '' }}">
+                <div class="group relative rounded-2xl bg-white/90 backdrop-blur-sm p-5 shadow-lg ring-1 ring-black/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 {{ !$n->read_at ? 'ring-2 ring-indigo-400/30 bg-gradient-to-r from-indigo-50/50 to-purple-50/50' : '' }}">
                     @if(!$n->read_at)
-                        <div class="absolute -left-1 top-1/2 -translate-y-1/2 h-12 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/50"></div>
+                        <div class="absolute -left-0.5 top-1/2 -translate-y-1/2 h-16 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-purple-600 shadow-md"></div>
                     @endif
                     
                     <div class="flex items-start gap-4">

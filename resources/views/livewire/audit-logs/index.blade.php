@@ -1,7 +1,7 @@
 <div class="space-y-6">
     <x-page-header title="Audit Logs" subtitle="Track important actions (backup, results approvals, billing, user changes)." accent="settings">
         <x-slot:actions>
-            <a href="{{ route('settings') }}" class="btn-outline">Back</a>
+            <a href="{{ route('settings.index') }}" class="btn-outline">Back</a>
         </x-slot:actions>
     </x-page-header>
 

@@ -196,6 +196,16 @@ class Index extends Component
         }
     }
 
+    public function cycleStatus(int $studentId): void
+    {
+        $order = ['Present', 'Absent', 'Late', 'Excused'];
+        $current = (string) ($this->marks[$studentId]['status'] ?? 'Present');
+        $index = array_search($current, $order, true);
+        $next = $order[$index === false ? 0 : ($index + 1) % count($order)];
+
+        $this->marks[$studentId]['status'] = $next;
+    }
+
     private function loadMarks(AttendanceSheet $sheet): void
     {
         $this->marks = [];

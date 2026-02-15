@@ -43,7 +43,7 @@
                         <button type="button" wire:click="save" class="btn-primary">
                             {{ $editingId ? 'Update Draft' : 'Save Draft' }}
                         </button>
-                        <button type="button" wire:click="clearForm" class="btn-outline">Clear</button>
+                        <button type="button" wire:click="clearForm" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold bg-white text-indigo-600 border-2 border-indigo-200 hover:bg-indigo-50">Clear</button>
                         @if ($editingId)
                             <button type="button" wire:click="publish({{ $editingId }})" class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
                                 Publish
@@ -78,9 +78,9 @@
 
                         @if ($isAdmin)
                             <div class="flex items-center gap-2">
-                                <button type="button" wire:click="edit({{ $a->id }})" class="btn-outline">Edit</button>
+                                <button type="button" wire:click="edit({{ $a->id }})" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold bg-white text-indigo-600 border-2 border-indigo-200 hover:bg-indigo-50">Edit</button>
                                 @if($a->published_at)
-                                    <button type="button" wire:click="unpublish({{ $a->id }})" class="btn-outline">Unpublish</button>
+                                    <button type="button" wire:click="unpublish({{ $a->id }})" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold bg-white text-indigo-600 border-2 border-indigo-200 hover:bg-indigo-50">Unpublish</button>
                                 @else
                                     <button type="button" wire:click="publish({{ $a->id }})" class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700">
                                         Publish

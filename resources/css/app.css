@@ -10,36 +10,19 @@
             "Segoe UI Emoji";
     }
 
-    /* Disable "scale" animations on button-like controls (Tailwind uses --tw-scale-* variables). */
-    :where(
-        button,
-        input[type='button'],
-        input[type='submit'],
-        input[type='reset'],
-        a[role='button'],
-        .btn-primary,
-        .btn-outline,
-        .btn-ghost,
-        .btn-success,
-        .btn-warning
-    ):is(:hover, :active, :focus) {
-        --tw-scale-x: 1 !important;
-        --tw-scale-y: 1 !important;
-        transform: translate(var(--tw-translate-x), var(--tw-translate-y))
-            rotate(var(--tw-rotate))
-            skewX(var(--tw-skew-x))
-            skewY(var(--tw-skew-y))
-            scaleX(var(--tw-scale-x))
-            scaleY(var(--tw-scale-y)) !important;
+    * {
+        box-sizing: border-box !important;
     }
 
-    /* Prevent button size changes on click */
-    button:active,
-    input[type='button']:active,
-    input[type='submit']:active,
-    a:active {
+    a, button {
+        outline: none !important;
         transform: none !important;
-        scale: 1 !important;
+    }
+
+    a:active, button:active, a:focus, button:focus {
+        outline: none !important;
+        transform: none !important;
+        box-shadow: none !important;
     }
 }
 
@@ -135,6 +118,17 @@
     50% { background-position: 100% 50%; }
 }
 
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 0.35;
+    }
+    100% {
+        transform: scale(2.2);
+        opacity: 0;
+    }
+}
+
 @layer components {
     .card {
         @apply rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition-all duration-200 hover:shadow-md;
@@ -182,23 +176,31 @@
     }
 
     .btn-primary {
-        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-brand-200 disabled:hover:bg-brand-200;
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-brand-200 disabled:hover:bg-brand-200;
     }
 
     .btn-outline {
-        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-brand-700 ring-1 ring-inset ring-brand-200 transition-colors hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+        background-color: white !important;
+        color: rgb(79 70 229) !important;
+        border: 2px solid rgb(199 210 254) !important;
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold;
+    }
+    
+    .btn-outline:hover {
+        background-color: rgb(238 242 255) !important;
+        border-color: rgb(199 210 254) !important;
     }
 
     .btn-ghost {
-        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2;
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2;
     }
     
     .btn-success {
-        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2;
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2;
     }
     
     .btn-warning {
-        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2;
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2;
     }
 
     .input {
@@ -230,5 +232,15 @@
         content: '';
         @apply absolute inset-0 rounded-xl;
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1) 100%);
+    }
+}
+
+@layer utilities {
+    .ripple {
+        position: absolute;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.45);
+        pointer-events: none;
+        animation: ripple 0.6s ease-out;
     }
 }

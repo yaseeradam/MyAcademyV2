@@ -21,6 +21,9 @@ class Take extends Component
     /** @var array<int,int> question_id => option_id */
     public array $answers = [];
 
+    /** @var array<int,string> question_id => text answer */
+    public array $theoryAnswers = [];
+
     public int $currentIndex = 0;
     public ?string $lastSavedAt = null;
 
@@ -172,6 +175,56 @@ class Take extends Component
             ->pluck('option_id', 'question_id')
             ->map(fn ($v) => (int) $v)
             ->all();
+
+        $this->theoryAnswers = CbtAnswer::query()
+            ->where('attempt_id', $this->attemptId)
+            ->whereNotNull('text_answer')
+            ->pluck('text_answer', 'question_id')
+            ->map(fn ($v) => (string) $v)
+            ->all();
+    }
+
+    public function updatedTheoryAnswers($value, $key): void
+    {
+        $questionId = (int) $key;
+        $attempt = $this->attempt;
+        if ($attempt->terminated_at || $attempt->submitted_at) {
+            return;
+        }
+        if (! $attempt->exam?->published_at) {
+            $this->dispatch('alert', message: 'Exam is paused by admin.', type: 'warning');
+            return;
+        }
+        if ($this->remainingSeconds() <= 0) {
+            $this->submitExam();
+            return;
+        }
+
+        $question = CbtQuestion::query()
+            ->whereKey($questionId)
+            ->where('exam_id', $attempt->exam_id)
+            ->first();
+
+        if (! $question || $question->type !== 'theory') {
+            return;
+        }
+
+        $answer = trim((string) $value);
+        CbtAnswer::query()->updateOrCreate(
+            [
+                'attempt_id' => $attempt->id,
+                'question_id' => $questionId,
+            ],
+            [
+                'option_id' => null,
+                'text_answer' => $answer !== '' ? $answer : null,
+                'awarded_marks' => null,
+                'is_correct' => null,
+            ]
+        );
+
+        $attempt->forceFill(['last_activity_at' => now()])->save();
+        $this->lastSavedAt = now()->format('H:i:s');
     }
 
     public function goTo(int $index): void
@@ -259,6 +312,8 @@ class Take extends Component
             ],
             [
                 'option_id' => $optionId,
+                'text_answer' => null,
+                'awarded_marks' => null,
                 'is_correct' => null,
             ]
         );
@@ -317,7 +372,26 @@ class Take extends Component
             $score = 0;
 
             foreach ($attempt->exam->questions as $question) {
+                $questionType = $question->type ?? 'mcq';
                 $maxScore += (int) ($question->marks ?? 0);
+
+                if ($questionType === 'theory') {
+                    $textAnswer = trim((string) ($this->theoryAnswers[$question->id] ?? ''));
+
+                    CbtAnswer::query()->updateOrCreate(
+                        [
+                            'attempt_id' => $attempt->id,
+                            'question_id' => $question->id,
+                        ],
+                        [
+                            'option_id' => null,
+                            'text_answer' => $textAnswer !== '' ? $textAnswer : null,
+                            'is_correct' => null,
+                        ]
+                    );
+
+                    continue;
+                }
 
                 $correctOptionId = (int) ($question->options->firstWhere('is_correct', true)?->id ?? 0);
                 $selectedOptionId = (int) ($this->answers[$question->id] ?? 0);
@@ -337,6 +411,8 @@ class Take extends Component
                     ],
                     [
                         'option_id' => $selectedOptionId > 0 ? $selectedOptionId : null,
+                        'text_answer' => null,
+                        'awarded_marks' => null,
                         'is_correct' => $isCorrect,
                     ]
                 );

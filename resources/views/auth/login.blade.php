@@ -83,29 +83,6 @@
                                 Sign in to Dashboard
                             </button>
                         </form>
-
-                        <!-- Demo Accounts -->
-                        <div class="mt-6 rounded-xl bg-white/5 backdrop-blur-sm p-4 ring-1 ring-white/10">
-                            <div class="text-xs font-bold text-white/70 uppercase tracking-wider mb-3">Demo Accounts</div>
-                            <div class="space-y-2 text-xs text-white/80">
-                                <div class="flex justify-between">
-                                    <span>Admin:</span>
-                                    <span class="font-mono">admin@myacademy.local</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Teacher:</span>
-                                    <span class="font-mono">teacher@myacademy.local</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Bursar:</span>
-                                    <span class="font-mono">bursar@myacademy.local</span>
-                                </div>
-                                <div class="mt-3 pt-3 border-t border-white/10 text-center">
-                                    <span class="text-white/70">Password:</span>
-                                    <span class="font-mono text-indigo-300 ml-2">password</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

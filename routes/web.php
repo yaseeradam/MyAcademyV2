@@ -12,6 +12,7 @@ use App\Http\Controllers\ReportCardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentsExportController;
 use App\Http\Controllers\MessageAttachmentController;
 use App\Http\Controllers\SchoolClassController;
 use App\Http\Controllers\SectionController;
@@ -117,12 +118,14 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         Route::get('/students/create', StudentsForm::class)->name('students.create');
         Route::get('/students/{student}/edit', StudentsForm::class)->name('students.edit');
+        Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
 
         Route::get('/teachers/create', [TeacherController::class, 'create'])->name('teachers.create');
         Route::post('/teachers', [TeacherController::class, 'store'])->name('teachers.store');
         Route::post('/teachers/{teacher}/photo', [TeacherController::class, 'updatePhoto'])->name('teachers.photo');
         Route::post('/teachers/{teacher}/allocations', [TeacherController::class, 'storeAllocation'])->name('teachers.allocations.store');
         Route::delete('/teachers/{teacher}/allocations/{allocation}', [TeacherController::class, 'destroyAllocation'])->name('teachers.allocations.destroy');
+        Route::delete('/teachers/{teacher}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
 
         Route::post('/classes', [SchoolClassController::class, 'store'])->name('classes.store');
         Route::patch('/classes/{class}', [SchoolClassController::class, 'update'])->name('classes.update');
@@ -156,6 +159,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
 
     Route::get('/students', StudentsIndex::class)->name('students.index');
+    Route::get('/students/export', [StudentsExportController::class, 'export'])->name('students.export');
     Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
 
     Route::middleware('role:admin,bursar')->group(function () {
@@ -177,7 +181,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::view('/teachers', 'pages.teachers.index')->name('teachers');
         Route::get('/teachers/{teacher}', [TeacherController::class, 'show'])->name('teachers.show');
         Route::get('/classes', [SchoolClassController::class, 'index'])->name('classes.index');
-        Route::get('/classes/{class}/subjects', ManageSubjects::class)->name('classes.subjects');
+        Route::get('/classes/{class}/subjects', ManageSubjects::class)->middleware('role:admin')->name('classes.subjects');
         Route::get('/subjects', [SubjectController::class, 'index'])->name('subjects.index');
         Route::get('/attendance', AttendanceIndex::class)->name('attendance');
         Route::view('/examination', 'pages.examination.index')->name('examination');

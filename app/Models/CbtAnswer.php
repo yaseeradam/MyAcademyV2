@@ -15,6 +15,8 @@ class CbtAnswer extends Model
         'question_id',
         'option_id',
         'is_correct',
+        'text_answer',
+        'awarded_marks',
     ];
 
     protected $casts = [
@@ -22,6 +24,8 @@ class CbtAnswer extends Model
         'question_id' => 'integer',
         'option_id' => 'integer',
         'is_correct' => 'boolean',
+        'text_answer' => 'string',
+        'awarded_marks' => 'integer',
     ];
 
     public function attempt(): BelongsTo
@@ -39,4 +43,3 @@ class CbtAnswer extends Model
         return $this->belongsTo(CbtOption::class, 'option_id');
     }
 }
-

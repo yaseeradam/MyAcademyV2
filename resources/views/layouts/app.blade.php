@@ -93,17 +93,19 @@
                             </a>
                             
                             @if ($user?->role === 'admin' || $user?->role === 'teacher')
-                                <a href="{{ route('teachers') }}" class="card-interactive p-4 text-center">
-                                    <div class="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-lg bg-orange-50 text-orange-600">
-                                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M2 7l10-5 10 5-10 5L2 7z" />
-                                            <path d="M12 12v10" />
-                                            <path d="M22 7v10l-10 5" />
-                                            <path d="M2 7v10l10 5" />
-                                        </svg>
-                                    </div>
-                                    <div class="text-xs font-semibold text-gray-700">Teachers</div>
-                                </a>
+                                @if ($user?->role === 'admin')
+                                    <a href="{{ route('teachers') }}" class="card-interactive p-4 text-center">
+                                        <div class="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-lg bg-orange-50 text-orange-600">
+                                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M2 7l10-5 10 5-10 5L2 7z" />
+                                                <path d="M12 12v10" />
+                                                <path d="M22 7v10l-10 5" />
+                                                <path d="M2 7v10l10 5" />
+                                            </svg>
+                                        </div>
+                                        <div class="text-xs font-semibold text-gray-700">Teachers</div>
+                                    </a>
+                                @endif
 
                                 <a href="{{ route('classes.index') }}" class="card-interactive p-4 text-center">
                                     <div class="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-lg bg-slate-50 text-slate-700">
@@ -293,7 +295,7 @@
                         <span class="sidebar-text">Students</span>
                     </a>
 
-                    @if ($user?->role === 'admin' || $user?->role === 'teacher')
+                    @if ($user?->role === 'admin')
                         <a href="{{ route('teachers') }}" class="{{ request()->routeIs('teachers') || request()->routeIs('teachers.*') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('teachers') || request()->routeIs('teachers.*') ? '' : 'text-orange-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -303,7 +305,9 @@
                             </svg>
                             <span class="sidebar-text">Teachers</span>
                         </a>
+                    @endif
 
+                    @if ($user?->role === 'admin' || $user?->role === 'teacher')
                         <a href="{{ route('classes.index') }}" class="{{ request()->routeIs('classes.*') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('classes.*') ? '' : 'text-purple-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -327,7 +331,9 @@
                             </svg>
                             <span class="sidebar-text">Score Entry</span>
                         </a>
+                    @endif
 
+                    @if ($user?->role === 'admin')
                         <a href="{{ route('results.broadsheet') }}" class="{{ request()->routeIs('results.broadsheet') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('results.broadsheet') ? '' : 'text-emerald-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -339,6 +345,16 @@
                             <span class="sidebar-text">Broadsheet</span>
                         </a>
 
+                        <a href="{{ route('examination') }}" class="{{ request()->routeIs('examination') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('examination') ? '' : 'text-indigo-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M9 11l3 3L22 4"/>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                            </svg>
+                            <span class="sidebar-text">Examinations</span>
+                        </a>
+                    @endif
+
+                    @if ($user?->role === 'admin' || $user?->role === 'teacher')
                         <a href="{{ route('attendance') }}" class="{{ request()->routeIs('attendance') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('attendance') ? '' : 'text-teal-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -356,6 +372,60 @@
                             <span class="ml-auto flex items-center">
                                 <livewire:messages.unread-badge />
                             </span>
+                        </a>
+
+                        @php($cbtHref = $cbtLocked ? route('more-features') : route('cbt.index'))
+                        @php($cbtIsActive = ! $cbtLocked && request()->routeIs('cbt.*'))
+                        <a href="{{ $cbtHref }}" class="{{ $cbtIsActive ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} {{ $cbtLocked ? 'opacity-60' : '' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                            <svg class="h-5 w-5 flex-shrink-0 {{ $cbtIsActive ? '' : 'text-violet-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <rect x="3" y="4" width="18" height="12" rx="2" ry="2" />
+                                <path d="M8 20h8" />
+                                <path d="M10 10l2 2 4-4" />
+                            </svg>
+                            <span class="sidebar-text">CBT</span>
+                            @if ($cbtLocked)
+                                <span class="ml-auto rounded-full bg-orange-100 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-orange-800">Locked</span>
+                            @endif
+                        </a>
+
+                        <a href="{{ route('events') }}" class="{{ request()->routeIs('events') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('events') ? '' : 'text-rose-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                            <span class="sidebar-text">Events</span>
+                        </a>
+
+                        <a href="{{ route('timetable') }}" class="{{ request()->routeIs('timetable') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('timetable') ? '' : 'text-sky-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                                <line x1="9" y1="4" x2="9" y2="22"/>
+                                <line x1="15" y1="4" x2="15" y2="22"/>
+                            </svg>
+                            <span class="sidebar-text">Timetable</span>
+                        </a>
+                    @endif
+
+                    @if ($user?->role === 'admin')
+                        <a href="{{ route('messages') }}" class="{{ request()->routeIs('messages') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('messages') ? '' : 'text-pink-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <span class="sidebar-text">Messages</span>
+                            <span class="ml-auto flex items-center">
+                                <livewire:messages.unread-badge />
+                            </span>
+                        </a>
+
+                        <a href="{{ route('certificates') }}" class="{{ request()->routeIs('certificates') ? 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-300' : 'text-gray-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:shadow-md' }} mb-1 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('certificates') ? '' : 'text-amber-500' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <circle cx="12" cy="8" r="7"/>
+                                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+                            </svg>
+                            <span class="sidebar-text">Certificates</span>
                         </a>
 
                     @php($cbtHref = $cbtLocked ? ($user?->role === 'admin' ? route('marketplace') : route('more-features')) : route('cbt.index'))

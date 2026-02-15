@@ -1,7 +1,7 @@
 <div class="space-y-6">
     <x-page-header title="Premium Devices" subtitle="Manage registered devices (max 2 removals per 30 days)." accent="settings">
         <x-slot:actions>
-            <a href="{{ route('settings') }}" class="btn-outline">Back</a>
+            <a href="{{ route('settings.index') }}" class="btn-outline">Back</a>
         </x-slot:actions>
     </x-page-header>
 
