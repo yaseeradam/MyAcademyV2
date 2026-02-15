@@ -241,3 +241,71 @@
         </div>
     </form>
 </div>
+
+@script
+<script>
+    $wire.on('validation-error', () => {
+        showModal('error', 'Validation Error', 'Please fix the validation errors before saving.');
+    });
+
+    $wire.on('upload-error', (event) => {
+        showModal('error', 'Upload Failed', event[0].message);
+    });
+
+    $wire.on('student-saved', (event) => {
+        const data = event[0];
+        const action = data.isNew ? 'created' : 'updated';
+        showModal(
+            'success',
+            `Student ${action.charAt(0).toUpperCase() + action.slice(1)} Successfully`,
+            `${data.name} (${data.admission}) has been ${action} successfully.`,
+            () => window.location.href = '{{ route('students.index') }}'
+        );
+    });
+
+    function showModal(type, title, message, onClose = null) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
+        modal.style.animation = 'fadeIn 0.2s ease-out';
+        
+        const colors = {
+            success: { bg: 'from-emerald-500 to-teal-500', icon: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+            error: { bg: 'from-rose-500 to-red-500', icon: 'M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }
+        };
+        
+        modal.innerHTML = `
+            <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full transform" style="animation: slideUp 0.3s ease-out">
+                <div class="bg-gradient-to-r ${colors[type].bg} p-6 rounded-t-3xl">
+                    <div class="flex items-center gap-4">
+                        <div class="flex-shrink-0">
+                            <svg class="h-12 w-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="${colors[type].icon}" />
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white">${title}</h3>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-700 text-lg leading-relaxed">${message}</p>
+                </div>
+                <div class="p-6 pt-0 flex gap-3">
+                    <button onclick="this.closest('.fixed').remove(); ${onClose ? 'arguments[0]()' : ''}" class="flex-1 bg-gradient-to-r ${colors[type].bg} text-white font-bold py-3 px-6 rounded-xl hover:shadow-lg transition-all">
+                        ${type === 'success' ? 'View Students' : 'Close'}
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        if (onClose) {
+            modal.querySelector('button').onclick = () => { modal.remove(); onClose(); };
+        }
+        
+        document.body.appendChild(modal);
+        modal.onclick = (e) => { if (e.target === modal) { modal.remove(); if (onClose) onClose(); } };
+    }
+</script>
+<style>
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+@endscript

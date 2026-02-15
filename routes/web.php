@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BillingReceiptController;
 use App\Http\Controllers\BillingExportController;
 use App\Http\Controllers\CbtExportController;
+use App\Http\Controllers\AdmissionFormController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BulkReportCardsController;
@@ -161,6 +162,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/students', StudentsIndex::class)->name('students.index');
     Route::get('/students/export', [StudentsExportController::class, 'export'])->name('students.export');
     Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
+    Route::get('/students/{student}/admission-form', [AdmissionFormController::class, 'download'])->name('students.admission-form');
 
     Route::middleware('role:admin,bursar')->group(function () {
         Route::get('/billing', BillingIndex::class)->middleware('permission:billing.transactions,fees.manage')->name('billing.index');

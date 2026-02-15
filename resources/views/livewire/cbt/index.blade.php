@@ -3,18 +3,18 @@
 @endphp
 
 <div class="space-y-6">
-    <div class="rounded-2xl bg-gradient-to-r from-rose-500 to-fuchsia-600 p-6 shadow-xl">
+    <div class="rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 p-6 shadow-xl">
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-white">CBT Exams</h1>
-                <p class="mt-1 text-sm text-pink-50">Create → Submit → Approve → Go Live</p>
+                <p class="mt-1 text-sm text-amber-50">Create → Submit → Approve → Go Live</p>
             </div>
             <div class="flex gap-2">
                 @if ($me?->role === 'teacher')
-                    <button wire:click="{{ $creating ? 'cancelCreate' : 'startCreate' }}" class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-pink-50">{{ $creating ? 'Close' : 'New Exam' }}</button>
+                    <button wire:click="{{ $creating ? 'cancelCreate' : 'startCreate' }}" class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-amber-600 hover:bg-amber-50">{{ $creating ? 'Close' : 'New Exam' }}</button>
                 @endif
                 @if ($me?->role === 'admin')
-                    <button wire:click="{{ $requesting ? 'cancelRequest' : 'startRequest' }}" class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-pink-50">{{ $requesting ? 'Close' : 'Request Teacher' }}</button>
+                    <button wire:click="{{ $requesting ? 'cancelRequest' : 'startRequest' }}" class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-amber-600 hover:bg-amber-50">{{ $requesting ? 'Close' : 'Request Teacher' }}</button>
                 @endif
             </div>
         </div>
@@ -35,7 +35,7 @@
     </div>
 
     @if ($requesting)
-        <div class="rounded-2xl border border-rose-200 bg-rose-50 p-6 shadow-lg">
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-lg">
             <div class="text-sm font-semibold text-gray-900">Request Teacher</div>
             <div class="mt-4 grid gap-4 lg:grid-cols-2">
                 <div class="lg:col-span-2">
@@ -104,7 +104,7 @@
     @endif
 
     @if ($creating)
-        <div class="rounded-2xl border border-rose-200 bg-rose-50 p-6 shadow-lg">
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-lg">
             <div class="text-sm font-semibold text-gray-900">Create Exam</div>
             <div class="mt-4 grid gap-4 lg:grid-cols-2">
                 <div class="lg:col-span-2">
@@ -188,7 +188,7 @@
                     <div><span class="font-semibold">{{ (int) $exam->questions_count }}</span> Questions</div>
                     <div><span class="font-semibold">{{ (int) $exam->attempts_count }}</span> Attempts</div>
                     @if ($exam->status === 'approved' && $exam->access_code)
-                        <div class="font-mono font-semibold text-rose-600">{{ $exam->access_code }}</div>
+                        <div class="font-mono font-semibold text-amber-600">{{ $exam->access_code }}</div>
                     @endif
                 </div>
                 

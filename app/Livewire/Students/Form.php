@@ -5,6 +5,7 @@ namespace App\Livewire\Students;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
@@ -117,8 +118,11 @@ class Form extends Component
             'guardian_phone' => ['nullable', 'string', 'max:30'],
             'guardian_address' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::in(['Active', 'Graduated', 'Expelled'])],
-            'passport' => ['nullable', 'image', 'max:2048'],
         ];
+
+        if ($this->passport) {
+            $rules['passport'] = ['image', 'max:2048'];
+        }
 
         if (!$this->auto_admission || $id) {
             $rules['admission_number'] = [
@@ -131,28 +135,48 @@ class Form extends Component
             $this->admission_number = $this->generateAdmissionNumber();
         }
 
-        $data = $this->validate($rules);
+        try {
+            $data = $this->validate($rules);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->dispatch('validation-error');
+            throw $e;
+        }
+
+        unset($data['passport']);
         $data['admission_number'] = $this->admission_number;
 
         $student = $this->student ?? new Student();
         $student->fill($data);
 
         if ($this->passport) {
-            $ext = $this->passport->getClientOriginalExtension() ?: 'jpg';
-            $filename = $data['admission_number'].'-'.now()->format('YmdHis').'.'.$ext;
-            $path = $this->passport->storeAs('passports', $filename, 'uploads');
-            $path = str_replace('\\', '/', $path);
+            try {
+                File::ensureDirectoryExists(public_path('uploads/passports'));
+                $ext = $this->passport->getClientOriginalExtension() ?: 'jpg';
+                $safeAdmission = preg_replace('/[^A-Za-z0-9_-]+/', '-', (string) $data['admission_number']);
+                $safeAdmission = trim((string) $safeAdmission, '-');
+                $safeAdmission = $safeAdmission !== '' ? $safeAdmission : 'student';
+                $filename = $safeAdmission.'-'.now()->format('YmdHis').'.'.$ext;
+                $path = $this->passport->storeAs('passports', $filename, 'uploads');
+                $path = str_replace('\\', '/', $path);
 
-            if ($student->exists && $student->passport_photo && $student->passport_photo !== $path) {
-                Storage::disk('uploads')->delete($student->passport_photo);
+                if ($student->exists && $student->passport_photo && $student->passport_photo !== $path) {
+                    Storage::disk('uploads')->delete($student->passport_photo);
+                }
+
+                $student->passport_photo = $path;
+            } catch (\Exception $e) {
+                $this->dispatch('upload-error', ['message' => 'Passport upload failed: ' . $e->getMessage()]);
+                return;
             }
-
-            $student->passport_photo = $path;
         }
 
         $student->save();
 
-        return redirect()->route('students.show', $student);
+        $this->dispatch('student-saved', [
+            'name' => $student->full_name,
+            'admission' => $student->admission_number,
+            'isNew' => !$this->student
+        ]);
     }
 
     public function render()

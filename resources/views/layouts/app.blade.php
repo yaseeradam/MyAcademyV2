@@ -554,6 +554,8 @@
         @livewireScripts
         @stack('scripts')
         
+        <x-notifications />
+        
         <script>
             const sidebar = document.getElementById('desktopSidebar');
             const mainContent = document.getElementById('mainContent');
