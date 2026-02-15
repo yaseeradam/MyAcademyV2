@@ -127,7 +127,7 @@
 @section('content')
     <div class="space-y-6">
         <section class="space-y-4">
-            <div class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 shadow-2xl transition-all duration-500 hover:shadow-slate-500/50">
+            <div class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-600 via-orange-600 to-orange-700 shadow-2xl transition-all duration-500 hover:shadow-amber-500/50">
                 <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
                 <div class="absolute right-0 top-0 h-96 w-96 -translate-y-32 translate-x-32 rounded-full bg-white/10"></div>
                 <div class="absolute left-0 bottom-0 h-64 w-64 -translate-x-24 translate-y-24 rounded-full bg-black/10"></div>
@@ -171,7 +171,7 @@
                             </div>
 
                             <div class="mt-6 flex flex-wrap gap-3">
-                                <a href="{{ route('attendance') }}" class="group/btn inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-indigo-600 shadow-lg transition-shadow duration-200 hover:shadow-xl">
+                                <a href="{{ route('attendance') }}" class="group/btn inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-amber-600 shadow-lg transition-shadow duration-200 hover:shadow-xl">
                                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M9 11l3 3L22 4"/>
                                         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>

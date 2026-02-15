@@ -81,11 +81,11 @@
             @forelse ($classes as $class)
                 @php
                     $palette = [
-                        ['from' => 'from-sky-400', 'via' => 'via-blue-500', 'to' => 'to-indigo-500', 'bg' => 'from-sky-50 to-blue-100/60', 'ring' => 'ring-sky-300/40', 'iconBg' => 'from-sky-400 to-sky-600', 'iconText' => 'text-sky-700', 'accent' => 'bg-sky-500', 'shadow' => 'shadow-sky-500/30', 'badge' => 'bg-sky-100 text-sky-700 ring-sky-200'],
+                        ['from' => 'from-amber-400', 'via' => 'via-orange-500', 'to' => 'to-orange-600', 'bg' => 'from-amber-50 to-orange-100/60', 'ring' => 'ring-amber-300/40', 'iconBg' => 'from-amber-400 to-orange-600', 'iconText' => 'text-amber-700', 'accent' => 'bg-amber-500', 'shadow' => 'shadow-amber-500/30', 'badge' => 'bg-amber-100 text-amber-700 ring-amber-200'],
                         ['from' => 'from-emerald-400', 'via' => 'via-teal-500', 'to' => 'to-cyan-500', 'bg' => 'from-emerald-50 to-teal-100/60', 'ring' => 'ring-emerald-300/40', 'iconBg' => 'from-emerald-400 to-emerald-600', 'iconText' => 'text-emerald-700', 'accent' => 'bg-emerald-500', 'shadow' => 'shadow-emerald-500/30', 'badge' => 'bg-emerald-100 text-emerald-700 ring-emerald-200'],
-                        ['from' => 'from-violet-400', 'via' => 'via-indigo-500', 'to' => 'to-blue-500', 'bg' => 'from-violet-50 to-indigo-100/60', 'ring' => 'ring-violet-300/40', 'iconBg' => 'from-violet-400 to-violet-600', 'iconText' => 'text-violet-700', 'accent' => 'bg-violet-500', 'shadow' => 'shadow-violet-500/30', 'badge' => 'bg-violet-100 text-violet-700 ring-violet-200'],
+                        ['from' => 'from-orange-400', 'via' => 'via-amber-500', 'to' => 'to-yellow-500', 'bg' => 'from-orange-50 to-amber-100/60', 'ring' => 'ring-orange-300/40', 'iconBg' => 'from-orange-400 to-amber-600', 'iconText' => 'text-orange-700', 'accent' => 'bg-orange-500', 'shadow' => 'shadow-orange-500/30', 'badge' => 'bg-orange-100 text-orange-700 ring-orange-200'],
                         ['from' => 'from-amber-400', 'via' => 'via-orange-500', 'to' => 'to-rose-500', 'bg' => 'from-amber-50 to-orange-100/60', 'ring' => 'ring-amber-300/40', 'iconBg' => 'from-amber-400 to-amber-600', 'iconText' => 'text-amber-700', 'accent' => 'bg-amber-500', 'shadow' => 'shadow-amber-500/30', 'badge' => 'bg-amber-100 text-amber-700 ring-amber-200'],
-                        ['from' => 'from-pink-400', 'via' => 'via-rose-500', 'to' => 'to-red-500', 'bg' => 'from-pink-50 to-rose-100/60', 'ring' => 'ring-pink-300/40', 'iconBg' => 'from-pink-400 to-pink-600', 'iconText' => 'text-pink-700', 'accent' => 'bg-pink-500', 'shadow' => 'shadow-pink-500/30', 'badge' => 'bg-pink-100 text-pink-700 ring-pink-200'],
+                        ['from' => 'from-yellow-400', 'via' => 'via-amber-500', 'to' => 'to-orange-500', 'bg' => 'from-yellow-50 to-amber-100/60', 'ring' => 'ring-yellow-300/40', 'iconBg' => 'from-yellow-400 to-amber-600', 'iconText' => 'text-yellow-700', 'accent' => 'bg-yellow-500', 'shadow' => 'shadow-yellow-500/30', 'badge' => 'bg-yellow-100 text-yellow-700 ring-yellow-200'],
                     ];
                     $scheme = $palette[$class->id % count($palette)];
                 @endphp
@@ -122,19 +122,34 @@
                         </div>
 
                         <div class="mt-6 grid grid-cols-2 gap-4">
-                            <a href="{{ route('classes.subjects', $class) }}" class="group/stat relative overflow-hidden rounded-2xl bg-white/80 px-5 py-4 ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:shadow-lg">
-                                <div class="absolute inset-0 bg-gradient-to-br {{ $scheme['from'] }} {{ $scheme['to'] }} opacity-0 transition-opacity duration-300 group-hover/stat:opacity-5"></div>
-                                <div class="relative">
-                                    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider {{ $scheme['iconText'] }}">
-                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                                        </svg>
-                                        Subjects
+                            @if ($user?->role === 'admin')
+                                <a href="{{ route('classes.subjects', $class) }}" class="group/stat relative overflow-hidden rounded-2xl bg-white/80 px-5 py-4 ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:shadow-lg">
+                                    <div class="absolute inset-0 bg-gradient-to-br {{ $scheme['from'] }} {{ $scheme['to'] }} opacity-0 transition-opacity duration-300 group-hover/stat:opacity-5"></div>
+                                    <div class="relative">
+                                        <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider {{ $scheme['iconText'] }}">
+                                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                            </svg>
+                                            Subjects
+                                        </div>
+                                        <div class="mt-2 text-3xl font-black tracking-tight text-slate-900">{{ number_format((int) $class->defaultSubjects->count()) }}</div>
                                     </div>
-                                    <div class="mt-2 text-3xl font-black tracking-tight text-slate-900">{{ number_format((int) $class->defaultSubjects->count()) }}</div>
+                                </a>
+                            @else
+                                <div class="group/stat relative overflow-hidden rounded-2xl bg-white/80 px-5 py-4 ring-1 ring-white/60 backdrop-blur-sm">
+                                    <div class="relative">
+                                        <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider {{ $scheme['iconText'] }}">
+                                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                            </svg>
+                                            Subjects
+                                        </div>
+                                        <div class="mt-2 text-3xl font-black tracking-tight text-slate-900">{{ number_format((int) $class->defaultSubjects->count()) }}</div>
+                                    </div>
                                 </div>
-                            </a>
+                            @endif
                             <div class="group/stat relative overflow-hidden rounded-2xl bg-white/80 px-5 py-4 ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:shadow-lg">
                                 <div class="absolute inset-0 bg-gradient-to-br {{ $scheme['from'] }} {{ $scheme['to'] }} opacity-0 transition-opacity duration-300 group-hover/stat:opacity-5"></div>
                                 <div class="relative">

@@ -192,15 +192,11 @@
                     </div>
                 </div>
 
-                <div class="card-padded">
-                    <div class="text-sm font-semibold text-slate-900">Assign Class & Subject</div>
-                    <div class="mt-1 text-sm text-slate-600">Allocate subjects to teach per class.</div>
+                @if ($user?->role === 'admin')
+                    <div class="card-padded">
+                        <div class="text-sm font-semibold text-slate-900">Assign Class & Subject</div>
+                        <div class="mt-1 text-sm text-slate-600">Allocate subjects to teach per class.</div>
 
-                    @if ($user?->role !== 'admin')
-                        <div class="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600 ring-1 ring-inset ring-slate-200">
-                            Only admins can manage allocations.
-                        </div>
-                    @else
                         @if ($classes->isEmpty() || $subjects->isEmpty())
                             <div class="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600 ring-1 ring-inset ring-slate-200">
                                 Create at least one class and one subject before assigning.
@@ -246,8 +242,8 @@
                                 Assign the same subject across multiple classes by repeating this form.
                             </div>
                         @endif
-                    @endif
-                </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

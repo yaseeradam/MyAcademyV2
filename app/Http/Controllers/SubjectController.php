@@ -11,9 +11,24 @@ class SubjectController extends Controller
 {
     public function index()
     {
-        $subjects = Subject::query()
-            ->orderBy('name')
-            ->get();
+        $user = auth()->user();
+
+        $subjectsQuery = Subject::query()->orderBy('name');
+
+        if ($user?->role === 'teacher') {
+            $subjectIds = \App\Models\SubjectAllocation::query()
+                ->where('teacher_id', $user->id)
+                ->pluck('subject_id')
+                ->unique();
+
+            if ($subjectIds->isEmpty()) {
+                return view('pages.subjects.index', ['subjects' => collect()]);
+            }
+
+            $subjectsQuery->whereIn('id', $subjectIds);
+        }
+
+        $subjects = $subjectsQuery->get();
 
         return view('pages.subjects.index', compact('subjects'));
     }

@@ -31,7 +31,7 @@
                     @error('surname') <div class="mt-1.5 text-xs font-semibold text-rose-700">{{ $message }}</div> @enderror
                 </div>
 
-                <button type="submit" class="w-full rounded-xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-600 px-6 py-2.5 text-sm font-black text-white shadow-lg transition-all hover:shadow-xl hover:scale-[1.02]">
+                <button type="submit" class="w-full rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-black text-white shadow-lg transition-all hover:bg-amber-600 hover:shadow-xl hover:scale-[1.02]">
                     Login
                 </button>
             </form>
