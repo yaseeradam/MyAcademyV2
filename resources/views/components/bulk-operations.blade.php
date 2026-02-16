@@ -72,12 +72,14 @@
 function bulkOperations() {
     return {
         selectedItems: [],
+        items: [],
         showModal: false,
         modalTitle: '',
         modalMessage: '',
         pendingAction: null,
         
         init() {
+            this.updateItems();
             // Listen for checkbox changes
             this.$watch('$el', () => {
                 this.updateSelectedItems();
@@ -87,6 +89,11 @@ function bulkOperations() {
             window.addEventListener('search-updated', (e) => {
                 this.clearSelection();
             });
+        },
+        
+        updateItems() {
+            const checkboxes = document.querySelectorAll('.checkbox-custom');
+            this.items = Array.from(checkboxes);
         },
         
         updateSelectedItems() {

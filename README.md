@@ -1,5 +1,15 @@
 # MyAcademy (Offline Edition)
 
+## ⚡ QUICK START - Just 3 Steps!
+
+1. **Install Laragon** - https://laragon.org/download/
+2. **Copy files** to `C:\laragon\www\`
+3. **Double-click** `MYACADEMY.bat` → Select option 1
+
+**Done!** See `QUICK_START.md` for details.
+
+---
+
 MyAcademy is an offline-first School Management System designed to run **100% on a local network (LAN)** for schools with limited internet access.
 
 ## LAN Deployment Model

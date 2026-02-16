@@ -501,10 +501,11 @@
                                 </div>
                             </a>
 
-                            <form method="POST" action="{{ route('logout') }}">
+                            <form method="POST" action="{{ route('logout') }}" id="logoutForm">
                                 @csrf
                                 <button
-                                    type="submit"
+                                    type="button"
+                                    onclick="confirmLogout()"
                                     class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
                                 >
                                     Logout
@@ -518,6 +519,9 @@
                     @yield('content')
                     {{ $slot ?? '' }}
                 </main>
+                
+                <!-- Global Modal -->
+                <livewire:global-modal />
             </div>
         </div>
 
@@ -525,6 +529,41 @@
         @stack('scripts')
         
         <x-notifications />
+        
+        <script>
+            function confirmLogout() {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
+                modal.style.animation = 'fadeIn 0.2s ease-out';
+                
+                modal.innerHTML = `
+                    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full transform" style="animation: slideUp 0.3s ease-out">
+                        <div class="bg-gradient-to-r from-slate-700 to-slate-900 p-6 rounded-t-3xl">
+                            <div class="flex items-center gap-4">
+                                <svg class="h-12 w-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <h3 class="text-2xl font-bold text-white">Confirm Logout</h3>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-gray-700 text-lg leading-relaxed">Are you sure you want to logout?</p>
+                        </div>
+                        <div class="p-6 pt-0 flex gap-3">
+                            <button onclick="document.getElementById('logoutForm').submit()" class="flex-1 bg-gradient-to-r from-slate-700 to-slate-900 text-white font-bold py-3 px-6 rounded-xl hover:shadow-lg transition-all">
+                                Yes, Logout
+                            </button>
+                            <button onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl hover:bg-gray-300 transition-all">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+            }
+        </script>
         
         <script>
             const sidebar = document.getElementById('desktopSidebar');

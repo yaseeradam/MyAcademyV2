@@ -5,6 +5,7 @@ namespace App\Livewire\Students;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
+use App\Traits\DispatchesModals;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -18,7 +19,7 @@ use Livewire\WithFileUploads;
 #[Title('Student')]
 class Form extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, DispatchesModals;
 
     public ?Student $student = null;
 
@@ -172,11 +173,17 @@ class Form extends Component
 
         $student->save();
 
-        $this->dispatch('student-saved', [
-            'name' => $student->full_name,
-            'admission' => $student->admission_number,
-            'isNew' => !$this->student
-        ]);
+        $isNew = !$this->student;
+        $this->dispatchSuccessModal(
+            $isNew ? 'Student Added' : 'Student Updated',
+            $isNew 
+                ? "Student {$student->full_name} ({$student->admission_number}) has been added successfully."
+                : "Student {$student->full_name} has been updated successfully."
+        );
+
+        if ($isNew) {
+            return $this->redirect(route('students.index'), navigate: true);
+        }
     }
 
     public function render()

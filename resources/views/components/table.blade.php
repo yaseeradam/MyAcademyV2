@@ -54,23 +54,30 @@ function enhancedTable(sortable = false, selectable = false) {
     return {
         loading: false,
         selectedItems: [],
+        items: [],
         sortField: null,
         sortDirection: 'asc',
         
         init() {
             if (selectable) {
+                this.updateItems();
                 this.updateSelectedItems();
             }
         },
         
+        updateItems() {
+            const checkboxes = this.$el.querySelectorAll('tbody .checkbox-custom');
+            this.items = Array.from(checkboxes);
+        },
+        
         toggleSelectAll(event) {
-            const checkboxes = this.$el.querySelectorAll('.checkbox-custom');
+            const checkboxes = this.$el.querySelectorAll('tbody .checkbox-custom');
             checkboxes.forEach(cb => cb.checked = event.target.checked);
             this.updateSelectedItems();
         },
         
         updateSelectedItems() {
-            const checkboxes = this.$el.querySelectorAll('.checkbox-custom:checked');
+            const checkboxes = this.$el.querySelectorAll('tbody .checkbox-custom:checked');
             this.selectedItems = Array.from(checkboxes).map(cb => cb.value);
         },
         

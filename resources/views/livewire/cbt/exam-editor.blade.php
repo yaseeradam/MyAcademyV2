@@ -15,10 +15,10 @@
 <div class="space-y-6" x-data="{ tab: '{{ $tab }}' }">
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 p-6 shadow-xl">
         <div class="relative">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-white">{{ $exam->title }}</h1>
-                    <div class="mt-2 flex items-center gap-2">
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
                         <x-status-badge variant="{{ $variant }}">{{ ucfirst($status) }}</x-status-badge>
                         @if ($status === 'approved' && $exam->access_code)
                             <span class="rounded-lg bg-white/20 px-3 py-1 text-xs font-black text-white backdrop-blur-sm">
@@ -27,7 +27,7 @@
                         @endif
                     </div>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
                     <a href="{{ route('cbt.index') }}" class="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/30">Back</a>
                     
                     @if ($canEdit)
@@ -49,7 +49,7 @@
                 </div>
             </div>
             
-            <div class="mt-6 flex gap-2 border-t border-white/20 pt-4">
+            <div class="mt-6 flex flex-wrap gap-2 border-t border-white/20 pt-4">
                 <button @click="tab = 'details'" :class="tab === 'details' ? 'bg-white text-violet-600' : 'bg-white/10 text-white hover:bg-white/20'" class="rounded-lg px-4 py-2 text-sm font-semibold transition">Details</button>
                 <button @click="tab = 'questions'" :class="tab === 'questions' ? 'bg-white text-violet-600' : 'bg-white/10 text-white hover:bg-white/20'" class="rounded-lg px-4 py-2 text-sm font-semibold transition">Questions</button>
                 @if ($status === 'approved')

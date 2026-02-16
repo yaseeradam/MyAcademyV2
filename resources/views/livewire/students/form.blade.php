@@ -244,15 +244,19 @@
 
 @script
 <script>
+    let progressModal = null;
+
     $wire.on('validation-error', () => {
         showModal('error', 'Validation Error', 'Please fix the validation errors before saving.');
     });
 
     $wire.on('upload-error', (event) => {
+        if (progressModal) progressModal.remove();
         showModal('error', 'Upload Failed', event[0].message);
     });
 
     $wire.on('student-saved', (event) => {
+        if (progressModal) progressModal.remove();
         const data = event[0];
         const action = data.isNew ? 'created' : 'updated';
         showModal(
@@ -262,6 +266,42 @@
             () => window.location.href = '{{ route('students.index') }}'
         );
     });
+
+    // Intercept form submission to show progress
+    document.addEventListener('livewire:init', () => {
+        Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
+            if (component.name === 'students.form') {
+                progressModal = showProgressModal();
+            }
+        });
+    });
+
+    function showProgressModal() {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
+        modal.style.animation = 'fadeIn 0.2s ease-out';
+        
+        modal.innerHTML = `
+            <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 transform" style="animation: slideUp 0.3s ease-out">
+                <div class="text-center">
+                    <div class="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                        <svg class="animate-spin h-8 w-8 text-white" viewBox="0 0 24 24" fill="none">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Saving Student...</h3>
+                    <p class="text-gray-600 mb-4">Please wait while we save the student information.</p>
+                    <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div class="progress-bar h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style="width: 0%; animation: progress 2s ease-in-out infinite"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        return modal;
+    }
 
     function showModal(type, title, message, onClose = null) {
         const modal = document.createElement('div');
@@ -307,5 +347,10 @@
 <style>
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes progress {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 90%; }
+    }
 </style>
 @endscript
