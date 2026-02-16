@@ -63,6 +63,10 @@
                 <div class="mt-2 text-sm text-gray-600">
                     Upload a backup zip. The system enters maintenance mode, replaces the database and uploads, then restores settings.
                 </div>
+                <div class="mt-2 text-xs text-gray-500">
+                    Max upload size: <span class="font-mono font-semibold">{{ ini_get('upload_max_filesize') }}</span> 
+                    (post_max_size: <span class="font-mono">{{ ini_get('post_max_size') }}</span>)
+                </div>
 
                 <form method="POST" action="{{ route('settings.restore') }}" enctype="multipart/form-data" class="mt-5 space-y-4" @submit="if(confirm('This will overwrite current data. Continue?')) { loading = true; return true; } return false;">
                     @csrf

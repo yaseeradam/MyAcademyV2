@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\SubjectAllocation;
+use App\Models\AttendanceMark;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -34,6 +35,10 @@ class StudentController extends Controller
         $photo = $student->passport_photo ? str_replace('\\', '/', (string) $student->passport_photo) : null;
 
         try {
+            AttendanceMark::query()
+                ->where('student_id', $student->id)
+                ->delete();
+
             $student->delete();
         } catch (QueryException $e) {
             return back()->withErrors(['student' => 'Unable to delete this student. Remove dependent records first.']);

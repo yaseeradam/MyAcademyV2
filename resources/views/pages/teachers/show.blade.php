@@ -29,6 +29,7 @@
                     {{ $teacher->is_active ? 'Active' : 'Inactive' }}
                 </x-status-badge>
                 @if ($user?->role === 'admin')
+                    <a href="{{ route('teachers.edit', $teacher) }}" class="btn-outline">Edit</a>
                     <form
                         method="POST"
                         action="{{ route('teachers.destroy', $teacher) }}"

@@ -123,7 +123,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
 
         Route::get('/teachers/create', [TeacherController::class, 'create'])->name('teachers.create');
+        Route::get('/teachers/{teacher}/edit', [TeacherController::class, 'edit'])->name('teachers.edit');
         Route::post('/teachers', [TeacherController::class, 'store'])->name('teachers.store');
+        Route::patch('/teachers/{teacher}', [TeacherController::class, 'update'])->name('teachers.update');
         Route::post('/teachers/{teacher}/photo', [TeacherController::class, 'updatePhoto'])->name('teachers.photo');
         Route::post('/teachers/{teacher}/allocations', [TeacherController::class, 'storeAllocation'])->name('teachers.allocations.store');
         Route::delete('/teachers/{teacher}/allocations/{allocation}', [TeacherController::class, 'destroyAllocation'])->name('teachers.allocations.destroy');

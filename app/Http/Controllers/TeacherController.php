@@ -71,6 +71,39 @@ class TeacherController extends Controller
         return view('pages.teachers.show', compact('teacher', 'allocations', 'classes', 'subjects'));
     }
 
+    public function edit(User $teacher)
+    {
+        abort_unless($teacher->role === 'teacher', 404);
+
+        return view('pages.teachers.edit', compact('teacher'));
+    }
+
+    public function update(Request $request, User $teacher)
+    {
+        abort_unless($teacher->role === 'teacher', 404);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($teacher->id)],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $teacher->name = $data['name'];
+        $teacher->email = $data['email'];
+        $teacher->is_active = (bool) ($data['is_active'] ?? false);
+
+        if (! empty($data['password'])) {
+            $teacher->password = $data['password'];
+        }
+
+        $teacher->save();
+
+        return redirect()
+            ->route('teachers.show', $teacher)
+            ->with('status', 'Teacher updated.');
+    }
+
     public function updatePhoto(Request $request, User $teacher)
     {
         abort_unless($teacher->role === 'teacher', 404);

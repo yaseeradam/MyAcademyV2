@@ -125,8 +125,16 @@ class BackupController extends Controller
         $broughtDown = false;
 
         $request->validate([
-            'backup' => ['required', 'file', 'mimes:zip'],
+            'backup' => ['required', 'file', 'mimes:zip', 'max:512000'],
         ]);
+
+        if (!$request->hasFile('backup')) {
+            return back()->withErrors(['backup' => 'No file was uploaded. Check your server upload_max_filesize and post_max_size settings.']);
+        }
+
+        if (!$request->file('backup')->isValid()) {
+            return back()->withErrors(['backup' => 'File upload failed. The file may be too large or corrupted.']);
+        }
 
         $tmpDir = storage_path('app/_restore_tmp/'.Str::random(10));
         File::ensureDirectoryExists($tmpDir);
