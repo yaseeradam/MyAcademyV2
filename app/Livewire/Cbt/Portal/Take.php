@@ -17,6 +17,7 @@ use Livewire\Component;
 class Take extends Component
 {
     public int $attemptId;
+    public string $examCode = '';
 
     /** @var array<int,int> question_id => option_id */
     public array $answers = [];
@@ -99,6 +100,7 @@ class Take extends Component
     public function mount(CbtAttempt $attempt): void
     {
         $this->attemptId = (int) $attempt->id;
+        $this->examCode = strtoupper(trim((string) request('code', '')));
 
         $attempt = $this->attempt;
 

@@ -109,7 +109,7 @@
                 </div>
 
                 <div class="mt-10">
-                    <a href="{{ route('cbt.student') }}" class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-8 py-4 text-base font-bold text-white shadow-md hover:bg-slate-800">
+                    <a href="{{ route('cbt.student', ['code' => $examCode]) }}" class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-8 py-4 text-base font-bold text-white shadow-md hover:bg-slate-800">
                         Back to Exams
                     </a>
                 </div>

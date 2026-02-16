@@ -137,8 +137,7 @@ class Start extends Component
         }
 
         if ($attempt->submitted_at) {
-            $this->addError('admissionNumber', 'You have already submitted this exam. Ask an admin to reset your attempt.');
-            return;
+            return redirect()->route('cbt.student.take', ['attempt' => $attempt, 'code' => $code]);
         }
 
         if (! $attempt->started_at) {
@@ -159,7 +158,7 @@ class Start extends Component
             }
         }
 
-        return redirect()->route('cbt.student.take', $attempt);
+        return redirect()->route('cbt.student.take', ['attempt' => $attempt, 'code' => $code]);
     }
 
     public function render()
