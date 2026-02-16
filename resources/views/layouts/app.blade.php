@@ -389,36 +389,6 @@
                                 <span class="ml-auto rounded-full bg-orange-100 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-orange-800">Locked</span>
                             @endif
                         </a>
-
-                        <a href="{{ route('events') }}" class="{{ request()->routeIs('events') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
-                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('events') ? 'text-white' : 'text-rose-600' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                <line x1="16" y1="2" x2="16" y2="6"/>
-                                <line x1="8" y1="2" x2="8" y2="6"/>
-                                <line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
-                            <span class="sidebar-text">Events</span>
-                        </a>
-
-                        <a href="{{ route('timetable') }}" class="{{ request()->routeIs('timetable') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
-                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('timetable') ? 'text-white' : 'text-cyan-600' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                <line x1="3" y1="10" x2="21" y2="10"/>
-                                <line x1="9" y1="4" x2="9" y2="22"/>
-                                <line x1="15" y1="4" x2="15" y2="22"/>
-                            </svg>
-                            <span class="sidebar-text">Timetable</span>
-                        </a>
-                    @endif
-
-                    @if ($user?->role === 'admin')
-                        <a href="{{ route('certificates') }}" class="{{ request()->routeIs('certificates') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
-                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('certificates') ? 'text-white' : 'text-amber-600' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <circle cx="12" cy="8" r="7"/>
-                                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
-                            </svg>
-                            <span class="sidebar-text">Certificates</span>
-                        </a>
                     @endif
 
                     @if ($user?->role === 'admin' || $user?->role === 'bursar')

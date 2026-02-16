@@ -33,6 +33,7 @@ use App\Livewire\Certificates\Index as CertificatesIndex;
 use App\Livewire\Events\Index as EventsIndex;
 use App\Livewire\Results\Entry as ResultsEntry;
 use App\Livewire\Results\Broadsheet as ResultsBroadsheet;
+use App\Livewire\Results\Submissions as ResultsSubmissions;
 use App\Livewire\Messages\Index as MessagesIndex;
 use App\Livewire\Marketplace\Index as MarketplaceIndex;
 use App\Livewire\Notifications\Index as NotificationsIndex;
@@ -196,6 +197,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         Route::get('/results/entry', ResultsEntry::class)->middleware('permission:results.entry,results.review')->name('results.entry');
         Route::get('/results/broadsheet', ResultsBroadsheet::class)->middleware('permission:results.broadsheet')->name('results.broadsheet');
+        Route::get('/results/submissions', ResultsSubmissions::class)->middleware('role:admin')->name('results.submissions');
         Route::get('/results/report-card/{student}', [ReportCardController::class, 'download'])->name('results.report-card');
 
         Route::get('/events', EventsIndex::class)->name('events');
