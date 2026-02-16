@@ -22,8 +22,8 @@
     $hasTheory = $questions->contains(fn ($q) => $q->type === 'theory');
 @endphp
 
-<div class="cbt-take-root h-screen overflow-hidden bg-gradient-to-br from-amber-50 via-white to-teal-50 text-slate-900" @if(! $submitted) wire:poll.1s="tick" @endif x-data="examKeyboard" @keydown.window="handleKeyPress($event)">
-    <div class="flex h-full flex-col">
+<div class="cbt-take-root min-h-screen bg-gradient-to-br from-amber-50 via-white to-teal-50 text-slate-900" @if(! $submitted) wire:poll.1s="tick" @endif x-data="examKeyboard" @keydown.window="handleKeyPress($event)">
+    <div class="flex flex-col">
         <div class="mx-auto w-full max-w-7xl px-6 pt-6">
             <div class="rounded-2xl bg-white/80 p-4 shadow-md ring-1 ring-slate-100 backdrop-blur">
                 <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -75,7 +75,7 @@
         </div>
         </div>
 
-        <div class="mx-auto w-full max-w-7xl flex-1 min-h-0 px-6 pb-6 pt-5">
+        <div class="mx-auto w-full max-w-7xl px-6 pb-6 pt-5">
         @if ($submitted)
             <div class="rounded-2xl bg-white p-7 shadow-lg ring-1 ring-slate-100">
                 <div>
@@ -115,9 +115,17 @@
                 </div>
             </div>
         @else
-            <div class="grid h-full gap-5 lg:grid-cols-[280px,1fr]">
-                <div class="space-y-5">
-                    <div class="rounded-2xl bg-white p-4 shadow-md ring-1 ring-slate-100">
+            <!-- Question Map Toggle (Mobile Only) -->
+            <button @click="$dispatch('toggle-question-map')" class="mb-4 flex w-full items-center justify-between rounded-xl bg-white p-3 shadow-md ring-1 ring-slate-100 lg:hidden">
+                <span class="text-sm font-bold text-slate-900">Question Map</span>
+                <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+
+            <div class="grid gap-5 lg:grid-cols-[280px,1fr]">
+                <div class="hidden space-y-5 lg:block" x-data="{ open: false }" @toggle-question-map.window="open = !open" :class="{ '!block fixed inset-0 z-50 bg-black/50 p-4': open }" @click.self="open = false">
+                    <div class="rounded-2xl bg-white p-4 shadow-md ring-1 ring-slate-100" :class="{ 'max-w-sm mx-auto': open }" @click.stop>
                         <div class="flex items-center justify-between">
                             <h3 class="text-sm font-bold text-slate-900">Question Map</h3>
                             <span class="text-xs font-semibold text-slate-500">Tap to jump</span>
@@ -155,10 +163,13 @@
                                 <span class="text-slate-700">Unanswered</span>
                             </div>
                         </div>
+                        <button @click="$dispatch('toggle-question-map')" class="mt-4 w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-bold text-white lg:hidden">
+                            Close
+                        </button>
                     </div>
                 </div>
 
-                <div class="h-full min-h-0">
+                <div>
                     @if (! $currentQuestion)
                         <div class="rounded-2xl bg-white p-8 shadow-md ring-1 ring-slate-100">
                             <p class="text-lg text-slate-500">No questions available.</p>
@@ -169,8 +180,8 @@
                             $currentQuestionType = strtolower((string) ($currentQuestion->type ?? 'mcq'));
                         @endphp
 
-                        <div class="h-full rounded-2xl bg-white p-5 shadow-md ring-1 ring-slate-100 flex flex-col">
-                            <div class="flex flex-1 flex-col gap-5 min-h-0">
+                        <div class="rounded-2xl bg-white p-5 shadow-md ring-1 ring-slate-100">
+                            <div class="flex flex-col gap-5">
                                 <div>
                                     <div class="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
                                         Question {{ $currentIndex + 1 }} of {{ $totalQuestions }}
@@ -194,7 +205,7 @@
                                         <div class="text-xs text-slate-500">Your response is saved automatically.</div>
                                     </div>
                                 @else
-                                    <div class="grid gap-2.5 sm:grid-cols-2 overflow-y-auto max-h-96">
+                                    <div class="space-y-2.5">
                                         @foreach ($currentQuestion->options as $opt)
                                             @php($isSelected = $selected === (int) $opt->id)
                                             <label
@@ -222,7 +233,7 @@
                                     </div>
                                 @endif
 
-                                <div class="mt-auto flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div class="text-sm font-semibold text-slate-700">
                                         <span class="text-emerald-600">{{ $answered }}</span> answered
                                         <span class="mx-2 text-slate-300">|</span>

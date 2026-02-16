@@ -462,6 +462,13 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
+                            <!-- Notification Permission Button -->
+                            <button onclick="requestNotificationPermission()" id="notificationBtn" class="rounded-xl p-2.5 text-gray-500 hover:bg-white hover:shadow-md transition-all duration-200" title="Enable notifications">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7zm-6 13a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2z" />
+                                </svg>
+                            </button>
+                            
                             <!-- Dark Mode Toggle -->
                             <button id="darkModeToggle" class="rounded-xl p-2.5 text-gray-500 hover:bg-white hover:shadow-md transition-all duration-200">
                                 <svg class="h-5 w-5 hidden dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -529,6 +536,63 @@
         @stack('scripts')
         
         <x-notifications />
+        
+        <script>
+            // Browser Push Notifications
+            if ('serviceWorker' in navigator && 'PushManager' in window) {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('Service Worker registered');
+                }).catch(function(error) {
+                    console.log('Service Worker registration failed:', error);
+                });
+            }
+
+            function requestNotificationPermission() {
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission().then(function(permission) {
+                        if (permission === 'granted') {
+                            showNotification('Notifications enabled!', 'success');
+                        }
+                    });
+                }
+            }
+
+            function sendBrowserNotification(title, body, url = '/') {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    const notification = new Notification(title, {
+                        body: body,
+                        icon: '/favicon.ico',
+                        badge: '/favicon.ico',
+                        vibrate: [200, 100, 200]
+                    });
+                    
+                    notification.onclick = function() {
+                        window.focus();
+                        if (url !== '/') window.location.href = url;
+                        notification.close();
+                    };
+                }
+            }
+
+            // Auto-request permission on first visit
+            window.addEventListener('load', function() {
+                if ('Notification' in window && Notification.permission === 'default') {
+                    setTimeout(requestNotificationPermission, 3000);
+                }
+            });
+
+            // Listen for Livewire events to trigger browser notifications
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('browser-notification', (event) => {
+                    const data = event[0] || event;
+                    sendBrowserNotification(
+                        data.title || 'MyAcademy',
+                        data.message || 'You have a new notification',
+                        data.url || '/'
+                    );
+                });
+            });
+        </script>
         
         <script>
             function confirmLogout() {
