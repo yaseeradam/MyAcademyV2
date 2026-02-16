@@ -346,14 +346,6 @@
                             </svg>
                             <span class="sidebar-text">Broadsheet</span>
                         </a>
-
-                        <a href="{{ route('examination') }}" class="{{ request()->routeIs('examination') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
-                            <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('examination') ? 'text-white' : 'text-teal-600' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M9 11l3 3L22 4"/>
-                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                            </svg>
-                            <span class="sidebar-text">Examinations</span>
-                        </a>
                     @endif
 
                     @if ($user?->role === 'admin' || $user?->role === 'teacher')

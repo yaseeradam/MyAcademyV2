@@ -18,9 +18,20 @@
             </div>
         </div>
 
-        @if (session('status'))
-            <div class="card-padded border border-green-200 bg-green-50/60 text-sm text-green-900">
-                {{ session('status') }}
+        @if (session('modal'))
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 2000)" class="fixed inset-0 z-50 flex items-center justify-center bg-black/20" x-transition>
+                <div class="rounded-2xl bg-white p-6 shadow-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-gray-900">{{ session('modal')['message'] }}</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         @endif
 

@@ -1,6 +1,8 @@
 	@php
 	    $user = auth()->user();
 	    $features = [
+	        ['route' => 'results.submissions', 'title' => 'Score Submissions', 'desc' => 'Review and approve teacher score submissions', 'icon' => 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11', 'color' => 'green', 'roles' => ['admin']],
+	        ['route' => 'examination', 'title' => 'Examinations', 'desc' => 'Manage exam schedules and settings', 'icon' => 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11', 'color' => 'teal', 'roles' => ['admin']],
 	        ['route' => 'marketplace', 'title' => 'Marketplace', 'desc' => 'Unlock premium modules (CBT, Savings/Loan)', 'icon' => 'M6 2l1.5 4h9L18 2M3 6h18l-1 16H4L3 6z', 'color' => 'purple', 'roles' => ['admin']],
 	        ['route' => 'users.index', 'title' => 'User Management', 'desc' => 'Create accounts, assign roles, activate/deactivate', 'icon' => 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', 'color' => 'indigo', 'roles' => ['admin']],
 	        ['route' => 'imports.index', 'title' => 'Imports', 'desc' => 'Bulk import students, teachers, and subjects (CSV)', 'icon' => 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3', 'color' => 'cyan', 'roles' => ['admin']],
@@ -17,6 +19,7 @@
 	    ];
 	    
 	    $colors = [
+	        'green' => ['bg' => 'from-green-50 to-emerald-50/60', 'icon' => 'from-green-500 to-emerald-600', 'shadow' => 'shadow-green-500/30'],
 	        'blue' => ['bg' => 'from-blue-50 to-cyan-50/60', 'icon' => 'from-blue-500 to-cyan-600', 'shadow' => 'shadow-blue-500/30'],
 	        'emerald' => ['bg' => 'from-emerald-50 to-teal-50/60', 'icon' => 'from-emerald-500 to-teal-600', 'shadow' => 'shadow-emerald-500/30'],
 	        'purple' => ['bg' => 'from-purple-50 to-pink-50/60', 'icon' => 'from-purple-500 to-pink-600', 'shadow' => 'shadow-purple-500/30'],
@@ -24,6 +27,7 @@
 	        'indigo' => ['bg' => 'from-indigo-50 to-blue-50/60', 'icon' => 'from-indigo-500 to-blue-600', 'shadow' => 'shadow-indigo-500/30'],
 	        'cyan' => ['bg' => 'from-cyan-50 to-sky-50/60', 'icon' => 'from-cyan-500 to-sky-600', 'shadow' => 'shadow-cyan-500/30'],
 	        'slate' => ['bg' => 'from-slate-50 to-gray-50/60', 'icon' => 'from-slate-600 to-gray-700', 'shadow' => 'shadow-slate-500/30'],
+	        'teal' => ['bg' => 'from-teal-50 to-cyan-50/60', 'icon' => 'from-teal-500 to-cyan-600', 'shadow' => 'shadow-teal-500/30'],
     ];
 @endphp
 

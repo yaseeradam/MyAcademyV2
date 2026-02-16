@@ -196,6 +196,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/cbt/exams/{exam}', CbtExamEditor::class)
             ->middleware(config('myacademy.premium_enforce', true) ? ['premium:cbt'] : [])
             ->name('cbt.exams.edit');
+        Route::get('/cbt/exams/{exam}/pdf', [CbtExportController::class, 'examPdf'])
+            ->middleware(config('myacademy.premium_enforce', true) ? ['premium:cbt'] : [])
+            ->name('cbt.exams.pdf');
 
         Route::get('/results/entry', ResultsEntry::class)->middleware('permission:results.entry,results.review')->name('results.entry');
         Route::get('/results/broadsheet', ResultsBroadsheet::class)->middleware('permission:results.broadsheet')->name('results.broadsheet');
@@ -236,8 +239,5 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/cbt/exams/{exam}/export', [CbtExportController::class, 'examResults'])
             ->middleware(config('myacademy.premium_enforce', true) ? ['premium:cbt'] : [])
             ->name('cbt.exams.export');
-        Route::get('/cbt/exams/{exam}/pdf', [CbtExportController::class, 'examPdf'])
-            ->middleware(config('myacademy.premium_enforce', true) ? ['premium:cbt'] : [])
-            ->name('cbt.exams.pdf');
     });
 });

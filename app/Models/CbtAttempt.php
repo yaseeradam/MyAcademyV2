@@ -26,6 +26,11 @@ class CbtAttempt extends Model
         'score',
         'max_score',
         'percent',
+        'theory_status',
+        'assigned_teacher_id',
+        'forwarded_at',
+        'marked_at',
+        'transferred_at',
     ];
 
     protected $casts = [
@@ -39,6 +44,10 @@ class CbtAttempt extends Model
         'score' => 'integer',
         'max_score' => 'integer',
         'percent' => 'decimal:2',
+        'assigned_teacher_id' => 'integer',
+        'forwarded_at' => 'datetime',
+        'marked_at' => 'datetime',
+        'transferred_at' => 'datetime',
     ];
 
     public function getRouteKeyName(): string
@@ -59,5 +68,10 @@ class CbtAttempt extends Model
     public function answers(): HasMany
     {
         return $this->hasMany(CbtAnswer::class, 'attempt_id');
+    }
+
+    public function assignedTeacher(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_teacher_id');
     }
 }

@@ -330,21 +330,34 @@
                                 @endif
 
                                     @if ($hasTheory && $attempt && ($attempt->submitted_at || $attempt->terminated_at))
+                                        @php
+                                            $theoryStatus = $attempt->theory_status ?? 'pending';
+                                        @endphp
+                                        @if ($theoryStatus === 'marked')
+                                            <span class="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">✓ Marked</span>
+                                        @elseif ($theoryStatus === 'forwarded')
+                                            <span class="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">→ Forwarded</span>
+                                        @else
+                                            <span class="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-800">Theory Pending</span>
+                                        @endif
                                         <button wire:click="startReview({{ $attempt->id }})" class="rounded bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-200">
-                                            Review Theory
+                                            {{ $theoryStatus === 'marked' ? 'View' : 'Mark' }}
                                         </button>
                                     @endif
                                     
                                     @if ($attempt)
-                                        <div class="relative" x-data="{ open: false }">
-                                            <button @click="open = !open" class="rounded bg-gray-200 px-3 py-1 text-xs font-semibold hover:bg-gray-300">•••</button>
-                                            <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 z-10 mt-1 w-40 rounded-lg bg-white shadow-xl ring-1 ring-black/5">
-                                                <button wire:click="startIpOverride({{ $attempt->id }})" @click="open = false" class="block w-full px-3 py-2 text-left text-xs font-semibold hover:bg-gray-50">Change IP</button>
-                                                @if ($state === 'in_progress')
-                                                    <button wire:click="forceSubmitAttempt({{ $attempt->id }})" @click="open = false" class="block w-full px-3 py-2 text-left text-xs font-semibold text-blue-700 hover:bg-blue-50">Force Submit</button>
-                                                    <button wire:click="terminateAttempt({{ $attempt->id }})" @click="open = false" class="block w-full px-3 py-2 text-left text-xs font-semibold text-orange-700 hover:bg-orange-50">Terminate</button>
+                                        <div class="relative">
+                                            <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="rounded bg-gray-200 px-3 py-1 text-xs font-semibold hover:bg-gray-300">•••</button>
+                                            <div class="absolute right-0 z-10 mt-1 hidden w-40 rounded-lg bg-white shadow-xl ring-1 ring-black/5">
+                                                @if ($hasTheory && ($attempt->submitted_at || $attempt->terminated_at) && ($attempt->theory_status ?? 'pending') !== 'marked')
+                                                    <button wire:click="startForward({{ $attempt->id }})" class="block w-full px-3 py-2 text-left text-xs font-semibold text-violet-700 hover:bg-violet-50">Forward to Teacher</button>
                                                 @endif
-                                                <button wire:click="resetAttempt({{ $attempt->id }})" @click="open = false" class="block w-full px-3 py-2 text-left text-xs font-semibold text-rose-700 hover:bg-rose-50">Reset</button>
+                                                <button wire:click="startIpOverride({{ $attempt->id }})" class="block w-full px-3 py-2 text-left text-xs font-semibold hover:bg-gray-50">Change IP</button>
+                                                @if ($state === 'in_progress')
+                                                    <button wire:click="forceSubmitAttempt({{ $attempt->id }})" class="block w-full px-3 py-2 text-left text-xs font-semibold text-blue-700 hover:bg-blue-50">Force Submit</button>
+                                                    <button wire:click="terminateAttempt({{ $attempt->id }})" class="block w-full px-3 py-2 text-left text-xs font-semibold text-orange-700 hover:bg-orange-50">Terminate</button>
+                                                @endif
+                                                <button wire:click="resetAttempt({{ $attempt->id }})" class="block w-full px-3 py-2 text-left text-xs font-semibold text-rose-700 hover:bg-rose-50">Reset</button>
                                             </div>
                                         </div>
                                     @endif
@@ -377,8 +390,18 @@
                                     <div class="text-sm font-semibold">{{ (int) $a->score }}/{{ (int) $a->max_score }}</div>
                                     <div class="text-xs text-gray-500">{{ number_format((float) $a->percent, 1) }}%</div>
                                     @if ($hasTheory && ($a->submitted_at || $a->terminated_at))
+                                        @php
+                                            $theoryStatus = $a->theory_status ?? 'pending';
+                                        @endphp
+                                        @if ($theoryStatus === 'marked')
+                                            <span class="mt-1 inline-block rounded bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">✓ Marked</span>
+                                        @elseif ($theoryStatus === 'forwarded')
+                                            <span class="mt-1 inline-block rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">→ Forwarded</span>
+                                        @else
+                                            <span class="mt-1 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-800">Pending</span>
+                                        @endif
                                         <button wire:click="startReview({{ $a->id }})" class="mt-2 rounded bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-200">
-                                            Review Theory
+                                            {{ $theoryStatus === 'marked' ? 'View' : 'Mark' }}
                                         </button>
                                     @endif
                                 </div>
@@ -441,20 +464,109 @@
     @endif
 
     <div x-show="tab === 'actions'" class="rounded-2xl bg-white p-6 shadow-lg">
-        <div class="space-y-2">
-            <a href="{{ route('cbt.exams.pdf', $exam) }}" target="_blank" class="block rounded-lg border bg-gray-50 p-3 text-sm font-semibold hover:bg-gray-100">📄 Download PDF</a>
+        <div class="space-y-3">
+            <a href="{{ route('cbt.exams.pdf', $exam) }}" target="_blank" class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 text-sm font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50">
+                <span class="text-xl">📄</span>
+                <span>Download PDF</span>
+            </a>
             @if ($status === 'approved' && $exam->access_code)
-                <a href="{{ route('cbt.student', ['code' => $exam->access_code]) }}" target="_blank" class="block rounded-lg border bg-gray-50 p-3 text-sm font-semibold hover:bg-gray-100">🎓 Student Portal</a>
+                <a href="{{ route('cbt.student', ['code' => $exam->access_code]) }}" target="_blank" class="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">
+                    <span class="text-xl">🎓</span>
+                    <span>Student Portal</span>
+                </a>
             @endif
             @if ($me?->role === 'admin')
-                <a href="{{ route('cbt.exams.export', $exam) }}" class="block rounded-lg border bg-gray-50 p-3 text-sm font-semibold hover:bg-gray-100">📊 Export CSV</a>
+                <a href="{{ route('cbt.exams.export', $exam) }}" class="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-700 transition hover:border-green-300 hover:bg-green-100">
+                    <span class="text-xl">📊</span>
+                    <span>Export CSV</span>
+                </a>
                 @if ($status === 'approved')
-                    <button wire:click="transferToResults" onclick="return confirm('Transfer CBT scores to academic results?')" class="block w-full rounded-lg border bg-emerald-50 p-3 text-left text-sm font-semibold text-emerald-700 hover:bg-emerald-100">✅ Transfer to Results</button>
-                    <button wire:click="endAllExams" onclick="return confirm('End this exam?')" class="block w-full rounded-lg border bg-orange-50 p-3 text-left text-sm font-semibold text-orange-700 hover:bg-orange-100">⏹️ End This Exam</button>
+                    <button wire:click="transferToResults" onclick="return confirm('Transfer CBT scores to academic results?')" class="flex w-full items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-left text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100">
+                        <span class="text-xl">✅</span>
+                        <span>Transfer to Results</span>
+                    </button>
+                    <button wire:click="endAllExams" onclick="return confirm('End this exam?')" class="flex w-full items-center gap-3 rounded-lg border border-orange-200 bg-orange-50 p-4 text-left text-sm font-semibold text-orange-700 transition hover:border-orange-300 hover:bg-orange-100">
+                        <span class="text-xl">⏹️</span>
+                        <span>End This Exam</span>
+                    </button>
                 @endif
-                <button wire:click="deleteExam" onclick="return confirm('Delete this exam?')" class="block w-full rounded-lg border bg-red-50 p-3 text-left text-sm font-semibold text-red-700 hover:bg-red-100">🗑️ Delete Exam</button>
+                <button wire:click="$set('showDeleteModal', true)" class="flex w-full items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-left text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100">
+                    <span class="text-xl">🗑️</span>
+                    <span>Delete Exam</span>
+                </button>
             @endif
         </div>
     </div>
 
+    @if ($showDeleteModal ?? false)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" x-data x-show="true" x-transition>
+            <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" @click.away="$wire.set('showDeleteModal', false)">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                        <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Delete Exam</h3>
+                        <p class="text-sm text-gray-600">This action cannot be undone</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4 rounded-lg bg-red-50 p-4">
+                    <p class="text-sm text-red-900">
+                        Are you sure you want to delete <strong>{{ $exam->title }}</strong>? 
+                        All questions, student attempts, and scores will be permanently removed.
+                    </p>
+                </div>
+
+                <div class="mt-6 flex gap-3">
+                    <button wire:click="$set('showDeleteModal', false)" class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button wire:click="deleteExam" class="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700">
+                        Delete Exam
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($showForwardModal ?? false)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" x-data x-show="true" x-transition>
+            <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" @click.away="$wire.set('showForwardModal', false)">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-violet-100">
+                        <svg class="h-6 w-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Forward to Teacher</h3>
+                        <p class="text-sm text-gray-600">Assign theory marking</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <label class="text-xs font-semibold uppercase text-gray-500">Select Teacher</label>
+                    <select wire:model="forwardTeacherId" class="mt-1 select w-full">
+                        <option value="">Choose teacher...</option>
+                        @foreach ($this->availableTeachers as $teacher)
+                            <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('forwardTeacherId') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
+                </div>
+
+                <div class="mt-6 flex gap-3">
+                    <button wire:click="cancelForward" class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button wire:click="confirmForward" class="flex-1 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
+                        Forward
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

@@ -45,7 +45,7 @@ class SubjectController extends Controller
             'code' => strtoupper(trim($data['code'])),
         ]);
 
-        return back()->with('status', 'Subject added.');
+        return back()->with('modal', ['type' => 'success', 'message' => 'Subject created successfully!']);
     }
 
     public function update(Request $request, Subject $subject)
@@ -60,7 +60,7 @@ class SubjectController extends Controller
             'code' => strtoupper(trim($data['code'])),
         ]);
 
-        return back()->with('status', 'Subject updated.');
+        return back()->with('modal', ['type' => 'success', 'message' => 'Subject updated successfully!']);
     }
 
     public function destroy(Subject $subject)
@@ -71,6 +71,6 @@ class SubjectController extends Controller
             return back()->withErrors(['subject' => 'Unable to delete this subject. Remove dependent records first.']);
         }
 
-        return back()->with('status', 'Subject deleted.');
+        return back()->with('modal', ['type' => 'success', 'message' => 'Subject deleted successfully!']);
     }
 }

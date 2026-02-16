@@ -50,7 +50,7 @@ class SchoolClassController extends Controller
             'level' => (int) $data['level'],
         ]);
 
-        return back()->with('status', 'Class added.');
+        return back()->with('modal', ['type' => 'success', 'message' => 'Class created successfully!']);
     }
 
     public function update(Request $request, SchoolClass $class)
@@ -65,7 +65,7 @@ class SchoolClassController extends Controller
             'level' => (int) $data['level'],
         ]);
 
-        return back()->with('status', 'Class updated.');
+        return back()->with('modal', ['type' => 'success', 'message' => 'Class updated successfully!']);
     }
 
     public function destroy(SchoolClass $class)
@@ -76,6 +76,6 @@ class SchoolClassController extends Controller
             return back()->withErrors(['class' => 'Unable to delete this class. Remove dependent records first.']);
         }
 
-        return back()->with('status', 'Class deleted.');
+        return back()->with('modal', ['type' => 'success', 'message' => 'Class deleted successfully!']);
     }
 }

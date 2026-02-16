@@ -65,6 +65,10 @@ class ExamEditor extends Component
     public ?int $reviewAttemptId = null;
     /** @var array<int, int|string|null> */
     public array $theoryMarks = [];
+    public bool $showDeleteModal = false;
+    public bool $showForwardModal = false;
+    public ?int $forwardAttemptId = null;
+    public ?int $forwardTeacherId = null;
 
     public function mount(CbtExam $exam): void
     {
@@ -190,6 +194,21 @@ class ExamEditor extends Component
             ->unique();
 
         return Subject::query()->whereIn('id', $ids)->orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function availableTeachers()
+    {
+        $exam = $this->exam;
+        return User::query()
+            ->where('role', 'teacher')
+            ->where('is_active', true)
+            ->whereIn('id', SubjectAllocation::query()
+                ->where('class_id', $exam->class_id)
+                ->where('subject_id', $exam->subject_id)
+                ->pluck('teacher_id'))
+            ->orderBy('name')
+            ->get();
     }
 
     public function updatedClassId(): void
@@ -595,7 +614,7 @@ class ExamEditor extends Component
 
         $attempt = CbtAttempt::query()
             ->where('exam_id', $this->examId)
-            ->with(['exam.questions.options', 'answers'])
+            ->with(['exam.questions.options', 'answers', 'student'])
             ->findOrFail((int) $this->reviewAttemptId);
 
         $questions = $attempt->exam->questions->where('type', 'theory');
@@ -649,9 +668,21 @@ class ExamEditor extends Component
             );
         }
 
+        $attempt->forceFill([
+            'theory_status' => 'marked',
+            'marked_at' => now(),
+        ])->save();
+
         $attempt->refresh();
         $this->recalculateAttemptScore($attempt);
 
+        Audit::log('cbt.theory_marked', $this->exam, [
+            'attempt_id' => $attempt->id,
+            'student_id' => $attempt->student_id,
+        ]);
+
+        $this->cancelReview();
+        unset($this->exam);
         $this->dispatch('alert', message: 'Theory marks saved.', type: 'success');
     }
 
@@ -1376,6 +1407,78 @@ class ExamEditor extends Component
         $this->dispatch('alert', message: "Transferred {$count} CBT score(s) to scores.", type: 'success');
     }
 
+    public function startForward(int $attemptId): void
+    {
+        $user = auth()->user();
+        abort_unless($user?->role === 'admin', 403);
+
+        $attempt = CbtAttempt::query()
+            ->where('exam_id', $this->examId)
+            ->findOrFail($attemptId);
+
+        if (!$attempt->submitted_at && !$attempt->terminated_at) {
+            $this->dispatch('alert', message: 'Only submitted attempts can be forwarded.', type: 'warning');
+            return;
+        }
+
+        $this->forwardAttemptId = $attempt->id;
+        $this->forwardTeacherId = null;
+        $this->showForwardModal = true;
+        $this->resetValidation();
+    }
+
+    public function cancelForward(): void
+    {
+        $this->showForwardModal = false;
+        $this->forwardAttemptId = null;
+        $this->forwardTeacherId = null;
+        $this->resetValidation();
+    }
+
+    public function confirmForward(): void
+    {
+        $user = auth()->user();
+        abort_unless($user?->role === 'admin', 403);
+        abort_unless($this->forwardAttemptId, 422);
+
+        $this->validate([
+            'forwardTeacherId' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $attempt = CbtAttempt::query()
+            ->where('exam_id', $this->examId)
+            ->with(['student', 'exam'])
+            ->findOrFail($this->forwardAttemptId);
+
+        $attempt->forceFill([
+            'theory_status' => 'forwarded',
+            'assigned_teacher_id' => (int) $this->forwardTeacherId,
+            'forwarded_at' => now(),
+        ])->save();
+
+        Audit::log('cbt.theory_forwarded', $this->exam, [
+            'attempt_id' => $attempt->id,
+            'teacher_id' => $this->forwardTeacherId,
+        ]);
+
+        InAppNotification::query()->create([
+            'user_id' => (int) $this->forwardTeacherId,
+            'title' => 'Theory marking assigned',
+            'body' => "Mark theory questions for {$attempt->student?->full_name} in {$attempt->exam->title}.",
+            'link' => route('cbt.exams.edit', $this->exam),
+        ]);
+
+        $this->dispatch('browser-notification', 
+            title: 'Theory marking assigned',
+            message: "Mark theory for {$attempt->student?->full_name}",
+            url: route('cbt.exams.edit', $this->exam)
+        );
+
+        $this->cancelForward();
+        unset($this->exam);
+        $this->dispatch('alert', message: 'Forwarded to teacher.', type: 'success');
+    }
+
     public function deleteExam()
     {
         $user = auth()->user();
@@ -1389,6 +1492,7 @@ class ExamEditor extends Component
 
         Audit::log('cbt.exam_deleted', null, ['exam_id' => $exam->id, 'title' => $exam->title]);
 
+        $this->showDeleteModal = false;
         $this->dispatch('alert', message: 'Exam deleted successfully.', type: 'success');
         return redirect()->route('cbt.index');
     }

@@ -9,20 +9,22 @@
                 font-family: DejaVu Sans, Arial, sans-serif;
                 font-size: 10px;
                 color: #1f2937;
-                padding: 15px;
-                background: #ffffff;
+                padding: 20px;
+                background: #f8fafc;
             }
             .page-border {
-                border: 4px double #1e40af;
-                padding: 15px;
-                min-height: 100%;
+                border: 5px solid #0ea5e9;
+                padding: 20px;
+                background: white;
+                box-shadow: 0 0 0 2px #bae6fd;
             }
             .header {
                 text-align: center;
-                border-bottom: 3px solid #3b82f6;
+                border-bottom: 4px solid #0ea5e9;
                 padding-bottom: 15px;
                 margin-bottom: 15px;
-                position: relative;
+                background: linear-gradient(to bottom, #f0f9ff 0%, white 100%);
+                padding-top: 10px;
             }
             .header-flex {
                 display: table;
@@ -30,7 +32,7 @@
             }
             .header-logo {
                 display: table-cell;
-                width: 90px;
+                width: 100px;
                 vertical-align: middle;
             }
             .header-center {
@@ -39,49 +41,53 @@
                 text-align: center;
             }
             .logo {
-                width: 75px;
-                height: 75px;
+                width: 80px;
+                height: 80px;
                 object-fit: contain;
-                border: 2px solid #3b82f6;
+                border: 3px solid #0ea5e9;
                 border-radius: 50%;
                 padding: 5px;
                 background: white;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             }
             .school-name {
-                font-size: 24px;
+                font-size: 26px;
                 font-weight: 700;
-                color: #1e40af;
-                margin-bottom: 3px;
+                color: #0c4a6e;
+                margin-bottom: 4px;
                 text-transform: uppercase;
-                letter-spacing: 1px;
+                letter-spacing: 2px;
             }
             .school-motto {
-                font-size: 9px;
-                color: #6b7280;
+                font-size: 10px;
+                color: #0369a1;
                 font-style: italic;
-                margin-bottom: 5px;
+                margin-bottom: 6px;
+                font-weight: 600;
             }
             .school-info {
                 font-size: 9px;
-                color: #4b5563;
+                color: #475569;
                 margin-bottom: 3px;
             }
             .report-title {
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: 700;
                 color: white;
-                background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-                padding: 8px;
+                background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                padding: 10px;
                 margin-top: 10px;
                 text-transform: uppercase;
-                letter-spacing: 2px;
-                border-radius: 4px;
+                letter-spacing: 3px;
+                border-radius: 6px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             }
             .session-bar {
-                background: #dbeafe;
-                padding: 8px;
+                background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+                padding: 10px;
                 margin-bottom: 15px;
-                border-left: 4px solid #3b82f6;
+                border-left: 5px solid #0ea5e9;
+                border-radius: 4px;
                 display: table;
                 width: 100%;
             }
@@ -92,22 +98,24 @@
                 padding: 0 10px;
             }
             .session-label {
-                color: #6b7280;
-                font-weight: 600;
+                color: #0369a1;
+                font-weight: 700;
                 display: block;
-                margin-bottom: 2px;
+                margin-bottom: 3px;
+                text-transform: uppercase;
+                font-size: 8px;
             }
             .session-value {
-                color: #1e40af;
+                color: #0c4a6e;
                 font-weight: 700;
-                font-size: 10px;
+                font-size: 11px;
             }
             .student-section {
-                background: #f9fafb;
-                border: 2px solid #e5e7eb;
-                border-radius: 6px;
-                padding: 12px;
-                margin-bottom: 12px;
+                background: linear-gradient(to right, #fef3c7 0%, #fde68a 100%);
+                border: 3px solid #f59e0b;
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 15px;
             }
             .student-grid {
                 display: table;
@@ -119,13 +127,13 @@
                 padding: 5px;
             }
             .student-row {
-                margin-bottom: 6px;
-                border-bottom: 1px dotted #d1d5db;
-                padding-bottom: 4px;
+                margin-bottom: 7px;
+                border-bottom: 1px solid #fbbf24;
+                padding-bottom: 5px;
             }
             .student-label {
-                color: #6b7280;
-                font-weight: 600;
+                color: #92400e;
+                font-weight: 700;
                 font-size: 9px;
                 display: inline-block;
                 width: 45%;
@@ -137,89 +145,98 @@
             }
             .passport-box {
                 display: table-cell;
-                width: 100px;
+                width: 110px;
                 text-align: center;
                 vertical-align: top;
             }
             .passport {
-                width: 90px;
-                height: 110px;
-                border: 2px solid #3b82f6;
-                border-radius: 4px;
+                width: 95px;
+                height: 115px;
+                border: 3px solid #f59e0b;
+                border-radius: 6px;
                 object-fit: cover;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             }
             .summary-cards {
                 display: table;
                 width: 100%;
-                margin-bottom: 12px;
+                margin-bottom: 15px;
             }
             .summary-card {
                 display: table-cell;
                 width: 25%;
-                padding: 8px;
+                padding: 5px;
             }
             .summary-inner {
-                background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-                border: 2px solid #3b82f6;
-                border-radius: 6px;
-                padding: 10px;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                border-radius: 8px;
+                padding: 12px;
                 text-align: center;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             }
             .summary-label {
                 font-size: 8px;
-                color: #1e40af;
+                color: white;
                 font-weight: 700;
                 text-transform: uppercase;
-                margin-bottom: 4px;
+                margin-bottom: 5px;
+                opacity: 0.9;
             }
             .summary-value {
-                font-size: 18px;
+                font-size: 20px;
                 font-weight: 700;
-                color: #1f2937;
+                color: white;
             }
             table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-bottom: 12px;
-                border: 2px solid #3b82f6;
+                margin-bottom: 15px;
+                border: 3px solid #0ea5e9;
+                border-radius: 8px;
+                overflow: hidden;
             }
             th {
-                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
                 color: white;
-                padding: 8px 6px;
+                padding: 10px 6px;
                 text-align: center;
                 font-size: 9px;
                 font-weight: 700;
                 text-transform: uppercase;
-                border: 1px solid #1e40af;
+                border: 1px solid #0284c7;
             }
             td {
-                padding: 6px;
-                border: 1px solid #d1d5db;
+                padding: 8px 6px;
+                border: 1px solid #cbd5e1;
                 text-align: center;
                 font-size: 9px;
             }
             tr:nth-child(even) {
-                background: #f9fafb;
+                background: #f1f5f9;
+            }
+            tr:hover {
+                background: #e0f2fe;
             }
             .subject-name {
                 text-align: left;
                 font-weight: 700;
-                color: #1f2937;
+                color: #0c4a6e;
             }
             .grading-key {
-                background: #fef3c7;
-                border: 2px solid #f59e0b;
-                border-radius: 6px;
-                padding: 10px;
-                margin-bottom: 12px;
+                background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                border: 3px solid #f59e0b;
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 15px;
             }
             .grading-title {
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: 700;
                 color: #92400e;
-                margin-bottom: 6px;
+                margin-bottom: 8px;
                 text-align: center;
+                text-transform: uppercase;
+                letter-spacing: 1px;
             }
             .grading-grid {
                 display: table;
@@ -229,38 +246,45 @@
                 display: table-cell;
                 text-align: center;
                 font-size: 8px;
-                padding: 4px;
+                padding: 5px;
+                font-weight: 600;
+                color: #78350f;
             }
             .grade-letter {
                 font-weight: 700;
                 color: #92400e;
+                font-size: 10px;
             }
             .remarks-section {
-                background: #f0fdf4;
-                border: 2px solid #10b981;
-                border-radius: 6px;
-                padding: 10px;
-                margin-bottom: 12px;
+                background: linear-gradient(to right, #d1fae5 0%, #a7f3d0 100%);
+                border: 3px solid #10b981;
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 15px;
             }
             .remarks-title {
                 font-size: 10px;
                 font-weight: 700;
                 color: #065f46;
-                margin-bottom: 6px;
+                margin-bottom: 8px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
             }
             .remarks-content {
-                min-height: 40px;
-                border-bottom: 1px solid #d1d5db;
-                padding: 5px;
+                min-height: 45px;
+                border-bottom: 2px solid #10b981;
+                padding: 6px;
                 font-size: 9px;
                 color: #1f2937;
+                background: white;
+                border-radius: 4px;
             }
             .attendance-box {
-                background: #fef2f2;
-                border: 2px solid #ef4444;
-                border-radius: 6px;
-                padding: 10px;
-                margin-bottom: 12px;
+                background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+                border: 3px solid #ef4444;
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 15px;
             }
             .attendance-grid {
                 display: table;
@@ -270,21 +294,25 @@
                 display: table-cell;
                 width: 33.33%;
                 text-align: center;
-                padding: 5px;
+                padding: 8px;
+                background: white;
+                margin: 0 5px;
+                border-radius: 6px;
             }
             .attendance-label {
                 font-size: 8px;
                 color: #991b1b;
-                font-weight: 600;
-                margin-bottom: 3px;
+                font-weight: 700;
+                margin-bottom: 5px;
+                text-transform: uppercase;
             }
             .attendance-value {
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 700;
                 color: #1f2937;
             }
             .signature-section {
-                margin-top: 20px;
+                margin-top: 25px;
                 display: table;
                 width: 100%;
             }
@@ -295,34 +323,42 @@
                 padding: 10px;
             }
             .signature-line {
-                border-top: 2px solid #1f2937;
-                margin-top: 35px;
-                padding-top: 5px;
-                font-size: 9px;
+                border-top: 2px solid #0c4a6e;
+                margin-top: 40px;
+                padding-top: 6px;
+                font-size: 10px;
                 font-weight: 700;
+                color: #0c4a6e;
             }
             .signature-label {
                 font-size: 8px;
-                color: #6b7280;
-                margin-top: 2px;
+                color: #64748b;
+                margin-top: 3px;
+                font-style: italic;
             }
             .footer {
-                margin-top: 15px;
-                padding-top: 10px;
-                border-top: 3px solid #3b82f6;
+                margin-top: 20px;
+                padding-top: 12px;
+                border-top: 4px solid #0ea5e9;
                 text-align: center;
                 font-size: 8px;
-                color: #6b7280;
+                color: #64748b;
+                background: #f8fafc;
+                padding-bottom: 8px;
+                border-radius: 4px;
             }
             .next-term {
-                background: #fef3c7;
-                border: 2px dashed #f59e0b;
-                padding: 8px;
+                background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                border: 3px solid #f59e0b;
+                padding: 10px;
                 text-align: center;
-                font-size: 9px;
+                font-size: 10px;
                 font-weight: 700;
                 color: #92400e;
-                margin-bottom: 10px;
+                margin-bottom: 12px;
+                border-radius: 6px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
             }
             .watermark {
                 position: fixed;
@@ -330,9 +366,9 @@
                 left: 50%;
                 transform: translate(-50%, -50%);
                 z-index: -1;
-                opacity: 0.05;
-                width: 400px;
-                height: 400px;
+                opacity: 0.03;
+                width: 450px;
+                height: 450px;
             }
         </style>
     </head>
@@ -536,8 +572,8 @@
                 <div class="remarks-content">{{ $teacherRemarks ?? 'No remarks provided.' }}</div>
             </div>
 
-            <div class="remarks-section" style="background: #ede9fe; border-color: #8b5cf6;">
-                <div class="remarks-title" style="color: #5b21b6;">PRINCIPAL'S REMARKS:</div>
+            <div class="remarks-section" style="background: linear-gradient(to right, #e9d5ff 0%, #d8b4fe 100%); border-color: #a855f7;">
+                <div class="remarks-title" style="color: #6b21a8;">PRINCIPAL'S REMARKS:</div>
                 <div class="remarks-content">{{ $principalRemarks ?? 'No remarks provided.' }}</div>
             </div>
 
