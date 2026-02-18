@@ -62,9 +62,11 @@
     </div>
 
     @if (session('status'))
-        <div class="card-padded border border-green-200 bg-green-50/60 text-sm text-green-900">
-            {{ session('status') }}
-        </div>
+        <x-alert type="success" :message="session('status')" />
+    @endif
+
+    @if (session('error'))
+        <x-alert type="error" :message="session('error')" />
     @endif
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -136,6 +138,10 @@
                 </svg>
             </x-slot:icon>
         </x-stat-card>
+    </div>
+
+    <div wire:loading.delay class="fixed top-20 right-6 z-50 rounded-xl bg-white shadow-lg border border-slate-200 p-4">
+        <x-loading size="sm" text="Loading..." />
     </div>
 
     <x-table sortable selectable :items="$this->students">
@@ -214,7 +220,7 @@
                         ->take(2)
                         ->implode('');
                 @endphp
-                <tr class="bg-white dark:bg-dark-100 hover:bg-gray-50 dark:hover:bg-dark-200 animate-fade-in">
+                <tr class="bg-white dark:bg-dark-100 hover:bg-gray-50 dark:hover:bg-dark-200 animate-fade-in" wire:loading.class="opacity-50">
                     <td class="px-5 py-4">
                         <input type="checkbox" class="checkbox-custom" value="{{ $student->id }}" />
                     </td>
@@ -265,8 +271,14 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="px-5 py-10 text-center text-sm text-gray-500">
-                        No students match your filters.
+                    <td colspan="8" class="px-5 py-12">
+                        <x-empty-state 
+                            icon="users" 
+                            title="No students found" 
+                            message="No students match your current filters. Try adjusting your search criteria or add a new student."
+                            :action="auth()->user()?->role === 'admin' ? route('students.create') : null"
+                            :actionText="auth()->user()?->role === 'admin' ? 'Add Student' : null"
+                        />
                     </td>
                 </tr>
             @endforelse

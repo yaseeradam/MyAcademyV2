@@ -255,6 +255,25 @@
                             @endif
                         </div>
                     </div>
+                    
+                    <!-- Mobile Logout Button -->
+                    <div class="border-t border-gray-100 p-4">
+                        <form method="POST" action="{{ route('logout') }}" id="mobileLogoutForm">
+                            @csrf
+                            <button
+                                type="button"
+                                onclick="confirmLogout('mobileLogoutForm')"
+                                class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 px-4 py-3 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
+                            >
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                    <polyline points="16 17 21 12 16 7"/>
+                                    <line x1="21" y1="12" x2="9" y2="12"/>
+                                </svg>
+                                Logout
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </aside>
             
@@ -609,7 +628,7 @@
         </script>
         
         <script>
-            function confirmLogout() {
+            function confirmLogout(formId = 'logoutForm') {
                 const modal = document.createElement('div');
                 modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
                 modal.style.animation = 'fadeIn 0.2s ease-out';
@@ -628,7 +647,7 @@
                             <p class="text-gray-700 text-lg leading-relaxed">Are you sure you want to logout?</p>
                         </div>
                         <div class="p-6 pt-0 flex gap-3">
-                            <button onclick="document.getElementById('logoutForm').submit()" class="flex-1 bg-gradient-to-r from-slate-700 to-slate-900 text-white font-bold py-3 px-6 rounded-xl hover:shadow-lg transition-all">
+                            <button onclick="document.getElementById('${formId}').submit()" class="flex-1 bg-gradient-to-r from-slate-700 to-slate-900 text-white font-bold py-3 px-6 rounded-xl hover:shadow-lg transition-all">
                                 Yes, Logout
                             </button>
                             <button onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl hover:bg-gray-300 transition-all">
@@ -668,6 +687,27 @@
                     sidebarTexts.forEach(text => text.classList.remove('hidden'));
                     toggleBtn.querySelector('svg').style.transform = 'rotate(0deg)';
                 }
+            });
+            
+            // Mobile sidebar
+            const mobileSidebar = document.getElementById('mobileSidebar');
+            const mobileOverlay = document.getElementById('mobileSidebarOverlay');
+            const openMobileBtn = document.getElementById('openMobileSidebar');
+            const closeMobileBtn = document.getElementById('closeMobileSidebar');
+            
+            openMobileBtn.addEventListener('click', () => {
+                mobileSidebar.classList.remove('-translate-x-full');
+                mobileOverlay.classList.remove('hidden');
+            });
+            
+            closeMobileBtn.addEventListener('click', () => {
+                mobileSidebar.classList.add('-translate-x-full');
+                mobileOverlay.classList.add('hidden');
+            });
+            
+            mobileOverlay.addEventListener('click', () => {
+                mobileSidebar.classList.add('-translate-x-full');
+                mobileOverlay.classList.add('hidden');
             });
         </script>
     </body>

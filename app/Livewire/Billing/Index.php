@@ -298,57 +298,66 @@ class Index extends Component
         $user = auth()->user();
         abort_unless($user && $user->hasPermission('fees.manage'), 403);
 
-        $data = $this->validate([
-            'feeClassId' => ['required', 'integer', Rule::exists('classes', 'id')],
-            'feeCategory' => ['required', 'string', 'max:255'],
-            'feeTerm' => ['nullable', 'integer', 'between:1,3'],
-            'feeSession' => ['nullable', 'string', 'max:9'],
-            'feeAmountDue' => ['required', 'numeric', 'min:0'],
-        ]);
-
-        if ($this->editingFeeId) {
-            $fee = FeeStructure::query()->findOrFail($this->editingFeeId);
-            $fee->update([
-                'class_id' => (int) $data['feeClassId'],
-                'category' => trim((string) $data['feeCategory']),
-                'term' => $data['feeTerm'] ? (int) $data['feeTerm'] : null,
-                'session' => $data['feeSession'] ? trim((string) $data['feeSession']) : null,
-                'amount_due' => $data['feeAmountDue'],
+        try {
+            $data = $this->validate([
+                'feeClassId' => ['required', 'integer', Rule::exists('classes', 'id')],
+                'feeCategory' => ['required', 'string', 'max:255'],
+                'feeTerm' => ['nullable', 'integer', 'between:1,3'],
+                'feeSession' => ['nullable', 'string', 'max:9'],
+                'feeAmountDue' => ['required', 'numeric', 'min:0'],
+            ], [
+                'feeClassId.required' => 'Please select a class.',
+                'feeCategory.required' => 'Please enter a fee category.',
+                'feeAmountDue.required' => 'Please enter the amount due.',
+                'feeAmountDue.min' => 'Amount must be greater than zero.',
             ]);
 
-            Audit::log('fees.structure_updated', $fee, [
-                'class_id' => $fee->class_id,
-                'category' => $fee->category,
-                'term' => $fee->term,
-                'session' => $fee->session,
-                'amount_due' => (string) $fee->amount_due,
-            ]);
-        } else {
-            $fee = FeeStructure::query()->updateOrCreate(
-                [
+            if ($this->editingFeeId) {
+                $fee = FeeStructure::query()->findOrFail($this->editingFeeId);
+                $fee->update([
                     'class_id' => (int) $data['feeClassId'],
                     'category' => trim((string) $data['feeCategory']),
                     'term' => $data['feeTerm'] ? (int) $data['feeTerm'] : null,
                     'session' => $data['feeSession'] ? trim((string) $data['feeSession']) : null,
-                ],
-                [
                     'amount_due' => $data['feeAmountDue'],
-                ]
-            );
+                ]);
 
-            Audit::log('fees.structure_saved', $fee, [
-                'class_id' => $fee->class_id,
-                'category' => $fee->category,
-                'term' => $fee->term,
-                'session' => $fee->session,
-                'amount_due' => (string) $fee->amount_due,
-            ]);
+                Audit::log('fees.structure_updated', $fee, [
+                    'class_id' => $fee->class_id,
+                    'category' => $fee->category,
+                    'term' => $fee->term,
+                    'session' => $fee->session,
+                    'amount_due' => (string) $fee->amount_due,
+                ]);
+            } else {
+                $fee = FeeStructure::query()->updateOrCreate(
+                    [
+                        'class_id' => (int) $data['feeClassId'],
+                        'category' => trim((string) $data['feeCategory']),
+                        'term' => $data['feeTerm'] ? (int) $data['feeTerm'] : null,
+                        'session' => $data['feeSession'] ? trim((string) $data['feeSession']) : null,
+                    ],
+                    [
+                        'amount_due' => $data['feeAmountDue'],
+                    ]
+                );
+
+                Audit::log('fees.structure_saved', $fee, [
+                    'class_id' => $fee->class_id,
+                    'category' => $fee->category,
+                    'term' => $fee->term,
+                    'session' => $fee->session,
+                    'amount_due' => (string) $fee->amount_due,
+                ]);
+            }
+
+            $this->cancelEditFee();
+            unset($this->feeStructures);
+
+            $this->dispatch('alert', message: 'Fee structure saved successfully!', type: 'success');
+        } catch (\Exception $e) {
+            $this->dispatch('alert', message: 'Failed to save fee structure. Please try again.', type: 'error');
         }
-
-        $this->cancelEditFee();
-        unset($this->feeStructures);
-
-        $this->dispatch('alert', message: 'Fee structure saved.', type: 'success');
     }
 
     public function deleteFeeStructure(int $feeId): void
@@ -375,47 +384,57 @@ class Index extends Component
         $user = auth()->user();
         abort_unless($user && $user->hasPermission('billing.transactions'), 403);
 
-        $data = $this->validate([
-            'studentId' => [
-                Rule::requiredIf(fn () => $this->type === 'Income'),
-                'nullable',
-                'integer',
-                Rule::exists('students', 'id'),
-            ],
-            'type' => ['required', Rule::in(['Income', 'Expense'])],
-            'category' => ['required', 'string', 'max:255'],
-            'term' => ['nullable', 'integer', 'between:1,3'],
-            'session' => ['nullable', 'string', 'max:9'],
-            'paymentMethod' => ['nullable', Rule::in(['Cash', 'Transfer', 'POS'])],
-            'amountPaid' => ['required', 'numeric', 'min:0'],
-            'date' => ['required', 'date'],
-        ]);
+        try {
+            $data = $this->validate([
+                'studentId' => [
+                    Rule::requiredIf(fn () => $this->type === 'Income'),
+                    'nullable',
+                    'integer',
+                    Rule::exists('students', 'id'),
+                ],
+                'type' => ['required', Rule::in(['Income', 'Expense'])],
+                'category' => ['required', 'string', 'max:255'],
+                'term' => ['nullable', 'integer', 'between:1,3'],
+                'session' => ['nullable', 'string', 'max:9'],
+                'paymentMethod' => ['nullable', Rule::in(['Cash', 'Transfer', 'POS'])],
+                'amountPaid' => ['required', 'numeric', 'min:0'],
+                'date' => ['required', 'date'],
+            ], [
+                'studentId.required' => 'Please select a student for income transactions.',
+                'studentId.exists' => 'The selected student does not exist.',
+                'amountPaid.required' => 'Please enter the amount paid.',
+                'amountPaid.min' => 'Amount must be greater than zero.',
+                'date.required' => 'Please select a transaction date.',
+            ]);
 
-        $transaction = Transaction::query()->create([
-            'student_id' => $data['studentId'],
-            'type' => $data['type'],
-            'category' => $data['category'],
-            'term' => $data['type'] === 'Income' ? $data['term'] : null,
-            'session' => $data['type'] === 'Income' ? $data['session'] : null,
-            'payment_method' => $data['type'] === 'Income' ? $data['paymentMethod'] : null,
-            'amount_paid' => $data['amountPaid'],
-            'date' => Carbon::parse($data['date'])->toDateString(),
-        ]);
+            $transaction = Transaction::query()->create([
+                'student_id' => $data['studentId'],
+                'type' => $data['type'],
+                'category' => $data['category'],
+                'term' => $data['type'] === 'Income' ? $data['term'] : null,
+                'session' => $data['type'] === 'Income' ? $data['session'] : null,
+                'payment_method' => $data['type'] === 'Income' ? $data['paymentMethod'] : null,
+                'amount_paid' => $data['amountPaid'],
+                'date' => Carbon::parse($data['date'])->toDateString(),
+            ]);
 
-        Audit::log('billing.transaction_created', $transaction, [
-            'type' => $transaction->type,
-            'student_id' => $transaction->student_id,
-            'category' => $transaction->category,
-            'term' => $transaction->term,
-            'session' => $transaction->session,
-            'amount_paid' => (string) $transaction->amount_paid,
-            'payment_method' => $transaction->payment_method,
-        ]);
+            Audit::log('billing.transaction_created', $transaction, [
+                'type' => $transaction->type,
+                'student_id' => $transaction->student_id,
+                'category' => $transaction->category,
+                'term' => $transaction->term,
+                'session' => $transaction->session,
+                'amount_paid' => (string) $transaction->amount_paid,
+                'payment_method' => $transaction->payment_method,
+            ]);
 
-        $this->reset(['studentId', 'amountPaid']);
-        $this->amountPaid = '';
+            $this->reset(['studentId', 'amountPaid']);
+            $this->amountPaid = '';
 
-        $this->dispatch('alert', message: 'Transaction saved.', type: 'success');
+            $this->dispatch('alert', message: 'Transaction saved successfully!', type: 'success');
+        } catch (\Exception $e) {
+            $this->dispatch('alert', message: 'Failed to save transaction. Please try again.', type: 'error');
+        }
     }
 
     public function startVoid(int $transactionId): void

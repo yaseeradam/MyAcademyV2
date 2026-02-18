@@ -184,11 +184,19 @@
     @push('scripts')
         <script>
             document.addEventListener('livewire:init', () => {
-                if (!window.Livewire) return;
-                window.Livewire.on('open-url', (payload) => {
-                    const url = payload?.url || payload;
-                    if (!url) return;
-                    window.open(url, '_blank', 'noopener');
+                Livewire.on('open-url', (event) => {
+                    const data = event[0] || event;
+                    const url = data?.url || data;
+                    if (url) {
+                        window.open(url, '_blank');
+                    }
+                });
+                
+                Livewire.on('alert', (event) => {
+                    const data = event[0] || event;
+                    if (data?.message) {
+                        alert(data.message);
+                    }
                 });
             });
         </script>
