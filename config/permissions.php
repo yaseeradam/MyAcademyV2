@@ -54,6 +54,13 @@ return [
             'label' => 'Access messaging',
             'roles' => ['admin', 'teacher', 'bursar'],
         ],
+        'data_collection.submit' => [
+            'label' => 'Submit weekly data collection',
+            'roles' => ['admin', 'teacher'],
+        ],
+        'data_collection.review' => [
+            'label' => 'Review data collection submissions',
+            'roles' => ['admin'],
+        ],
     ],
 ];
-

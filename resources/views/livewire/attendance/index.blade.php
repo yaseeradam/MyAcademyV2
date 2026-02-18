@@ -1,99 +1,295 @@
 <div class="space-y-6">
-    <x-page-header title="Attendance" subtitle="Take daily attendance for your class" accent="attendance" />
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900">Attendance Management</h2>
+            <p class="text-slate-600 text-sm mt-1">Mark and track student attendance</p>
+        </div>
+        <button
+            wire:click="$set('showModal', true)"
+            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-bold shadow-lg"
+        >
+            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            Mark Student Attendance
+        </button>
+    </div>
 
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="card-padded relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-3 opacity-10">
+                <svg class="h-20 w-20 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="relative">
+                <div class="flex items-center mb-2">
+                    <div class="p-2 rounded-lg bg-emerald-50 mr-2">
+                        <svg class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-semibold text-slate-600">Present Today</h3>
+                </div>
+                <div class="text-3xl font-bold text-slate-900 mb-1">{{ $this->markCounts['Present'] ?? 0 }}</div>
+                <p class="text-xs text-emerald-600 font-semibold">Students present</p>
+            </div>
+        </div>
+
+        <div class="card-padded relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-3 opacity-10">
+                <svg class="h-20 w-20 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="relative">
+                <div class="flex items-center mb-2">
+                    <div class="p-2 rounded-lg bg-red-50 mr-2">
+                        <svg class="h-4 w-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-semibold text-slate-600">Absent Today</h3>
+                </div>
+                <div class="text-3xl font-bold text-slate-900 mb-1">{{ $this->markCounts['Absent'] ?? 0 }}</div>
+                <p class="text-xs text-red-600 font-semibold">Students absent</p>
+            </div>
+        </div>
+
+        <div class="card-padded relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-3 opacity-10">
+                <svg class="h-20 w-20 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="relative">
+                <div class="flex items-center mb-2">
+                    <div class="p-2 rounded-lg bg-amber-50 mr-2">
+                        <svg class="h-4 w-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-semibold text-slate-600">Late Today</h3>
+                </div>
+                <div class="text-3xl font-bold text-slate-900 mb-1">{{ $this->markCounts['Late'] ?? 0 }}</div>
+                <p class="text-xs text-amber-600 font-semibold">Students late</p>
+            </div>
+        </div>
+
+        <div class="card-padded relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-3 opacity-10">
+                <svg class="h-20 w-20 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <div class="relative">
+                <div class="flex items-center mb-2">
+                    <div class="p-2 rounded-lg bg-purple-50 mr-2">
+                        <svg class="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-semibold text-slate-600">Excused Today</h3>
+                </div>
+                <div class="text-3xl font-bold text-slate-900 mb-1">{{ $this->markCounts['Excused'] ?? 0 }}</div>
+                <p class="text-xs text-purple-600 font-semibold">Students excused</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
     <div class="card-padded">
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
-            <div class="lg:col-span-2">
-                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Class</label>
-                <select wire:model.live="classId" class="mt-2 select">
-                    <option value="">Choose class</option>
-                    @foreach ($this->classes as $class)
-                        <option value="{{ $class->id }}">{{ $class->name }}</option>
-                    @endforeach
-                </select>
+        <div class="flex items-center gap-4 flex-wrap">
+            <div class="flex items-center text-slate-700">
+                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+                <label class="text-sm font-bold">View Attendance for:</label>
             </div>
-
-            <div>
-                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Date</label>
-                <input wire:model.live="date" type="date" class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500" />
-            </div>
-
-            <div>
-                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Term</label>
-                <select wire:model.live="term" class="mt-2 select">
-                    <option value="1">Term 1</option>
-                    <option value="2">Term 2</option>
-                    <option value="3">Term 3</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Session</label>
-                <input wire:model.live="session" type="text" placeholder="2025/2026" class="mt-2 input-compact" />
-            </div>
-        </div>
-
-        <div class="mt-4 flex flex-wrap items-center gap-3">
-            <button type="button" wire:click="start" class="btn-primary" @disabled(! $classId)>
-                Load Students
-            </button>
-            <button type="button" wire:click="save" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold bg-white text-green-700 border-2 border-green-200 hover:bg-green-50" @disabled(! $classId)>
-                Save Attendance
-            </button>
-
-            <div class="ml-auto flex flex-wrap items-center gap-2">
-                <button type="button" wire:click="markAll('Present')" class="rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 hover:bg-green-100" @disabled(! $classId)>
-                    All Present
-                </button>
-                <button type="button" wire:click="markAll('Absent')" class="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100" @disabled(! $classId)>
-                    All Absent
-                </button>
-            </div>
-        </div>
-
-        <div class="mt-3 flex flex-wrap gap-2 text-xs">
-            <x-status-badge variant="success">Present: {{ $this->markCounts['Present'] ?? 0 }}</x-status-badge>
-            <x-status-badge variant="warning">Absent: {{ $this->markCounts['Absent'] ?? 0 }}</x-status-badge>
-            <x-status-badge variant="info">Late: {{ $this->markCounts['Late'] ?? 0 }}</x-status-badge>
-            <x-status-badge variant="default">Excused: {{ $this->markCounts['Excused'] ?? 0 }}</x-status-badge>
+            <input wire:model.live="date" type="date" class="input-compact max-w-xs" />
+            <button wire:click="$set('date', '{{ now()->toDateString() }}')" class="btn-outline text-sm">Reset</button>
         </div>
     </div>
 
-    <div class="space-y-3">
-        @forelse ($this->students as $student)
-            <div class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                <div class="grid h-10 w-10 place-items-center rounded-full bg-blue-50 text-sm font-bold text-blue-600 flex-shrink-0">
-                    {{ mb_substr($student->full_name, 0, 1) }}
-                </div>
-                <div class="min-w-0 flex-1">
-                    <div class="truncate text-sm font-semibold text-gray-900">{{ $student->full_name }}</div>
-                    <div class="text-xs text-gray-500">{{ $student->admission_number }}</div>
-                </div>
-                @php
-                    $status = $marks[$student->id]['status'] ?? 'Present';
-                    $statusStyles = [
-                        'Present' => 'bg-green-600 text-white',
-                        'Absent' => 'bg-red-600 text-white',
-                        'Late' => 'bg-orange-600 text-white',
-                        'Excused' => 'bg-slate-600 text-white',
-                    ];
-                    $statusStyle = $statusStyles[$status] ?? $statusStyles['Present'];
-                @endphp
-                <button
-                    type="button"
-                    wire:click="cycleStatus({{ $student->id }})"
-                    class="flex-shrink-0 rounded-lg px-4 py-2 text-xs font-semibold transition-colors {{ $statusStyle }}"
-                    aria-label="Cycle attendance status for {{ $student->full_name }}"
-                    title="Click to cycle status"
-                >
-                    {{ $status }}
-                </button>
+    <!-- Attendance Table -->
+    <div class="card-padded">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+                <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <h3 class="font-bold text-slate-900">Attendance Details - {{ $date ? \Carbon\Carbon::parse($date)->format('l, F d, Y') : 'Today' }}</h3>
             </div>
-        @empty
-            <div class="card-padded text-center text-sm text-gray-500">
-                Select a class and click "Load Students" to begin.
+        </div>
+
+        @if($this->visibleStudents->count() > 0)
+            <div class="overflow-x-auto">
+                <x-table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Class</th>
+                            <th>Status</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($this->visibleStudents as $student)
+                            @php
+                                $status = $marks[$student->id]['status'] ?? 'Present';
+                                $note = $marks[$student->id]['note'] ?? '';
+                            @endphp
+                            <tr>
+                                <td>
+                                    <div class="font-semibold text-slate-900">{{ $student->full_name }}</div>
+                                    <div class="text-xs text-slate-500">{{ $student->admission_number }}</div>
+                                </td>
+                                <td class="text-slate-700 text-sm">{{ $student->class->name ?? 'N/A' }}</td>
+                                <td>
+                                    <x-status-badge variant="{{ $status === 'Present' ? 'success' : ($status === 'Absent' ? 'danger' : ($status === 'Late' ? 'warning' : 'default')) }}">
+                                        {{ $status }}
+                                    </x-status-badge>
+                                </td>
+                                <td class="text-sm text-slate-600">{{ $note ?: '-' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </x-table>
             </div>
-        @endforelse
+        @else
+            <div class="text-center py-12">
+                <svg class="h-12 w-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <p class="text-slate-900 font-semibold">No attendance marked for {{ $date ? \Carbon\Carbon::parse($date)->format('F d, Y') : 'today' }}</p>
+                <p class="text-sm text-slate-500 mt-1">Click "Mark Attendance" to add records</p>
+            </div>
+        @endif
     </div>
 
+    <!-- Mobile Modal -->
+    @if($showModal)
+        <div class="fixed inset-0 z-50 overflow-hidden">
+            <div class="absolute inset-0 bg-black/50" wire:click="$set('showModal', false)"></div>
+            <div class="absolute inset-0 sm:inset-auto sm:right-0 sm:top-0 sm:bottom-0 sm:w-[500px] bg-white flex flex-col shadow-2xl">
+                <!-- Modal Header -->
+                <div class="flex-shrink-0 px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-amber-50 to-orange-50">
+                    <div class="flex items-center gap-3">
+                        <button wire:click="$set('showModal', false)" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white shadow-sm hover:shadow-md">
+                            <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                        <div class="flex-1">
+                            <h2 class="text-base font-bold text-slate-900">Student Attendance</h2>
+                            <p class="text-xs text-slate-600">{{ $date ? \Carbon\Carbon::parse($date)->format('l, M d') : 'Today' }}</p>
+                        </div>
+                        @if($classId && $sectionId)
+                            <div class="flex gap-1.5">
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700">
+                                    {{ $this->markCounts['Present'] ?? 0 }}
+                                </span>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700">
+                                    {{ $this->markCounts['Absent'] ?? 0 }}
+                                </span>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Modal Content -->
+                <div class="flex-1 overflow-y-auto p-3 space-y-3">
+                    <!-- Selectors -->
+                    <div class="flex gap-2">
+                        <select wire:model.live="classId" class="flex-1 select">
+                            <option value="">Select class</option>
+                            @foreach($this->classes as $class)
+                                <option value="{{ $class->id }}">{{ $class->name }}</option>
+                            @endforeach
+                        </select>
+                        <select wire:model.live="sectionId" class="flex-1 select" @disabled(!$classId)>
+                            <option value="">Select section</option>
+                            @foreach($this->sections as $section)
+                                <option value="{{ $section->id }}">{{ $section->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Student List -->
+                    @if($classId && $sectionId)
+                        <div class="space-y-2">
+                            @foreach($this->visibleStudents as $student)
+                                @php
+                                    $status = $marks[$student->id]['status'] ?? 'Present';
+                                @endphp
+                                <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                            {{ substr($student->first_name, 0, 1) }}{{ substr($student->last_name, 0, 1) }}
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-bold text-slate-900 text-sm truncate">{{ $student->full_name }}</p>
+                                            <p class="text-[11px] text-slate-500">{{ $student->admission_number }}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-4 gap-1.5">
+                                        <button
+                                            wire:click="setMark({{ $student->id }}, 'Present')"
+                                            class="py-2 rounded-lg text-xs font-bold transition-all {{ $status === 'Present' ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                                        >
+                                            Present
+                                        </button>
+                                        <button
+                                            wire:click="setMark({{ $student->id }}, 'Absent')"
+                                            class="py-2 rounded-lg text-xs font-bold transition-all {{ $status === 'Absent' ? 'bg-red-500 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                                        >
+                                            Absent
+                                        </button>
+                                        <button
+                                            wire:click="setMark({{ $student->id }}, 'Late')"
+                                            class="py-2 rounded-lg text-xs font-bold transition-all {{ $status === 'Late' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                                        >
+                                            Late
+                                        </button>
+                                        <button
+                                            wire:click="setMark({{ $student->id }}, 'Excused')"
+                                            class="py-2 rounded-lg text-xs font-bold transition-all {{ $status === 'Excused' ? 'bg-purple-500 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                                        >
+                                            Excused
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-12">
+                            <svg class="h-12 w-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            <p class="text-slate-600 text-sm font-semibold">Select class and section</p>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Modal Footer -->
+                @if($classId && $sectionId)
+                    <div class="flex-shrink-0 p-3 border-t border-slate-200 bg-slate-50">
+                        <button
+                            wire:click="save"
+                            class="w-full h-12 text-base font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl shadow-lg"
+                        >
+                            <svg class="h-5 w-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span wire:loading.remove wire:target="save">Save Attendance</span>
+                            <span wire:loading wire:target="save">Saving...</span>
+                        </button>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
 </div>

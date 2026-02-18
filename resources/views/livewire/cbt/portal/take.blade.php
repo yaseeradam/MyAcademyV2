@@ -213,6 +213,7 @@
                                                 data-option-index="{{ $loop->index }}"
                                                 data-option-id="{{ $opt->id }}"
                                                 data-question-id="{{ $currentQuestion->id }}"
+                                                wire:click="selectOption({{ $currentQuestion->id }}, {{ $opt->id }})"
                                             >
                                                 <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold {{ $isSelected ? 'bg-white text-amber-700' : 'bg-white text-slate-700 group-hover:text-amber-700' }}">
                                                     {{ chr(65 + $loop->index) }}
@@ -222,9 +223,9 @@
                                                     name="q{{ $currentQuestion->id }}"
                                                     value="{{ $opt->id }}"
                                                     @checked($isSelected)
-                                                wire:click="selectOption({{ $currentQuestion->id }}, {{ $opt->id }})"
-                                                class="sr-only"
-                                            />
+                                                    @click.stop
+                                                    class="sr-only"
+                                                />
                                                 <span class="min-w-0 flex-1 text-sm leading-relaxed {{ $isSelected ? 'font-semibold text-white' : 'font-medium text-slate-800' }}">
                                                     {{ $opt->label }}
                                                 </span>
@@ -314,6 +315,7 @@
             Alpine.data('examKeyboard', () => ({
                 handleKeyPress(event) {
                     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
+                    if (event.ctrlKey || event.metaKey || event.altKey) return;
 
                     const key = event.key.toLowerCase();
 
@@ -330,8 +332,14 @@
                         const index = key.charCodeAt(0) - 97;
                         const option = document.querySelector(`label[data-option-index="${index}"]`);
                         if (option) {
-                            const radio = option.querySelector('input[type="radio"]');
-                            if (radio) radio.click();
+                            const questionId = parseInt(option.dataset.questionId || '0', 10);
+                            const optionId = parseInt(option.dataset.optionId || '0', 10);
+
+                            if (questionId > 0 && optionId > 0 && typeof $wire !== 'undefined' && typeof $wire.selectOption === 'function') {
+                                $wire.selectOption(questionId, optionId);
+                            } else {
+                                option.click();
+                            }
                         }
                     }
                 }

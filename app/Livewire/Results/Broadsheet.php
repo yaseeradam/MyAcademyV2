@@ -3,19 +3,23 @@
 namespace App\Livewire\Results;
 
 use App\Models\AcademicSession;
-use App\Models\ResultPublication;
 use App\Models\SchoolClass;
 use App\Models\Score;
-use App\Models\ScoreSubmission;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\SubjectAllocation;
-use Illuminate\Support\Collection;
 use App\Support\Audit;
+use App\Support\ReportCardService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use ZipArchive;
 
 #[Layout('layouts.app')]
 #[Title('Broadsheet')]
@@ -62,118 +66,6 @@ class Broadsheet extends Component
         }
 
         return Subject::query()->whereIn('id', $ids)->orderBy('name')->get();
-    }
-
-    #[Computed]
-    public function publication(): ?ResultPublication
-    {
-        if (! $this->classId || ! $this->session) {
-            return null;
-        }
-
-        return ResultPublication::query()
-            ->where('class_id', $this->classId)
-            ->where('term', $this->term)
-            ->where('session', $this->session)
-            ->first();
-    }
-
-    #[Computed]
-    public function isPublished(): bool
-    {
-        return (bool) ($this->publication?->published_at);
-    }
-
-    public function publishResults(): void
-    {
-        $user = auth()->user();
-        abort_unless($user?->hasPermission('results.publish'), 403);
-
-        if (! $this->classId || ! $this->session) {
-            return;
-        }
-
-        $hasPending = ScoreSubmission::query()
-            ->where('class_id', $this->classId)
-            ->where('term', $this->term)
-            ->where('session', $this->session)
-            ->where('status', 'submitted')
-            ->exists();
-
-        if ($hasPending) {
-            $this->dispatch('alert', message: 'Cannot publish: there are pending (submitted) teacher score submissions.', type: 'warning');
-            return;
-        }
-
-        $publication = ResultPublication::query()->updateOrCreate(
-            [
-                'class_id' => $this->classId,
-                'term' => $this->term,
-                'session' => $this->session,
-            ],
-            [
-                'published_at' => now(),
-                'published_by' => $user->id,
-            ]
-        );
-
-        Audit::log('results.published', $publication, [
-            'class_id' => $publication->class_id,
-            'term' => $publication->term,
-            'session' => $publication->session,
-        ]);
-
-        // Notify teachers
-        $class = SchoolClass::find($this->classId);
-        $teacherIds = SubjectAllocation::query()
-            ->where('class_id', $this->classId)
-            ->pluck('teacher_id')
-            ->unique();
-        
-        foreach ($teacherIds as $teacherId) {
-            \App\Models\Notification::create([
-                'user_id' => $teacherId,
-                'title' => 'Results Published',
-                'message' => "Results for {$class->name} - Term {$this->term} ({$this->session}) have been published. You can now view student results.",
-                'type' => 'info',
-            ]);
-        }
-
-        unset($this->publication);
-        unset($this->isPublished);
-        $this->dispatch('alert', message: 'Results published and teachers notified.', type: 'success');
-    }
-
-    public function unpublishResults(): void
-    {
-        $user = auth()->user();
-        abort_unless($user?->hasPermission('results.publish'), 403);
-
-        if (! $this->classId || ! $this->session) {
-            return;
-        }
-
-        $publication = ResultPublication::query()->updateOrCreate(
-            [
-                'class_id' => $this->classId,
-                'term' => $this->term,
-                'session' => $this->session,
-            ],
-            [
-                'published_at' => null,
-                'published_by' => $user->id,
-            ]
-        );
-
-        Audit::log('results.unpublished', $publication, [
-            'class_id' => $publication->class_id,
-            'term' => $publication->term,
-            'session' => $publication->session,
-        ]);
-
-        unset($this->publication);
-        unset($this->isPublished);
-        $this->dispatch('alert', message: 'Results unpublished.', type: 'success');
     }
 
     #[Computed]
@@ -255,6 +147,73 @@ class Broadsheet extends Component
         $next = $year + 1;
 
         return "{$year}/{$next}";
+    }
+
+    public function generateBulk(): BinaryFileResponse
+    {
+        $user = auth()->user();
+        abort_unless($user && $user->hasPermission('results.broadsheet'), 403);
+
+        if (! $this->classId) {
+            session()->flash('error', 'Please select a class.');
+            abort(400, 'Please select a class.');
+        }
+
+        set_time_limit(0);
+
+        $students = Student::query()
+            ->where('class_id', $this->classId)
+            ->where('status', 'Active')
+            ->orderBy('last_name')
+            ->get();
+
+        if ($students->isEmpty()) {
+            session()->flash('error', 'No active students found.');
+            abort(400, 'No active students found.');
+        }
+
+        $service = app(ReportCardService::class);
+        $safeSession = str_replace('/', '-', $this->session);
+        $tmpDir = storage_path('app/_bulk_report_cards/'.Str::random(12));
+        $pdfDir = $tmpDir.DIRECTORY_SEPARATOR.'pdfs';
+        File::ensureDirectoryExists($pdfDir);
+
+        $timestamp = now()->format('Y-m-d_H-i-s');
+        $zipDir = storage_path('app/report-cards');
+        File::ensureDirectoryExists($zipDir);
+        $zipPath = $zipDir.DIRECTORY_SEPARATOR."report_cards_class{$this->classId}_{$safeSession}_T{$this->term}_{$timestamp}.zip";
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
+            File::deleteDirectory($tmpDir);
+            abort(500, 'Unable to create zip archive.');
+        }
+
+        try {
+            foreach ($students as $student) {
+                $payload = $service->build($student, $this->term, $this->session);
+                $template = (string) config('myacademy.report_card_template', 'standard');
+                $view = $template === 'compact' ? 'pdf.report-card-compact' : 'pdf.report-card';
+                $pdf = Pdf::loadView($view, $payload)->setPaper('a4');
+                $safeAdm = preg_replace('/[^A-Za-z0-9\\-_.]+/', '-', (string) $student->admission_number) ?: (string) $student->id;
+                $filename = "report-card-{$safeAdm}-{$safeSession}-T{$this->term}.pdf";
+                $path = $pdfDir.DIRECTORY_SEPARATOR.$filename;
+                File::put($path, $pdf->output());
+                $zip->addFile($path, $filename);
+            }
+        } finally {
+            $zip->close();
+            File::deleteDirectory($tmpDir);
+        }
+
+        Audit::log('results.bulk_report_cards_generated', null, [
+            'class_id' => $this->classId,
+            'term' => $this->term,
+            'session' => $this->session,
+            'count' => $students->count(),
+        ]);
+
+        return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 
     public function render()

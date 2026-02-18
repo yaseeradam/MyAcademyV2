@@ -3,13 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Support\LicenseManager;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Fluent;
 
 class SettingsController extends Controller
 {
+    private const CERTIFICATE_TEMPLATES = ['modern', 'classic'];
+    private const REPORT_CARD_TEMPLATES = ['standard', 'compact'];
+
     public function updateSchool(Request $request)
     {
         $data = $request->validate([
@@ -216,6 +222,123 @@ class SettingsController extends Controller
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         return back()->with('status', 'Certificate settings saved.');
+    }
+
+    public function updateTemplates(Request $request)
+    {
+        $data = $request->validate([
+            'certificate_template' => ['required', 'string', 'in:'.implode(',', self::CERTIFICATE_TEMPLATES)],
+            'report_card_template' => ['required', 'string', 'in:'.implode(',', self::REPORT_CARD_TEMPLATES)],
+        ]);
+
+        $settingsPath = storage_path('app/myacademy/settings.json');
+        File::ensureDirectoryExists(dirname($settingsPath));
+
+        $settings = [];
+        if (File::exists($settingsPath)) {
+            $existing = json_decode(File::get($settingsPath), true);
+            if (is_array($existing)) {
+                $settings = $existing;
+            }
+        }
+
+        $settings['certificate_template'] = (string) $data['certificate_template'];
+        $settings['report_card_template'] = (string) $data['report_card_template'];
+
+        File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        return back()->with('status', 'Template selection saved.');
+    }
+
+    public function previewTemplate(string $type, string $template): \Illuminate\Http\Response
+    {
+        $type = strtolower(trim($type));
+        $template = strtolower(trim($template));
+
+        if ($type === 'certificate') {
+            abort_unless(in_array($template, self::CERTIFICATE_TEMPLATES, true), 404);
+
+            $view = match ($template) {
+                'classic' => 'pdf.certificate-classic',
+                default => 'pdf.certificate',
+            };
+
+            $student = new Fluent([
+                'full_name' => 'Jane Doe',
+                'admission_number' => 'ADM/001',
+                'schoolClass' => new Fluent(['name' => 'JSS 1']),
+                'section' => new Fluent(['name' => 'A']),
+            ]);
+
+            $certificate = new Fluent([
+                'title' => 'Certificate of Achievement',
+                'type' => 'General',
+                'body' => 'This certificate is proudly presented to {student_name} for outstanding performance and dedication.',
+                'serial_number' => 'CERT-0001',
+                'issued_on' => Carbon::now(),
+            ]);
+
+            $orientation = (string) config('myacademy.certificate_orientation', 'landscape');
+            $orientation = in_array($orientation, ['landscape', 'portrait'], true) ? $orientation : 'landscape';
+
+            $pdf = Pdf::loadView($view, [
+                'certificate' => $certificate,
+                'student' => $student,
+            ])->setPaper('a4', $orientation);
+
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="certificate-template-preview.pdf"',
+            ]);
+        }
+
+        if ($type === 'report-card') {
+            abort_unless(in_array($template, self::REPORT_CARD_TEMPLATES, true), 404);
+
+            $view = match ($template) {
+                'compact' => 'pdf.report-card-compact',
+                default => 'pdf.report-card',
+            };
+
+            $student = new Fluent([
+                'full_name' => 'Jane Doe',
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
+                'admission_number' => 'ADM/001',
+                'schoolClass' => new Fluent(['name' => 'JSS 1']),
+                'section' => new Fluent(['name' => 'A']),
+            ]);
+
+            $rows = collect([
+                ['subject' => new Fluent(['name' => 'Mathematics']), 'ca1' => 18, 'ca2' => 19, 'exam' => 55, 'total' => 92, 'grade' => 'A'],
+                ['subject' => new Fluent(['name' => 'English']), 'ca1' => 16, 'ca2' => 18, 'exam' => 50, 'total' => 84, 'grade' => 'A'],
+                ['subject' => new Fluent(['name' => 'Basic Science']), 'ca1' => 15, 'ca2' => 14, 'exam' => 49, 'total' => 78, 'grade' => 'B'],
+                ['subject' => new Fluent(['name' => 'Social Studies']), 'ca1' => 17, 'ca2' => 15, 'exam' => 45, 'total' => 77, 'grade' => 'B'],
+                ['subject' => new Fluent(['name' => 'Computer Studies']), 'ca1' => 19, 'ca2' => 18, 'exam' => 52, 'total' => 89, 'grade' => 'A'],
+            ]);
+
+            $grandTotal = (int) $rows->sum(fn ($r) => (int) ($r['total'] ?? 0));
+            $subjectCount = max(1, (int) $rows->count());
+            $average = round($grandTotal / $subjectCount, 2);
+
+            $pdf = Pdf::loadView($view, [
+                'student' => $student,
+                'term' => 1,
+                'session' => '2025/2026',
+                'rows' => $rows,
+                'grandTotal' => $grandTotal,
+                'average' => $average,
+                'position' => 1,
+                'classAverage' => $average,
+            ])->setPaper('a4');
+
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="report-card-template-preview.pdf"',
+            ]);
+        }
+
+        abort(404);
     }
 
     public function updateLicense(Request $request, LicenseManager $licenses)

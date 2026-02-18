@@ -41,6 +41,9 @@ return [
     'certificate_default_type' => env('MYACADEMY_CERTIFICATE_DEFAULT_TYPE', 'General'),
     'certificate_default_title' => env('MYACADEMY_CERTIFICATE_DEFAULT_TITLE', 'Certificate'),
     'certificate_default_body' => env('MYACADEMY_CERTIFICATE_DEFAULT_BODY'),
+    'certificate_template' => env('MYACADEMY_CERTIFICATE_TEMPLATE', 'modern'),
+
+    'report_card_template' => env('MYACADEMY_REPORT_CARD_TEMPLATE', 'standard'),
 
     'premium_device_removal_limit' => (int) env('MYACADEMY_PREMIUM_DEVICE_REMOVAL_LIMIT', 2),
     'premium_device_removal_window_days' => (int) env('MYACADEMY_PREMIUM_DEVICE_REMOVAL_WINDOW_DAYS', 30),

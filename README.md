@@ -20,7 +20,7 @@ MyAcademy is an offline-first School Management System designed to run **100% on
 
 ## Stack
 
-- PHP `^8.2` (Laravel 11)
+- PHP `^8.2` (Laravel 11) with **GD extension** (required for certificates)
 - Blade + Livewire v3
 - Tailwind via Vite (local build)
 - MySQL (InnoDB)
@@ -34,7 +34,15 @@ MyAcademy is an offline-first School Management System designed to run **100% on
 
 ## Local Setup (Windows / Laragon)
 
-1) Install dependencies
+1) Enable GD extension (required for certificates)
+
+```powershell
+Double-click ENABLE_GD.bat
+```
+
+Then restart Laragon.
+
+2) Install dependencies
 
 ```powershell
 php .\composer.phar install

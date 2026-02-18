@@ -12,15 +12,22 @@ class Certificate extends Model
         'type',
         'title',
         'body',
+        'description',
+        'session',
+        'term',
+        'issue_date',
         'issued_on',
         'serial_number',
+        'template',
         'issued_by',
     ];
 
     protected $casts = [
         'student_id' => 'integer',
         'issued_by' => 'integer',
+        'term' => 'integer',
         'issued_on' => 'date',
+        'issue_date' => 'date',
     ];
 
     public function student(): BelongsTo
@@ -33,4 +40,3 @@ class Certificate extends Model
         return $this->belongsTo(User::class, 'issued_by');
     }
 }
-

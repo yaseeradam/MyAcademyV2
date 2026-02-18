@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\AttendanceMark;
+use App\Models\AttendanceSheet;
 use App\Models\Score;
 use App\Models\Student;
 use App\Models\Subject;
@@ -67,6 +69,8 @@ class ReportCardService
             session: $session
         );
 
+        [$timesOpened, $timesPresent, $timesAbsent] = $this->attendanceSummary($student, $term, $session);
+
         return [
             'student' => $student,
             'term' => $term,
@@ -76,7 +80,53 @@ class ReportCardService
             'average' => $average,
             'position' => $position,
             'classAverage' => $classAverage,
+            'timesOpened' => $timesOpened,
+            'timesPresent' => $timesPresent,
+            'timesAbsent' => $timesAbsent,
         ];
+    }
+
+    /**
+     * @return array{0:int|null,1:int|null,2:int|null} times opened, present, absent.
+     */
+    private function attendanceSummary(Student $student, int $term, string $session): array
+    {
+        $sectionId = (int) ($student->section_id ?? 0);
+        if ($sectionId <= 0) {
+            return [null, null, null];
+        }
+
+        $sheetsQuery = AttendanceSheet::query()
+            ->where('class_id', $student->class_id)
+            ->where('section_id', $sectionId)
+            ->where('term', $term)
+            ->where('session', $session);
+
+        $timesOpened = (int) $sheetsQuery->count();
+
+        $counts = AttendanceMark::query()
+            ->join('attendance_sheets', 'attendance_sheets.id', '=', 'attendance_marks.sheet_id')
+            ->where('attendance_marks.student_id', $student->id)
+            ->where('attendance_sheets.class_id', $student->class_id)
+            ->where('attendance_sheets.section_id', $sectionId)
+            ->where('attendance_sheets.term', $term)
+            ->where('attendance_sheets.session', $session)
+            ->selectRaw("SUM(CASE WHEN attendance_marks.status = 'Absent' THEN 1 ELSE 0 END) AS absent_count")
+            ->selectRaw("SUM(CASE WHEN attendance_marks.status IN ('Present','Late','Excused') THEN 1 ELSE 0 END) AS present_count")
+            ->first();
+
+        $timesAbsent = (int) ($counts?->absent_count ?? 0);
+        $timesPresent = (int) ($counts?->present_count ?? 0);
+
+        if ($timesOpened === 0 && ($timesPresent + $timesAbsent) > 0) {
+            $timesOpened = $timesPresent + $timesAbsent;
+        }
+
+        if ($timesOpened <= 0 && $timesPresent === 0 && $timesAbsent === 0) {
+            return [null, null, null];
+        }
+
+        return [$timesOpened, $timesPresent, $timesAbsent];
     }
 
     private function subjectsForClass(int $classId): Collection
@@ -141,4 +191,3 @@ class ReportCardService
         return [$position, $classAverage];
     }
 }
-

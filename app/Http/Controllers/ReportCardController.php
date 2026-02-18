@@ -49,7 +49,10 @@ class ReportCardController extends Controller
 
         $data = app(ReportCardService::class)->build($student, $term, $session);
 
-        $pdf = Pdf::loadView('pdf.report-card', [
+        $template = (string) config('myacademy.report_card_template', 'standard');
+        $view = $template === 'compact' ? 'pdf.report-card-compact' : 'pdf.report-card';
+
+        $pdf = Pdf::loadView($view, [
             ...$data,
         ])->setPaper('a4');
 

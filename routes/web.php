@@ -29,11 +29,15 @@ use App\Livewire\Announcements\Index as AnnouncementsIndex;
 use App\Livewire\AuditLogs\Index as AuditLogsIndex;
 use App\Livewire\Billing\Index as BillingIndex;
 use App\Livewire\Attendance\Index as AttendanceIndex;
+use App\Livewire\Attendance\Teachers as TeacherAttendance;
 use App\Livewire\Certificates\Index as CertificatesIndex;
+use App\Livewire\Certificates\Manager as CertificatesManager;
 use App\Livewire\Events\Index as EventsIndex;
 use App\Livewire\Results\Entry as ResultsEntry;
 use App\Livewire\Results\Broadsheet as ResultsBroadsheet;
 use App\Livewire\Results\Submissions as ResultsSubmissions;
+use App\Livewire\DataCollection\Weekly as DataCollectionWeekly;
+use App\Livewire\DataCollection\Submissions as DataCollectionSubmissions;
 use App\Livewire\Messages\Index as MessagesIndex;
 use App\Livewire\Marketplace\Index as MarketplaceIndex;
 use App\Livewire\Notifications\Index as NotificationsIndex;
@@ -189,6 +193,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/classes/{class}/subjects', ManageSubjects::class)->middleware('role:admin')->name('classes.subjects');
         Route::get('/subjects', [SubjectController::class, 'index'])->name('subjects.index');
         Route::get('/attendance', AttendanceIndex::class)->name('attendance');
+        Route::get('/attendance/teachers', TeacherAttendance::class)->name('attendance.teachers');
+        Route::get('/data-collection', DataCollectionWeekly::class)->middleware('permission:data_collection.submit')->name('data-collection');
         Route::view('/examination', 'pages.examination.index')->name('examination');
         Route::get('/cbt', CbtIndex::class)
             ->middleware(config('myacademy.premium_enforce', true) ? ['premium:cbt'] : [])
@@ -208,7 +214,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/events', EventsIndex::class)->name('events');
         Route::get('/timetable', TimetableIndex::class)->name('timetable');
         Route::get('/timetable/pdf', [\App\Http\Controllers\TimetableController::class, 'downloadPdf'])->name('timetable.pdf');
-        Route::get('/certificates', CertificatesIndex::class)->name('certificates');
+        Route::get('/certificates', CertificatesManager::class)->name('certificates');
         Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
     });
 
@@ -227,6 +233,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::view('/settings', 'pages.settings.index')->name('settings.index');
         Route::view('/settings/results', 'pages.settings.results')->name('settings.results');
         Route::view('/settings/certificates', 'pages.settings.certificates')->name('settings.certificates');
+        Route::view('/settings/templates', 'pages.settings.templates')->name('settings.templates');
+        Route::post('/settings/templates', [SettingsController::class, 'updateTemplates'])->name('settings.update-templates');
+        Route::get('/settings/templates/preview/{type}/{template}', [SettingsController::class, 'previewTemplate'])->name('settings.templates.preview');
         Route::get('/settings/devices', PremiumDevices::class)->name('settings.devices');
         Route::get('/settings/backup', [BackupController::class, 'index'])->middleware('permission:backup.manage')->name('settings.backup');
         Route::post('/settings/backup', [BackupController::class, 'create'])->middleware('permission:backup.manage')->name('settings.backup.create');
@@ -235,6 +244,10 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         Route::get('/promotions', PromotionsIndex::class)->name('promotions');
         Route::get('/academic-sessions', AcademicSessions::class)->name('academic-sessions');
+
+        Route::get('/data-collection/submissions', DataCollectionSubmissions::class)
+            ->middleware('permission:data_collection.review')
+            ->name('data-collection.submissions');
 
         Route::get('/cbt/exams/{exam}/export', [CbtExportController::class, 'examResults'])
             ->middleware(config('myacademy.premium_enforce', true) ? ['premium:cbt'] : [])

@@ -160,6 +160,18 @@
                                     </div>
                                     <div class="text-xs font-semibold text-gray-700">Attendance</div>
                                 </a>
+
+                                @if ($user?->hasPermission('data_collection.submit'))
+                                    <a href="{{ route('data-collection') }}" class="card-interactive p-4 text-center">
+                                        <div class="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-lg bg-emerald-50 text-emerald-600">
+                                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M3 3v18h18" />
+                                                <path d="M7 14l3-3 4 4 6-7" />
+                                            </svg>
+                                        </div>
+                                        <div class="text-xs font-semibold text-gray-700">Data Collection</div>
+                                    </a>
+                                @endif
                                 
                                 @php($cbtHref = $cbtLocked ? ($user?->role === 'admin' ? route('marketplace') : route('more-features')) : route('cbt.index'))
                                 <a href="{{ $cbtHref }}" class="card-interactive p-4 text-center {{ $cbtLocked ? 'opacity-60' : '' }}">
@@ -357,6 +369,16 @@
                             </svg>
                             <span class="sidebar-text">Attendance</span>
                         </a>
+
+                        @if ($user?->hasPermission('data_collection.submit'))
+                            <a href="{{ route('data-collection') }}" class="{{ request()->routeIs('data-collection*') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
+                                <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('data-collection*') ? 'text-white' : 'text-emerald-600' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M3 3v18h18" />
+                                    <path d="M7 14l3-3 4 4 6-7" />
+                                </svg>
+                                <span class="sidebar-text">Data Collection</span>
+                            </a>
+                        @endif
 
                         <a href="{{ route('messages') }}" class="{{ request()->routeIs('messages') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('messages') ? 'text-white' : 'text-purple-600' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

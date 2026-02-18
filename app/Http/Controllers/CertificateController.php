@@ -19,10 +19,16 @@ class CertificateController extends Controller
 
         $student = $certificate->student;
 
-        $pdf = Pdf::loadView('pdf.certificate', [
+        $template = (string) config('myacademy.certificate_template', 'modern');
+        $view = $template === 'classic' ? 'pdf.certificate-classic' : 'pdf.certificate';
+
+        $orientation = (string) config('myacademy.certificate_orientation', 'landscape');
+        $orientation = in_array($orientation, ['landscape', 'portrait'], true) ? $orientation : 'landscape';
+
+        $pdf = Pdf::loadView($view, [
             'certificate' => $certificate,
             'student' => $student,
-        ])->setPaper('a4', 'landscape');
+        ])->setPaper('a4', $orientation);
 
         $filename = 'certificate-'.$certificate->serial_number.'.pdf';
 

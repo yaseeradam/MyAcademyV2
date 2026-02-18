@@ -9,17 +9,11 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <a href="{{ route('results.entry') }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Score Entry</a>
-                    @php($user = auth()->user())
-                    @if ($classId && $user?->hasPermission('results.publish'))
-                        <x-status-badge variant="{{ $this->isPublished ? 'success' : 'warning' }}">
-                            {{ $this->isPublished ? 'Published' : 'Unpublished' }}
-                        </x-status-badge>
-                        @if ($this->isPublished)
-                            <button type="button" wire:click="unpublishResults" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-600 shadow-lg transition-all hover:bg-emerald-50 hover:shadow-xl">Unpublish</button>
-                        @else
-                            <button type="button" wire:click="publishResults" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-600 shadow-lg transition-all hover:bg-emerald-50 hover:shadow-xl">Publish</button>
-                        @endif
-                        <a href="{{ route('results.bulk-report-cards', ['class_id' => $classId, 'term' => $term, 'session' => $session]) }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-600 shadow-lg transition-all hover:bg-emerald-50 hover:shadow-xl">Bulk Report Cards</a>
+                    @if ($classId)
+                        <button wire:click="generateBulk" wire:loading.attr="disabled" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-600 shadow-lg transition-all hover:bg-emerald-50 hover:shadow-xl disabled:opacity-50">
+                            <span wire:loading.remove wire:target="generateBulk">Bulk Report Cards</span>
+                            <span wire:loading wire:target="generateBulk">Generating...</span>
+                        </button>
                     @endif
                 </div>
             </div>
@@ -120,17 +114,12 @@
                             </x-status-badge>
                         </td>
                         <td class="px-5 py-4 text-right">
-                            @php($user = auth()->user())
-                            @if ($this->isPublished || $user?->hasPermission('results.publish'))
-                                <a
-                                    href="{{ route('results.report-card', ['student' => $row['student'], 'term' => $term, 'session' => $session]) }}"
-                                    class="text-sm font-semibold text-brand-600 hover:text-brand-700"
-                                >
-                                    Report Card
-                                </a>
-                            @else
-                                <span class="text-xs font-semibold text-gray-400">Not published</span>
-                            @endif
+                            <a
+                                href="{{ route('results.report-card', ['student' => $row['student'], 'term' => $term, 'session' => $session]) }}"
+                                class="text-sm font-semibold text-brand-600 hover:text-brand-700"
+                            >
+                                Report Card
+                            </a>
                         </td>
                     </tr>
                 @empty

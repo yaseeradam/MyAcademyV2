@@ -45,6 +45,7 @@ class CertificatesCustomizationTest extends TestCase
             'myacademy.certificate_show_watermark' => false,
             'myacademy.certificate_signature_label' => 'Principal',
             'myacademy.certificate_signature_name' => 'Jane Doe',
+            'myacademy.certificate_template' => 'classic',
         ]);
 
         $teacher = User::query()->where('email', 'teacher@myacademy.local')->firstOrFail();
@@ -64,5 +65,31 @@ class CertificatesCustomizationTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', (string) $response->getContent());
+    }
+
+    public function test_admin_can_preview_templates(): void
+    {
+        $this->seed();
+
+        $admin = User::query()->where('email', 'admin@myacademy.local')->firstOrFail();
+
+        $cert = $this->actingAs($admin)->get(route('settings.templates.preview', [
+            'type' => 'certificate',
+            'template' => 'classic',
+        ]));
+
+        $cert->assertOk();
+        $cert->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', (string) $cert->getContent());
+
+        $report = $this->actingAs($admin)->get(route('settings.templates.preview', [
+            'type' => 'report-card',
+            'template' => 'compact',
+        ]));
+
+        $report->assertOk();
+        $report->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', (string) $report->getContent());
     }
 }

@@ -21,11 +21,17 @@ use Livewire\Component;
 class Index extends Component
 {
     public ?int $classId = null;
+    public ?int $sectionId = null;
     public string $date = '';
     public int $term = 1;
     public string $session = '';
 
     public ?int $sheetId = null;
+
+    public string $tool = 'Absent';
+    public string $search = '';
+    public bool $onlyExceptions = false;
+    public bool $showModal = false;
 
     /**
      * @var array<int, array{status:string, note:string|null}>
@@ -61,15 +67,43 @@ class Index extends Component
     #[Computed]
     public function students()
     {
-        if (! $this->classId) {
+        if (! $this->classId || ! $this->sectionId) {
             return collect();
         }
 
         return Student::query()
             ->where('class_id', $this->classId)
+            ->where('section_id', $this->sectionId)
             ->where('status', 'Active')
             ->orderBy('last_name')
             ->get();
+    }
+
+    #[Computed]
+    public function visibleStudents()
+    {
+        $students = $this->students;
+
+        $query = trim($this->search);
+        if ($query !== '') {
+            $q = mb_strtolower($query);
+            $students = $students->filter(function (Student $student) use ($q, $query) {
+                $name = mb_strtolower($student->full_name);
+                $adm = (string) ($student->admission_number ?? '');
+
+                return str_contains($name, $q) || str_contains($adm, $query);
+            });
+        }
+
+        if ($this->onlyExceptions) {
+            $students = $students->filter(function (Student $student) {
+                $status = (string) ($this->marks[$student->id]['status'] ?? 'Present');
+
+                return $status !== 'Present';
+            });
+        }
+
+        return $students->values();
     }
 
     #[Computed]
@@ -96,36 +130,70 @@ class Index extends Component
 
     public function updatedClassId(): void
     {
-        $this->resetSheet();
+        $this->sectionId = null;
+
+        if ($this->classId) {
+            $this->sectionId = Section::query()
+                ->where('class_id', $this->classId)
+                ->orderBy('name')
+                ->value('id');
+        }
+
+        $this->syncSheetFromSelection();
+    }
+
+    public function updatedSectionId(): void
+    {
+        $this->syncSheetFromSelection();
     }
 
     public function updatedDate(): void
     {
-        $this->resetSheet();
+        $this->syncSheetFromSelection();
     }
 
     public function updatedTerm(): void
     {
-        $this->resetSheet();
+        $this->syncSheetFromSelection();
     }
 
     public function updatedSession(): void
     {
-        $this->resetSheet();
+        $this->syncSheetFromSelection();
+    }
+
+    public function setTool(string $tool): void
+    {
+        if (! in_array($tool, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+            return;
+        }
+
+        $this->tool = $tool;
+    }
+
+    public function applyTool(int $studentId): void
+    {
+        $tool = $this->tool;
+        if (! in_array($tool, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+            $tool = 'Absent';
+        }
+
+        $current = (string) ($this->marks[$studentId]['status'] ?? 'Present');
+
+        if ($tool === 'Present') {
+            $this->marks[$studentId]['status'] = 'Present';
+            return;
+        }
+
+        $this->marks[$studentId]['status'] = $current === $tool ? 'Present' : $tool;
     }
 
     public function start(): void
     {
-        $this->validate([
-            'classId' => ['required', 'integer', Rule::exists('classes', 'id')],
-            'date' => ['required', 'date'],
-            'term' => ['required', 'integer', 'between:1,3'],
-            'session' => ['required', 'string', 'max:9', 'regex:/^\d{4}\/\d{4}$/'],
-        ]);
+        [$section] = $this->validateSelection();
 
-        $section = $this->sections->first();
         if (! $section) {
-            $this->dispatch('alert', message: 'No sections found for this class.', type: 'error');
+            $this->dispatch('alert', message: 'Please select a valid section.', type: 'error');
             return;
         }
 
@@ -148,14 +216,22 @@ class Index extends Component
 
     public function save(): void
     {
-        if (! $this->sheetId) {
-            $this->start();
-            if (! $this->sheetId) {
-                return;
-            }
-        }
+        [$section] = $this->validateSelection();
 
-        $sheet = AttendanceSheet::query()->findOrFail($this->sheetId);
+        $sheet = AttendanceSheet::query()->firstOrCreate(
+            [
+                'class_id' => $this->classId,
+                'section_id' => $section->id,
+                'date' => $this->date,
+                'term' => $this->term,
+                'session' => $this->session,
+            ],
+            [
+                'taken_by' => auth()->id(),
+            ],
+        );
+
+        $this->sheetId = $sheet->id;
 
         DB::transaction(function () use ($sheet) {
             foreach ($this->students as $student) {
@@ -206,6 +282,15 @@ class Index extends Component
         $this->marks[$studentId]['status'] = $next;
     }
 
+    public function setMark(int $studentId, string $status): void
+    {
+        if (! in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+            return;
+        }
+
+        $this->marks[$studentId]['status'] = $status;
+    }
+
     private function loadMarks(AttendanceSheet $sheet): void
     {
         $this->marks = [];
@@ -228,6 +313,58 @@ class Index extends Component
     {
         $this->sheetId = null;
         $this->marks = [];
+    }
+
+    /**
+     * @return array{0: \App\Models\Section}
+     */
+    private function validateSelection(): array
+    {
+        $this->validate([
+            'classId' => ['required', 'integer', Rule::exists('classes', 'id')],
+            'sectionId' => ['required', 'integer', Rule::exists('sections', 'id')],
+            'date' => ['required', 'date'],
+            'term' => ['required', 'integer', 'between:1,3'],
+            'session' => ['required', 'string', 'max:9', 'regex:/^\\d{4}\\/\\d{4}$/'],
+        ]);
+
+        $section = Section::query()
+            ->where('id', $this->sectionId)
+            ->where('class_id', $this->classId)
+            ->first();
+
+        if (! $section) {
+            throw ValidationException::withMessages([
+                'sectionId' => 'Please select a valid section for the chosen class.',
+            ]);
+        }
+
+        return [$section];
+    }
+
+    private function syncSheetFromSelection(): void
+    {
+        $this->sheetId = null;
+        $this->marks = [];
+
+        if (! $this->classId || ! $this->sectionId || ! $this->date || ! $this->term || ! $this->session) {
+            return;
+        }
+
+        $sheet = AttendanceSheet::query()
+            ->where('class_id', $this->classId)
+            ->where('section_id', $this->sectionId)
+            ->where('date', $this->date)
+            ->where('term', $this->term)
+            ->where('session', $this->session)
+            ->first();
+
+        if (! $sheet) {
+            return;
+        }
+
+        $this->sheetId = $sheet->id;
+        $this->loadMarks($sheet);
     }
 
     private function defaultSession(): string

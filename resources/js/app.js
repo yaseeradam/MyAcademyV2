@@ -2,7 +2,9 @@ import './bootstrap';
 import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
-Alpine.start();
+document.addEventListener('DOMContentLoaded', () => {
+    Alpine.start();
+});
 
 // Mobile Sidebar
 const mobileSidebar = document.getElementById('mobileSidebar');

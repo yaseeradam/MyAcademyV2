@@ -20,6 +20,8 @@ class ResultsPublicationTest extends TestCase
 
     public function test_teacher_report_card_requires_results_published(): void
     {
+        config(['myacademy.report_card_template' => 'compact']);
+
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
         $teacher = User::factory()->create(['role' => 'teacher', 'is_active' => true]);
 
@@ -87,4 +89,3 @@ class ResultsPublicationTest extends TestCase
             ->assertHasErrors(['scores']);
     }
 }
-

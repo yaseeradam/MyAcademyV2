@@ -76,6 +76,8 @@ class AppServiceProvider extends ServiceProvider
             'certificate_default_type',
             'certificate_default_title',
             'certificate_default_body',
+            'certificate_template',
+            'report_card_template',
         ];
 
         $settings = Arr::only($data, $allowed);
