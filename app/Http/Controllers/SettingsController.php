@@ -13,7 +13,7 @@ use Illuminate\Support\Fluent;
 
 class SettingsController extends Controller
 {
-    private const CERTIFICATE_TEMPLATES = ['modern', 'classic'];
+    private const CERTIFICATE_TEMPLATES = ['modern', 'classic', 'elegant', 'vibrant', 'minimal', 'royal'];
     private const REPORT_CARD_TEMPLATES = ['standard', 'compact'];
 
     public function updateSchool(Request $request)
@@ -45,7 +45,7 @@ class SettingsController extends Controller
         if ($request->hasFile('school_logo')) {
             $file = $request->file('school_logo');
             $ext = $file->getClientOriginalExtension() ?: 'png';
-            $filename = 'school-logo-'.now()->format('YmdHis').'.'.$ext;
+            $filename = 'school-logo-' . now()->format('YmdHis') . '.' . $ext;
             $path = $file->storeAs('school-assets', $filename, 'uploads');
             $path = str_replace('\\', '/', (string) $path);
 
@@ -151,7 +151,7 @@ class SettingsController extends Controller
         if ($request->hasFile('certificate_watermark_image')) {
             $file = $request->file('certificate_watermark_image');
             $ext = $file->getClientOriginalExtension() ?: 'png';
-            $filename = 'certificate-watermark-'.now()->format('YmdHis').'.'.$ext;
+            $filename = 'certificate-watermark-' . now()->format('YmdHis') . '.' . $ext;
             $path = $file->storeAs('school-assets', $filename, 'uploads');
             $path = str_replace('\\', '/', (string) $path);
 
@@ -177,7 +177,7 @@ class SettingsController extends Controller
         if ($request->hasFile('certificate_signature_image')) {
             $file = $request->file('certificate_signature_image');
             $ext = $file->getClientOriginalExtension() ?: 'png';
-            $filename = 'certificate-signature-'.now()->format('YmdHis').'.'.$ext;
+            $filename = 'certificate-signature-' . now()->format('YmdHis') . '.' . $ext;
             $path = $file->storeAs('school-assets', $filename, 'uploads');
             $path = str_replace('\\', '/', (string) $path);
 
@@ -203,7 +203,7 @@ class SettingsController extends Controller
         if ($request->hasFile('certificate_signature2_image')) {
             $file = $request->file('certificate_signature2_image');
             $ext = $file->getClientOriginalExtension() ?: 'png';
-            $filename = 'certificate-signature2-'.now()->format('YmdHis').'.'.$ext;
+            $filename = 'certificate-signature2-' . now()->format('YmdHis') . '.' . $ext;
             $path = $file->storeAs('school-assets', $filename, 'uploads');
             $path = str_replace('\\', '/', (string) $path);
 
@@ -227,8 +227,8 @@ class SettingsController extends Controller
     public function updateTemplates(Request $request)
     {
         $data = $request->validate([
-            'certificate_template' => ['required', 'string', 'in:'.implode(',', self::CERTIFICATE_TEMPLATES)],
-            'report_card_template' => ['required', 'string', 'in:'.implode(',', self::REPORT_CARD_TEMPLATES)],
+            'certificate_template' => ['required', 'string', 'in:' . implode(',', self::CERTIFICATE_TEMPLATES)],
+            'report_card_template' => ['required', 'string', 'in:' . implode(',', self::REPORT_CARD_TEMPLATES)],
         ]);
 
         $settingsPath = storage_path('app/myacademy/settings.json');
@@ -260,6 +260,10 @@ class SettingsController extends Controller
 
             $view = match ($template) {
                 'classic' => 'pdf.certificate-classic',
+                'elegant' => 'pdf.certificate-elegant',
+                'vibrant' => 'pdf.certificate-vibrant',
+                'minimal' => 'pdf.certificate-minimal',
+                'royal' => 'pdf.certificate-royal',
                 default => 'pdf.certificate',
             };
 
@@ -317,7 +321,7 @@ class SettingsController extends Controller
                 ['subject' => new Fluent(['name' => 'Computer Studies']), 'ca1' => 19, 'ca2' => 18, 'exam' => 52, 'total' => 89, 'grade' => 'A'],
             ]);
 
-            $grandTotal = (int) $rows->sum(fn ($r) => (int) ($r['total'] ?? 0));
+            $grandTotal = (int) $rows->sum(fn($r) => (int) ($r['total'] ?? 0));
             $subjectCount = max(1, (int) $rows->count());
             $average = round($grandTotal / $subjectCount, 2);
 
@@ -352,7 +356,7 @@ class SettingsController extends Controller
 
         $state = $licenses->installRaw($raw);
 
-        if (! ($state['ok'] ?? false)) {
+        if (!($state['ok'] ?? false)) {
             return back()->withErrors(['license' => (string) ($state['reason'] ?? 'Invalid license.')]);
         }
 

@@ -19,8 +19,17 @@ class CertificateController extends Controller
 
         $student = $certificate->student;
 
-        $template = (string) config('myacademy.certificate_template', 'modern');
-        $view = $template === 'classic' ? 'pdf.certificate-classic' : 'pdf.certificate';
+        $templateViews = [
+            'modern' => 'pdf.certificate',
+            'classic' => 'pdf.certificate-classic',
+            'elegant' => 'pdf.certificate-elegant',
+            'vibrant' => 'pdf.certificate-vibrant',
+            'minimal' => 'pdf.certificate-minimal',
+            'royal' => 'pdf.certificate-royal',
+        ];
+
+        $template = $certificate->template ?: (string) config('myacademy.certificate_template', 'modern');
+        $view = $templateViews[$template] ?? 'pdf.certificate';
 
         $orientation = (string) config('myacademy.certificate_orientation', 'landscape');
         $orientation = in_array($orientation, ['landscape', 'portrait'], true) ? $orientation : 'landscape';
@@ -30,7 +39,7 @@ class CertificateController extends Controller
             'student' => $student,
         ])->setPaper('a4', $orientation);
 
-        $filename = 'certificate-'.$certificate->serial_number.'.pdf';
+        $filename = 'certificate-' . $certificate->serial_number . '.pdf';
 
         return response($pdf->output(), 200, [
             'Content-Type' => 'application/pdf',

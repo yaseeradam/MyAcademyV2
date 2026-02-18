@@ -29,11 +29,21 @@ class Manager extends Component
     public string $session = '';
     public int $term = 1;
     public string $issueDate = '';
-    public string $template = 'default';
+    public string $template = 'modern';
     public bool $showModal = false;
     public $templateFile;
+    public int $previewIndex = 0;
 
     public string $search = '';
+
+    public array $availableTemplates = [
+        ['key' => 'modern', 'label' => 'Modern', 'view' => 'pdf.certificate'],
+        ['key' => 'classic', 'label' => 'Classic', 'view' => 'pdf.certificate-classic'],
+        ['key' => 'elegant', 'label' => 'Elegant', 'view' => 'pdf.certificate-elegant'],
+        ['key' => 'vibrant', 'label' => 'Vibrant', 'view' => 'pdf.certificate-vibrant'],
+        ['key' => 'minimal', 'label' => 'Minimal', 'view' => 'pdf.certificate-minimal'],
+        ['key' => 'royal', 'label' => 'Royal', 'view' => 'pdf.certificate-royal'],
+    ];
 
     public function mount(): void
     {
@@ -47,6 +57,39 @@ class Manager extends Component
         if (trim($this->description) === '') {
             $this->description = 'For outstanding performance and dedication.';
         }
+
+        $this->template = $this->availableTemplates[0]['key'];
+    }
+
+    public function nextTemplate(): void
+    {
+        $this->previewIndex = ($this->previewIndex + 1) % count($this->availableTemplates);
+        $this->template = $this->availableTemplates[$this->previewIndex]['key'];
+    }
+
+    public function prevTemplate(): void
+    {
+        $this->previewIndex = ($this->previewIndex - 1 + count($this->availableTemplates)) % count($this->availableTemplates);
+        $this->template = $this->availableTemplates[$this->previewIndex]['key'];
+    }
+
+    public function setTemplate(int $index): void
+    {
+        $index = max(0, min($index, count($this->availableTemplates) - 1));
+        $this->previewIndex = $index;
+        $this->template = $this->availableTemplates[$this->previewIndex]['key'];
+    }
+
+    #[Computed]
+    public function templateLabel(): string
+    {
+        return $this->availableTemplates[$this->previewIndex]['label'] ?? 'Modern';
+    }
+
+    #[Computed]
+    public function templateCount(): int
+    {
+        return count($this->availableTemplates);
     }
 
     #[Computed]
@@ -71,7 +114,7 @@ class Manager extends Component
     #[Computed]
     public function filteredStudents()
     {
-        if (! $this->classId) {
+        if (!$this->classId) {
             return collect();
         }
 
@@ -163,8 +206,8 @@ class Manager extends Component
             abort(500, 'Unable to create zip.');
         }
 
-        $template = (string) config('myacademy.certificate_template', 'modern');
-        $view = $template === 'classic' ? 'pdf.certificate-classic' : 'pdf.certificate';
+        $templateViews = collect($this->availableTemplates)->pluck('view', 'key')->toArray();
+        $view = $templateViews[$this->template] ?? 'pdf.certificate';
 
         $orientation = (string) config('myacademy.certificate_orientation', 'landscape');
         $orientation = in_array($orientation, ['landscape', 'portrait'], true) ? $orientation : 'landscape';
@@ -207,19 +250,19 @@ class Manager extends Component
         $this->validate(['templateFile' => 'required|image|max:10240']);
 
         $name = trim($this->template);
-        if ($name === '' || ! preg_match('/^[a-zA-Z0-9_-]+$/', $name)) {
+        if ($name === '' || !preg_match('/^[a-zA-Z0-9_-]+$/', $name)) {
             $this->addError('template', 'Template key must be letters, numbers, dash or underscore.');
             return;
         }
 
-        $filename = $name.'.png';
+        $filename = $name . '.png';
 
         $dir = public_path('certificates/templates');
         File::ensureDirectoryExists($dir);
 
-        $target = $dir.DIRECTORY_SEPARATOR.$filename;
+        $target = $dir . DIRECTORY_SEPARATOR . $filename;
         $realPath = $this->templateFile->getRealPath();
-        if (! $realPath || ! file_exists($realPath)) {
+        if (!$realPath || !file_exists($realPath)) {
             session()->flash('error', 'Upload failed. Please try again.');
             return;
         }

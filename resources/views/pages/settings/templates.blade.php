@@ -7,7 +7,8 @@
     @endphp
 
     <div class="space-y-6" x-data="{ open: false, src: null, title: '' }">
-        <x-page-header title="Templates" subtitle="Choose which Certificate and Report Card template to use." accent="settings" />
+        <x-page-header title="Templates" subtitle="Choose which Certificate and Report Card template to use."
+            accent="settings" />
 
         <div class="flex gap-2">
             <a href="{{ route('settings.index') }}" class="btn-outline">← Back to Settings</a>
@@ -35,12 +36,13 @@
 
             <div class="rounded-3xl border border-gray-100 bg-gradient-to-br from-amber-50 to-rose-50/60 p-6 shadow-lg">
                 <div class="mb-5 flex items-center gap-3">
-                    <div class="icon-3d grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 text-white shadow-lg shadow-amber-500/30">
+                    <div
+                        class="icon-3d grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 text-white shadow-lg shadow-amber-500/30">
                         <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M6 2h9l3 3v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
-                            <path d="M14 2v4h4"/>
-                            <path d="M8 13h8"/>
-                            <path d="M8 17h6"/>
+                            <path d="M6 2h9l3 3v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
+                            <path d="M14 2v4h4" />
+                            <path d="M8 13h8" />
+                            <path d="M8 17h6" />
                         </svg>
                     </div>
                     <div>
@@ -64,31 +66,53 @@
                                 'desc' => 'Simple formal layout with clean border.',
                                 'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'classic']),
                             ],
+                            [
+                                'key' => 'elegant',
+                                'title' => 'Elegant',
+                                'desc' => 'Gold & navy formal with decorative corner flourishes.',
+                                'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'elegant']),
+                            ],
+                            [
+                                'key' => 'vibrant',
+                                'title' => 'Vibrant',
+                                'desc' => 'Colorful wave gradients with sparkles and medal badge.',
+                                'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'vibrant']),
+                            ],
+                            [
+                                'key' => 'minimal',
+                                'title' => 'Minimal',
+                                'desc' => 'Clean contemporary design with generous whitespace.',
+                                'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'minimal']),
+                            ],
+                            [
+                                'key' => 'royal',
+                                'title' => 'Royal',
+                                'desc' => 'Rich purple banner with gold ribbon and ornate borders.',
+                                'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'royal']),
+                            ],
                         ];
                     @endphp
 
                     @foreach ($certificateTemplates as $t)
                         <label
-                            class="group cursor-pointer rounded-3xl border bg-white/70 p-5 shadow-sm ring-1 ring-white/50 backdrop-blur transition hover:shadow-md {{ $certificateTemplate === $t['key'] ? 'border-amber-300 ring-2 ring-amber-500' : 'border-gray-100' }}"
-                        >
-                            <input type="radio" name="certificate_template" value="{{ $t['key'] }}" class="sr-only" @checked($certificateTemplate === $t['key']) />
+                            class="group cursor-pointer rounded-3xl border bg-white/70 p-5 shadow-sm ring-1 ring-white/50 backdrop-blur transition hover:shadow-md {{ $certificateTemplate === $t['key'] ? 'border-amber-300 ring-2 ring-amber-500' : 'border-gray-100' }}">
+                            <input type="radio" name="certificate_template" value="{{ $t['key'] }}" class="sr-only"
+                                @checked($certificateTemplate === $t['key']) />
                             <div class="flex items-start justify-between gap-4">
                                 <div class="min-w-0">
                                     <div class="text-sm font-black text-gray-900">{{ $t['title'] }}</div>
                                     <div class="mt-1 text-sm font-semibold text-gray-600">{{ $t['desc'] }}</div>
                                 </div>
-                                <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800 group-hover:bg-amber-200">
+                                <span
+                                    class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800 group-hover:bg-amber-200">
                                     {{ strtoupper($t['key']) }}
                                 </span>
                             </div>
 
                             <div class="mt-4 flex items-center justify-between">
                                 <div class="text-xs font-semibold text-gray-500">Click card to select</div>
-                                <button
-                                    type="button"
-                                    class="btn-outline"
-                                    @click.stop="open = true; src = @js($t['preview']); title = @js('Certificate · '.$t['title'])"
-                                >
+                                <button type="button" class="btn-outline"
+                                    @click.stop="open = true; src = @js($t['preview']); title = @js('Certificate · ' . $t['title'])">
                                     Preview
                                 </button>
                             </div>
@@ -99,7 +123,8 @@
 
             <div class="rounded-3xl border border-gray-100 bg-gradient-to-br from-emerald-50 to-sky-50/60 p-6 shadow-lg">
                 <div class="mb-5 flex items-center gap-3">
-                    <div class="icon-3d grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-sky-600 text-white shadow-lg shadow-emerald-500/30">
+                    <div
+                        class="icon-3d grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-sky-600 text-white shadow-lg shadow-emerald-500/30">
                         <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <polyline points="14 2 14 8 20 8" />
@@ -133,26 +158,24 @@
 
                     @foreach ($reportTemplates as $t)
                         <label
-                            class="group cursor-pointer rounded-3xl border bg-white/70 p-5 shadow-sm ring-1 ring-white/50 backdrop-blur transition hover:shadow-md {{ $reportCardTemplate === $t['key'] ? 'border-emerald-300 ring-2 ring-emerald-600' : 'border-gray-100' }}"
-                        >
-                            <input type="radio" name="report_card_template" value="{{ $t['key'] }}" class="sr-only" @checked($reportCardTemplate === $t['key']) />
+                            class="group cursor-pointer rounded-3xl border bg-white/70 p-5 shadow-sm ring-1 ring-white/50 backdrop-blur transition hover:shadow-md {{ $reportCardTemplate === $t['key'] ? 'border-emerald-300 ring-2 ring-emerald-600' : 'border-gray-100' }}">
+                            <input type="radio" name="report_card_template" value="{{ $t['key'] }}" class="sr-only"
+                                @checked($reportCardTemplate === $t['key']) />
                             <div class="flex items-start justify-between gap-4">
                                 <div class="min-w-0">
                                     <div class="text-sm font-black text-gray-900">{{ $t['title'] }}</div>
                                     <div class="mt-1 text-sm font-semibold text-gray-600">{{ $t['desc'] }}</div>
                                 </div>
-                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800 group-hover:bg-emerald-200">
+                                <span
+                                    class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800 group-hover:bg-emerald-200">
                                     {{ strtoupper($t['key']) }}
                                 </span>
                             </div>
 
                             <div class="mt-4 flex items-center justify-between">
                                 <div class="text-xs font-semibold text-gray-500">Click card to select</div>
-                                <button
-                                    type="button"
-                                    class="btn-outline"
-                                    @click.stop="open = true; src = @js($t['preview']); title = @js('Report Card · '.$t['title'])"
-                                >
+                                <button type="button" class="btn-outline"
+                                    @click.stop="open = true; src = @js($t['preview']); title = @js('Report Card · ' . $t['title'])">
                                     Preview
                                 </button>
                             </div>
@@ -161,17 +184,21 @@
                 </div>
             </div>
 
-            <button type="submit" class="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-slate-800 transition-all">
+            <button type="submit"
+                class="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-slate-800 transition-all">
                 Save Template Selection
             </button>
         </form>
 
         <!-- Preview Modal -->
-        <div x-show="open" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4" @click.self="open = false">
+        <div x-show="open" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+            @click.self="open = false">
             <div class="w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5">
                 <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                     <div class="text-sm font-black text-slate-900" x-text="title"></div>
-                    <button type="button" class="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200" @click="open = false">
+                    <button type="button"
+                        class="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200"
+                        @click="open = false">
                         Close
                     </button>
                 </div>
@@ -182,4 +209,3 @@
         </div>
     </div>
 @endsection
-

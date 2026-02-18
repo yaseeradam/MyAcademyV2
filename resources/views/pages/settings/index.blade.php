@@ -44,6 +44,9 @@
         @endif
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <!-- Randomize Photos Card -->
+            <x-randomize-photos />
+            
             <!-- School Information Card -->
             <div class="rounded-3xl border border-gray-100 bg-gradient-to-br from-blue-50 to-indigo-50/60 p-6 shadow-lg">
                 @if(config('myacademy.school_logo'))

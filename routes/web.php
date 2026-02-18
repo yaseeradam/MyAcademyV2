@@ -19,6 +19,7 @@ use App\Http\Controllers\SchoolClassController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\PhotoRandomizerController;
 use App\Livewire\Classes\ManageSubjects;
 use App\Livewire\Cbt\ExamEditor as CbtExamEditor;
 use App\Livewire\Cbt\Index as CbtIndex;
@@ -120,6 +121,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::view('/more-features', 'pages.more-features.index')->name('more-features');
 
     Route::middleware('role:admin')->group(function () {
+        Route::post('/randomize-photos', [PhotoRandomizerController::class, 'randomize'])->name('photos.randomize');
+        
         Route::get('/marketplace', MarketplaceIndex::class)->name('marketplace');
 
         Route::get('/students/create', StudentsForm::class)->name('students.create');
