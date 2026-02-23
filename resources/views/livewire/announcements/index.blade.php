@@ -1,5 +1,5 @@
 <div class="space-y-6">
-    <x-page-header title="Announcements" subtitle="School-wide notices for staff and students." accent="more">
+    <x-page-header title="Announcements" subtitle="Stay updated with school-wide notices and important information." accent="more">
         <x-slot:actions>
             <a href="{{ route('more-features') }}" class="btn-outline">Back</a>
         </x-slot:actions>
@@ -55,52 +55,93 @@
         </div>
     @endif
 
-    <div class="card-padded">
-        <div class="text-sm font-semibold text-gray-900">All Announcements</div>
-        <div class="mt-1 text-sm text-gray-600">Latest first.</div>
-
-        <div class="mt-5 space-y-3">
-            @forelse($announcements as $a)
-                <div class="rounded-2xl border border-gray-100 bg-white p-4">
-                    <div class="flex flex-wrap items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="text-sm font-bold text-gray-900">{{ $a->title }}</div>
-                            <div class="mt-1 text-xs text-gray-500">
-                                Audience: <span class="font-mono">{{ $a->audience }}</span>
-                                •
-                                @if($a->published_at)
-                                    Published {{ $a->published_at->diffForHumans() }}
-                                @else
-                                    Draft
-                                @endif
+    <div class="grid gap-5 lg:grid-cols-2">
+        @forelse($announcements as $a)
+            <div class="group relative overflow-hidden rounded-2xl border-2 border-gray-100 bg-gradient-to-br from-white to-gray-50 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-indigo-200">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-100/40 to-purple-100/40 rounded-bl-full transform translate-x-12 -translate-y-12"></div>
+                
+                <div class="relative p-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-lg font-bold text-gray-900 leading-tight mb-1">{{ $a->title }}</h3>
+                                    <div class="flex items-center gap-2 text-xs">
+                                        @php
+                                            $audienceColors = [
+                                                'all' => 'bg-blue-100 text-blue-700',
+                                                'staff' => 'bg-purple-100 text-purple-700',
+                                                'admin' => 'bg-red-100 text-red-700',
+                                                'teacher' => 'bg-green-100 text-green-700',
+                                                'bursar' => 'bg-orange-100 text-orange-700',
+                                            ];
+                                        @endphp
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-semibold {{ $audienceColors[$a->audience] ?? 'bg-gray-100 text-gray-700' }}">
+                                            {{ ucfirst($a->audience) }}
+                                        </span>
+                                        <span class="text-gray-400">•</span>
+                                        <span class="text-gray-600 font-medium">
+                                            @if($a->published_at)
+                                                {{ $a->published_at->diffForHumans() }}
+                                            @else
+                                                <span class="text-amber-600">Draft</span>
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        @if ($isAdmin)
-                            <div class="flex items-center gap-2">
-                                <button type="button" wire:click="edit({{ $a->id }})" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold bg-white text-indigo-600 border-2 border-indigo-200 hover:bg-indigo-50">Edit</button>
-                                @if($a->published_at)
-                                    <button type="button" wire:click="unpublish({{ $a->id }})" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold bg-white text-indigo-600 border-2 border-indigo-200 hover:bg-indigo-50">Unpublish</button>
-                                @else
-                                    <button type="button" wire:click="publish({{ $a->id }})" class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700">
-                                        Publish
-                                    </button>
-                                @endif
-                                <button type="button" wire:click="delete({{ $a->id }})" class="inline-flex items-center justify-center rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700">
-                                    Delete
-                                </button>
-                            </div>
-                        @endif
                     </div>
 
-                    <div class="mt-3 whitespace-pre-wrap text-sm text-gray-700">{{ $a->body }}</div>
+                    <div class="mt-4 pl-0">
+                        <div class="prose prose-sm max-w-none">
+                            <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">{{ $a->body }}</p>
+                        </div>
+                    </div>
+
+                    @if ($isAdmin)
+                        <div class="mt-5 pt-4 border-t border-gray-200 flex flex-wrap items-center gap-2">
+                            <button type="button" wire:click="edit({{ $a->id }})" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                Edit
+                            </button>
+                            @if($a->published_at)
+                                <button type="button" wire:click="unpublish({{ $a->id }})" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+                                    Unpublish
+                                </button>
+                            @else
+                                <button type="button" wire:click="publish({{ $a->id }})" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    Publish
+                                </button>
+                            @endif
+                            <button type="button" wire:click="delete({{ $a->id }})" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 rounded-lg hover:bg-rose-100 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Delete
+                            </button>
+                        </div>
+                    @endif
                 </div>
-            @empty
-                <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-600">
-                    No announcements yet.
+            </div>
+        @empty
+            <div class="lg:col-span-2">
+                <div class="rounded-2xl border-2 border-dashed border-gray-200 bg-gradient-to-br from-gray-50 to-white p-12 text-center">
+                    <div class="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-4">
+                        <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No announcements yet</h3>
+                    <p class="text-sm text-gray-600">Check back later for important updates and notices.</p>
                 </div>
-            @endforelse
-        </div>
+            </div>
+        @endforelse
     </div>
 </div>
 
