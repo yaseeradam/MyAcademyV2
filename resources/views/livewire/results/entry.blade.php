@@ -99,29 +99,29 @@
 	            $maxMarks = $this->maxMarks();
 	        @endphp
 	        <x-table>
-            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <thead class="bg-gradient-to-r from-indigo-600 to-purple-600 text-xs font-bold uppercase tracking-wider text-white">
                 <tr>
-                    <th class="px-5 py-3">Student</th>
-                    <th class="px-5 py-3 text-right">CA1 /{{ $maxMarks['ca1'] }}</th>
-                    <th class="px-5 py-3 text-right">CA2 /{{ $maxMarks['ca2'] }}</th>
-                    <th class="px-5 py-3 text-right">Exam /{{ $maxMarks['exam'] }}</th>
-                    <th class="px-5 py-3 text-right">Total</th>
-                    <th class="px-5 py-3 text-right">Grade</th>
+                    <th class="px-5 py-4">Student</th>
+                    <th class="px-5 py-4 text-right">CA1 /{{ $maxMarks['ca1'] }}</th>
+                    <th class="px-5 py-4 text-right">CA2 /{{ $maxMarks['ca2'] }}</th>
+                    <th class="px-5 py-4 text-right">Exam /{{ $maxMarks['exam'] }}</th>
+                    <th class="px-5 py-4 text-right">Total</th>
+                    <th class="px-5 py-4 text-right">Grade</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody class="divide-y divide-gray-200">
                 @forelse ($this->students as $student)
                     @php
                         $row = $scores[$student->id] ?? ['ca1' => 0, 'ca2' => 0, 'exam' => 0];
                         $total = (int) ($row['ca1'] ?? 0) + (int) ($row['ca2'] ?? 0) + (int) ($row['exam'] ?? 0);
                         $grade = \App\Models\Score::gradeForTotal($total, $maxMarks['ca1'] + $maxMarks['ca2'] + $maxMarks['exam']);
                     @endphp
-                    <tr class="bg-white hover:bg-gray-50">
-                        <td class="px-5 py-4">
+                    <tr class="bg-white hover:bg-indigo-50 transition-colors">
+                        <td class="px-5 py-4 bg-gray-50">
                             <div class="text-sm font-semibold text-gray-900">{{ $student->full_name }}</div>
                             <div class="mt-1 text-xs text-gray-500">{{ $student->admission_number }}</div>
                         </td>
-                        <td class="px-5 py-4 text-right">
+                        <td class="px-5 py-4 text-right bg-blue-50">
                             <input
                                 wire:model.lazy="scores.{{ $student->id }}.ca1"
                                 type="number"
@@ -129,10 +129,10 @@
                                 max="{{ $maxMarks['ca1'] }}"
                                 step="1"
                                 oninput="this.value !== '' && (this.value = Math.max(+this.min, Math.min(+this.max, +this.value)))"
-                                class="w-20 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                class="w-20 rounded-lg border-2 border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                             />
                         </td>
-                        <td class="px-5 py-4 text-right">
+                        <td class="px-5 py-4 text-right bg-green-50">
                             <input
                                 wire:model.lazy="scores.{{ $student->id }}.ca2"
                                 type="number"
@@ -140,10 +140,10 @@
                                 max="{{ $maxMarks['ca2'] }}"
                                 step="1"
                                 oninput="this.value !== '' && (this.value = Math.max(+this.min, Math.min(+this.max, +this.value)))"
-                                class="w-20 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                class="w-20 rounded-lg border-2 border-green-200 bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-500"
                             />
                         </td>
-                        <td class="px-5 py-4 text-right">
+                        <td class="px-5 py-4 text-right bg-amber-50">
                             <input
                                 wire:model.lazy="scores.{{ $student->id }}.exam"
                                 type="number"
@@ -151,11 +151,13 @@
                                 max="{{ $maxMarks['exam'] }}"
                                 step="1"
                                 oninput="this.value !== '' && (this.value = Math.max(+this.min, Math.min(+this.max, +this.value)))"
-                                class="w-20 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                class="w-20 rounded-lg border-2 border-amber-200 bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500"
                             />
                         </td>
-                        <td class="px-5 py-4 text-right text-sm font-semibold text-gray-900">{{ $total }}</td>
-                        <td class="px-5 py-4 text-right">
+                        <td class="px-5 py-4 text-right bg-purple-50">
+                            <span class="inline-flex items-center justify-center rounded-lg bg-purple-100 px-3 py-2 text-sm font-bold text-purple-900">{{ $total }}</span>
+                        </td>
+                        <td class="px-5 py-4 text-right bg-gray-50">
                             <x-status-badge variant="{{ in_array($grade, ['A', 'B'], true) ? 'success' : 'neutral' }}">
                                 {{ $grade }}
                             </x-status-badge>

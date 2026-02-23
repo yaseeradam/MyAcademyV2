@@ -1,7 +1,6 @@
 	@php
 	    $user = auth()->user();
 	    $features = [
-	        ['route' => 'results.submissions', 'title' => 'Score Submissions', 'desc' => 'Review and approve teacher score submissions', 'icon' => 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11', 'color' => 'green', 'roles' => ['admin']],
 	        ['route' => 'examination', 'title' => 'Examinations', 'desc' => 'Manage exam schedules and settings', 'icon' => 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11', 'color' => 'teal', 'roles' => ['admin']],
 	        ['route' => 'marketplace', 'title' => 'Marketplace', 'desc' => 'Unlock premium modules (CBT, Savings/Loan)', 'icon' => 'M6 2l1.5 4h9L18 2M3 6h18l-1 16H4L3 6z', 'color' => 'purple', 'roles' => ['admin']],
 	        ['route' => 'users.index', 'title' => 'User Management', 'desc' => 'Create accounts, assign roles, activate/deactivate', 'icon' => 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', 'color' => 'indigo', 'roles' => ['admin']],

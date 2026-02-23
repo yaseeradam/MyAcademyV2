@@ -43,6 +43,15 @@ class Manager extends Component
         ['key' => 'vibrant', 'label' => 'Vibrant', 'view' => 'pdf.certificate-vibrant'],
         ['key' => 'minimal', 'label' => 'Minimal', 'view' => 'pdf.certificate-minimal'],
         ['key' => 'royal', 'label' => 'Royal', 'view' => 'pdf.certificate-royal'],
+        ['key' => 'prestige', 'label' => 'Prestige', 'view' => 'pdf.certificate-prestige'],
+        ['key' => 'botanical', 'label' => 'Botanical', 'view' => 'pdf.certificate-botanical'],
+        ['key' => 'aurora', 'label' => 'Aurora', 'view' => 'pdf.certificate-aurora'],
+        ['key' => 'heritage', 'label' => 'Heritage', 'view' => 'pdf.certificate-heritage'],
+        ['key' => 'obsidian', 'label' => 'Obsidian', 'view' => 'pdf.certificate-obsidian'],
+        ['key' => 'sahara', 'label' => 'Sahara', 'view' => 'pdf.certificate-sahara'],
+        ['key' => 'oceanic', 'label' => 'Oceanic', 'view' => 'pdf.certificate-oceanic'],
+        ['key' => 'crimson', 'label' => 'Crimson', 'view' => 'pdf.certificate-crimson'],
+        ['key' => 'ivory', 'label' => 'Ivory', 'view' => 'pdf.certificate-ivory'],
     ];
 
     public function mount(): void

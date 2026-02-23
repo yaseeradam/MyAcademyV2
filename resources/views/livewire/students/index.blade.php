@@ -6,15 +6,12 @@
                 <p class="mt-1 text-sm text-gray-600">Manage, search and filter student records</p>
             </div>
             <div class="flex gap-3">
-                <x-export
-                    type="students"
-                    :filters="[
-                        'class' => $this->classFilter,
-                        'section' => $this->sectionFilter,
-                        'status' => $this->statusFilter,
-                        'search' => $this->search,
-                    ]"
-                />
+                <x-export type="students" :filters="[
+        'class' => $this->classFilter,
+        'section' => $this->sectionFilter,
+        'status' => $this->statusFilter,
+        'search' => $this->search,
+    ]" />
                 @if (auth()->user()?->role === 'admin')
                     <a href="{{ route('students.create') }}" class="btn-primary">Add Student</a>
                 @endif
@@ -55,7 +52,8 @@
                 </div>
 
                 <div class="lg:col-span-6">
-                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search by name, admission number, class, parent..." class="input" />
+                    <input wire:model.live.debounce.300ms="search" type="text"
+                        placeholder="Search by name, admission number, class, parent..." class="input" />
                 </div>
             </div>
         </div>
@@ -70,14 +68,8 @@
     @endif
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <x-stat-card
-            label="Total Students"
-            :value="$this->stats['total']"
-            cardBg="bg-sky-50/60"
-            ringColor="ring-sky-100"
-            iconBg="bg-blue-50"
-            iconColor="text-blue-600"
-        >
+        <x-stat-card label="Total Students" :value="$this->stats['total']" cardBg="bg-sky-50/60"
+            ringColor="ring-sky-100" iconBg="bg-blue-50" iconColor="text-blue-600">
             <x-slot:icon>
                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M17 21v-2a4 4 0 0 0-3-3.87" />
@@ -88,14 +80,8 @@
             </x-slot:icon>
         </x-stat-card>
 
-        <x-stat-card
-            label="Boys"
-            :value="$this->stats['boys']"
-            cardBg="bg-emerald-50/60"
-            ringColor="ring-emerald-100"
-            iconBg="bg-emerald-50"
-            iconColor="text-emerald-700"
-        >
+        <x-stat-card label="Boys" :value="$this->stats['boys']" cardBg="bg-emerald-50/60" ringColor="ring-emerald-100"
+            iconBg="bg-emerald-50" iconColor="text-emerald-700">
             <x-slot:icon>
                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="10" cy="14" r="5" />
@@ -105,14 +91,8 @@
             </x-slot:icon>
         </x-stat-card>
 
-        <x-stat-card
-            label="Girls"
-            :value="$this->stats['girls']"
-            cardBg="bg-violet-50/60"
-            ringColor="ring-violet-100"
-            iconBg="bg-violet-50"
-            iconColor="text-violet-700"
-        >
+        <x-stat-card label="Girls" :value="$this->stats['girls']" cardBg="bg-violet-50/60" ringColor="ring-violet-100"
+            iconBg="bg-violet-50" iconColor="text-violet-700">
             <x-slot:icon>
                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="9" r="5" />
@@ -122,14 +102,8 @@
             </x-slot:icon>
         </x-stat-card>
 
-        <x-stat-card
-            label="Alumni"
-            :value="$this->stats['alumni']"
-            cardBg="bg-amber-50/60"
-            ringColor="ring-amber-100"
-            iconBg="bg-amber-50"
-            iconColor="text-amber-700"
-        >
+        <x-stat-card label="Alumni" :value="$this->stats['alumni']" cardBg="bg-amber-50/60" ringColor="ring-amber-100"
+            iconBg="bg-amber-50" iconColor="text-amber-700">
             <x-slot:icon>
                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 10 12 5 2 10l10 5 10-5z" />
@@ -140,12 +114,10 @@
         </x-stat-card>
     </div>
 
-    <div wire:loading.delay class="fixed top-20 right-6 z-50 rounded-xl bg-white shadow-lg border border-slate-200 p-4">
-        <x-loading size="sm" text="Loading..." />
-    </div>
 
     <x-table sortable selectable :items="$this->students">
-        <thead class="bg-gradient-to-r from-blue-500 to-indigo-600 text-xs font-semibold uppercase tracking-wider text-white">
+        <thead
+            class="bg-gradient-to-r from-blue-500 to-indigo-600 text-xs font-semibold uppercase tracking-wider text-white">
             <tr>
                 <th class="px-5 py-3">
                     <input type="checkbox" class="checkbox-custom" value="all" />
@@ -156,9 +128,9 @@
                         @if($sortBy === 'last_name')
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 @if($sortDir === 'asc')
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                                 @else
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 @endif
                             </svg>
                         @endif
@@ -170,9 +142,9 @@
                         @if($sortBy === 'admission_number')
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 @if($sortDir === 'asc')
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                                 @else
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 @endif
                             </svg>
                         @endif
@@ -185,9 +157,9 @@
                         @if($sortBy === 'gender')
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 @if($sortDir === 'asc')
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                                 @else
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 @endif
                             </svg>
                         @endif
@@ -200,9 +172,9 @@
                         @if($sortBy === 'status')
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 @if($sortDir === 'asc')
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                                 @else
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 @endif
                             </svg>
                         @endif
@@ -216,20 +188,23 @@
                 @php
                     $initials = collect(explode(' ', $student->full_name))
                         ->filter()
-                        ->map(fn ($part) => mb_substr($part, 0, 1))
+                        ->map(fn($part) => mb_substr($part, 0, 1))
                         ->take(2)
                         ->implode('');
                 @endphp
-                <tr class="bg-white dark:bg-dark-100 hover:bg-gray-50 dark:hover:bg-dark-200 animate-fade-in" wire:loading.class="opacity-50">
+                <tr class="bg-white dark:bg-dark-100 hover:bg-gray-50 dark:hover:bg-dark-200 animate-fade-in"
+                    wire:loading.class="opacity-50">
                     <td class="px-5 py-4">
                         <input type="checkbox" class="checkbox-custom" value="{{ $student->id }}" />
                     </td>
                     <td class="px-5 py-4">
                         <div class="flex items-center gap-3">
                             @if($student->passport_photo_url)
-                                <img src="{{ $student->passport_photo_url }}" alt="{{ $student->full_name }}" class="h-10 w-10 rounded-full object-cover ring-2 ring-gray-100">
+                                <img src="{{ $student->passport_photo_url }}" alt="{{ $student->full_name }}"
+                                    class="h-10 w-10 rounded-full object-cover ring-2 ring-gray-100">
                             @else
-                                <div class="grid h-10 w-10 place-items-center rounded-full bg-brand-50 text-sm font-bold text-brand-600">
+                                <div
+                                    class="grid h-10 w-10 place-items-center rounded-full bg-brand-50 text-sm font-bold text-brand-600">
                                     {{ $initials }}
                                 </div>
                             @endif
@@ -261,10 +236,8 @@
                         <x-status-badge variant="{{ $variant }}">{{ $student->status }}</x-status-badge>
                     </td>
                     <td class="px-5 py-4 text-right">
-                        <a
-                            class="text-sm font-semibold text-brand-600 hover:text-brand-700"
-                            href="{{ route('students.show', ['student' => $student]) }}"
-                        >
+                        <a class="text-sm font-semibold text-brand-600 hover:text-brand-700"
+                            href="{{ route('students.show', ['student' => $student]) }}">
                             View
                         </a>
                     </td>
@@ -272,13 +245,10 @@
             @empty
                 <tr>
                     <td colspan="8" class="px-5 py-12">
-                        <x-empty-state 
-                            icon="users" 
-                            title="No students found" 
+                        <x-empty-state icon="users" title="No students found"
                             message="No students match your current filters. Try adjusting your search criteria or add a new student."
                             :action="auth()->user()?->role === 'admin' ? route('students.create') : null"
-                            :actionText="auth()->user()?->role === 'admin' ? 'Add Student' : null"
-                        />
+                            :actionText="auth()->user()?->role === 'admin' ? 'Add Student' : null" />
                     </td>
                 </tr>
             @endforelse

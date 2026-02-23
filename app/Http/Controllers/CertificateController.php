@@ -26,6 +26,15 @@ class CertificateController extends Controller
             'vibrant' => 'pdf.certificate-vibrant',
             'minimal' => 'pdf.certificate-minimal',
             'royal' => 'pdf.certificate-royal',
+            'prestige' => 'pdf.certificate-prestige',
+            'botanical' => 'pdf.certificate-botanical',
+            'aurora' => 'pdf.certificate-aurora',
+            'heritage' => 'pdf.certificate-heritage',
+            'obsidian' => 'pdf.certificate-obsidian',
+            'sahara' => 'pdf.certificate-sahara',
+            'oceanic' => 'pdf.certificate-oceanic',
+            'crimson' => 'pdf.certificate-crimson',
+            'ivory' => 'pdf.certificate-ivory',
         ];
 
         $template = $certificate->template ?: (string) config('myacademy.certificate_template', 'modern');

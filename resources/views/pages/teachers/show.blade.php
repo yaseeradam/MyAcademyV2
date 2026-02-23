@@ -211,15 +211,20 @@
                             @csrf
 
                             <div>
-                                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Class</label>
-                                <select name="class_id" class="mt-2 select" required>
-                                    <option value="">Select class</option>
+                                @php
+                                    $selectedClassIds = collect(old('class_ids', old('class_id') ? [old('class_id')] : []))
+                                        ->map(fn ($id) => (string) $id)
+                                        ->all();
+                                @endphp
+                                <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Classes</label>
+                                <select name="class_ids[]" class="mt-2 select" multiple size="6" required>
                                     @foreach ($classes as $class)
-                                        <option value="{{ $class->id }}" @selected((string) old('class_id') === (string) $class->id)>
+                                        <option value="{{ $class->id }}" @selected(in_array((string) $class->id, $selectedClassIds, true))>
                                             {{ $class->name }}
                                         </option>
                                     @endforeach
                                 </select>
+                                <div class="mt-1 text-xs text-slate-500">Hold Ctrl (Windows) / Cmd (Mac) to pick multiple.</div>
                             </div>
 
                             <div>
@@ -240,7 +245,7 @@
                             </form>
 
                             <div class="mt-4 text-xs text-slate-500">
-                                Assign the same subject across multiple classes by repeating this form.
+                                Assign the same subject across multiple classes in one go.
                             </div>
                         @endif
                     </div>

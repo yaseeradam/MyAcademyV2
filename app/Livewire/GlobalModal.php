@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class GlobalModal extends Component
@@ -11,13 +12,20 @@ class GlobalModal extends Component
     public $title = '';
     public $message = '';
 
-    protected $listeners = ['showModal'];
-
-    public function showModal($type, $title, $message)
+    #[On('showModal')]
+    public function showModal($type = 'success', $title = '', $message = '')
     {
-        $this->type = $type;
-        $this->title = $title;
-        $this->message = $message;
+        // Support both named params and single-array dispatch
+        if (is_array($type) && isset($type['type'])) {
+            $this->type = $type['type'] ?? 'success';
+            $this->title = $type['title'] ?? '';
+            $this->message = $type['message'] ?? '';
+        } else {
+            $this->type = $type;
+            $this->title = $title;
+            $this->message = $message;
+        }
+
         $this->show = true;
     }
 

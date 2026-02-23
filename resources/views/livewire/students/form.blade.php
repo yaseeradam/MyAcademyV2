@@ -78,6 +78,7 @@
                         <label class="text-sm font-semibold text-gray-700">Class</label>
                         <select
                             wire:model.live="class_id"
+                            wire:change="$refresh"
                             class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                         >
                             <option value="">Select class</option>
@@ -93,11 +94,12 @@
                     <div>
                         <label class="text-sm font-semibold text-gray-700">Section</label>
                         <select
-                            wire:model.live="section_id"
-                            @disabled(! $class_id)
-                            class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500 disabled:bg-gray-50 disabled:text-gray-400"
+                            wire:model="section_id"
+                            wire:key="sections-{{ $class_id }}"
+                            {{ !$class_id ? 'disabled' : '' }}
+                            class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:ring-brand-500 {{ !$class_id ? 'bg-gray-50 text-gray-400' : '' }}"
                         >
-                            <option value="">Select section</option>
+                            <option value="">{{ $class_id ? 'Select section' : 'Select class first' }}</option>
                             @foreach ($this->sections as $section)
                                 <option value="{{ $section->id }}">{{ $section->name }}</option>
                             @endforeach
@@ -165,6 +167,13 @@
                             accept="image/*"
                             class="mt-3 block w-full text-sm text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-gray-700 hover:file:bg-gray-200"
                         />
+                        <div wire:loading wire:target="passport" class="mt-2 flex items-center gap-2 text-xs font-medium text-brand-600">
+                            <svg class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Uploading image...
+                        </div>
                         @error('passport')
                             <div class="mt-2 text-sm text-orange-700">{{ $message }}</div>
                         @enderror
@@ -240,6 +249,25 @@
             </div>
         </div>
     </form>
+
+    <!-- Save Processing Modal -->
+    <div wire:loading.flex wire:target="save" class="fixed inset-0 z-[100] items-center justify-center p-4 bg-black/40 backdrop-blur-[2px]" style="display: none;">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 transform transition-all">
+            <div class="text-center">
+                <div class="mx-auto mb-5 h-16 w-16 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-200">
+                    <svg class="animate-spin h-8 w-8 text-white" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Saving Changes</h3>
+                <p class="text-gray-600 mb-6 text-sm">Please hold on while we update the student record. This usually takes just a moment.</p>
+                <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-brand-500 to-indigo-600 rounded-full" style="width: 0%; animation: progress 2s ease-in-out infinite"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @script
@@ -247,34 +275,22 @@
     let progressModal = null;
 
     $wire.on('validation-error', () => {
+        if (progressModal) { progressModal.remove(); progressModal = null; }
         showModal('error', 'Validation Error', 'Please fix the validation errors before saving.');
     });
 
     $wire.on('upload-error', (event) => {
-        if (progressModal) progressModal.remove();
+        if (progressModal) { progressModal.remove(); progressModal = null; }
         showModal('error', 'Upload Failed', event[0].message);
     });
 
     $wire.on('student-saved', (event) => {
-        if (progressModal) progressModal.remove();
-        const data = event[0];
-        const action = data.isNew ? 'created' : 'updated';
-        showModal(
-            'success',
-            `Student ${action.charAt(0).toUpperCase() + action.slice(1)} Successfully`,
-            `${data.name} (${data.admission}) has been ${action} successfully.`,
-            () => window.location.href = '{{ route('students.index') }}'
-        );
+        if (progressModal) { progressModal.remove(); progressModal = null; }
+        const data = event?.[0] ?? event;
+        showStudentSavedModal(data);
     });
 
-    // Intercept form submission to show progress
-    document.addEventListener('livewire:init', () => {
-        Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
-            if (component.name === 'students.form') {
-                progressModal = showProgressModal();
-            }
-        });
-    });
+    // Modals are now handled by wire:loading for reliability
 
     function showProgressModal() {
         const modal = document.createElement('div');
@@ -342,6 +358,109 @@
         
         document.body.appendChild(modal);
         modal.onclick = (e) => { if (e.target === modal) { modal.remove(); if (onClose) onClose(); } };
+    }
+
+    function showStudentSavedModal(data) {
+        const studentsUrl = '{{ route('students.index') }}';
+        const downloadUrl = data?.downloadUrl;
+        const isNew = !!data?.isNew;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
+        overlay.style.animation = 'fadeIn 0.2s ease-out';
+
+        const panel = document.createElement('div');
+        panel.className = 'bg-white rounded-3xl shadow-2xl max-w-md w-full transform';
+        panel.style.animation = 'slideUp 0.3s ease-out';
+
+        const header = document.createElement('div');
+        header.className = 'bg-gradient-to-r from-emerald-500 to-teal-500 p-6 rounded-t-3xl';
+
+        const headerRow = document.createElement('div');
+        headerRow.className = 'flex items-center gap-4';
+
+        const iconWrap = document.createElement('div');
+        iconWrap.className = 'flex-shrink-0';
+        iconWrap.innerHTML = `
+            <svg class="h-12 w-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        `;
+
+        const title = document.createElement('h3');
+        title.className = 'text-2xl font-bold text-white';
+        title.textContent = isNew ? 'Student Created Successfully' : 'Student Updated Successfully';
+
+        headerRow.appendChild(iconWrap);
+        headerRow.appendChild(title);
+        header.appendChild(headerRow);
+
+        const body = document.createElement('div');
+        body.className = 'p-6';
+
+        const message = document.createElement('p');
+        message.className = 'text-gray-700 text-lg leading-relaxed';
+        const actionText = isNew ? 'created' : 'updated';
+        const nameText = data?.name ? String(data.name) : 'Student';
+        const admissionText = data?.admission ? String(data.admission) : '';
+        message.textContent = admissionText
+            ? `${nameText} (${admissionText}) has been ${actionText} successfully.`
+            : `${nameText} has been ${actionText} successfully.`;
+
+        body.appendChild(message);
+
+        const actions = document.createElement('div');
+        actions.className = 'p-6 pt-0 flex gap-3';
+
+        const goStudents = () => { window.location.href = studentsUrl; };
+        const close = () => { overlay.remove(); };
+
+        if (isNew && downloadUrl) {
+            const downloadBtn = document.createElement('button');
+            downloadBtn.type = 'button';
+            downloadBtn.className = 'flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-3 px-6 rounded-xl hover:shadow-lg transition-all';
+            downloadBtn.textContent = 'Download Admission Letter';
+            downloadBtn.onclick = () => {
+                window.open(downloadUrl, '_blank', 'noopener');
+                goStudents();
+            };
+
+            const viewBtn = document.createElement('button');
+            viewBtn.type = 'button';
+            viewBtn.className = 'flex-1 bg-white text-emerald-700 font-bold py-3 px-6 rounded-xl border border-emerald-200 hover:shadow transition-all';
+            viewBtn.textContent = 'View Students';
+            viewBtn.onclick = goStudents;
+
+            actions.appendChild(downloadBtn);
+            actions.appendChild(viewBtn);
+        } else {
+            const okBtn = document.createElement('button');
+            okBtn.type = 'button';
+            okBtn.className = 'flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-3 px-6 rounded-xl hover:shadow-lg transition-all';
+            okBtn.textContent = 'View Students';
+            okBtn.onclick = goStudents;
+            actions.appendChild(okBtn);
+        }
+
+        panel.appendChild(header);
+        panel.appendChild(body);
+        panel.appendChild(actions);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                close();
+                goStudents();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                close();
+                goStudents();
+            }
+        }, { once: true });
     }
 </script>
 <style>

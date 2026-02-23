@@ -108,7 +108,7 @@ class Index extends Component
             ->orderByDesc('date')
             ->orderByDesc('id');
 
-        if (! $this->includeVoided) {
+        if (!$this->includeVoided) {
             $query->where('is_void', false);
         }
 
@@ -161,7 +161,7 @@ class Index extends Component
                 }
             })
             ->where(function ($q) use ($session) {
-                if (! $session) {
+                if (!$session) {
                     $q->whereNull('session');
                 } else {
                     $q->whereNull('session')->orWhere('session', $session);
@@ -226,7 +226,7 @@ class Index extends Component
                     'balance' => $balance,
                 ];
             })
-            ->filter(fn (array $row) => $row['balance'] > 0)
+            ->filter(fn(array $row) => $row['balance'] > 0)
             ->sortByDesc('balance')
             ->values();
     }
@@ -387,7 +387,7 @@ class Index extends Component
         try {
             $data = $this->validate([
                 'studentId' => [
-                    Rule::requiredIf(fn () => $this->type === 'Income'),
+                    Rule::requiredIf(fn() => $this->type === 'Income'),
                     'nullable',
                     'integer',
                     Rule::exists('students', 'id'),
@@ -430,6 +430,9 @@ class Index extends Component
 
             $this->reset(['studentId', 'amountPaid']);
             $this->amountPaid = '';
+
+            // Clear cached computed properties so the UI reflects the new data
+            unset($this->transactions, $this->debtors);
 
             $this->dispatch('alert', message: 'Transaction saved successfully!', type: 'success');
         } catch (\Exception $e) {
@@ -475,6 +478,10 @@ class Index extends Component
         ]);
 
         $this->cancelVoid();
+
+        // Clear cached computed properties so the UI reflects the voided transaction
+        unset($this->transactions, $this->debtors);
+
         $this->dispatch('alert', message: 'Transaction voided.', type: 'warning');
     }
 

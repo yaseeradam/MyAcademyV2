@@ -138,21 +138,42 @@ class TeacherController extends Controller
         abort_unless($teacher->role === 'teacher', 404);
 
         $data = $request->validate([
-            'class_id' => ['required', 'integer', 'exists:classes,id'],
+            'class_id' => ['nullable', 'required_without:class_ids', 'integer', 'exists:classes,id'],
+            'class_ids' => ['nullable', 'required_without:class_id', 'array', 'min:1'],
+            'class_ids.*' => ['integer', 'distinct', 'exists:classes,id'],
             'subject_id' => ['required', 'integer', 'exists:subjects,id'],
         ]);
 
-        try {
-            SubjectAllocation::query()->create([
-                'teacher_id' => $teacher->id,
-                'class_id' => $data['class_id'],
-                'subject_id' => $data['subject_id'],
-            ]);
-        } catch (QueryException $e) {
-            // Ignore duplicate allocation attempts (unique constraint).
+        $classIds = collect($data['class_ids'] ?? (! empty($data['class_id']) ? [$data['class_id']] : []))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $created = 0;
+        foreach ($classIds as $classId) {
+            try {
+                $allocation = SubjectAllocation::query()->firstOrCreate([
+                    'teacher_id' => (int) $teacher->id,
+                    'class_id' => $classId,
+                    'subject_id' => (int) $data['subject_id'],
+                ]);
+
+                if ($allocation->wasRecentlyCreated) {
+                    $created++;
+                }
+            } catch (QueryException $e) {
+                // Ignore duplicate allocation attempts (unique constraint).
+            }
         }
 
-        return back()->with('status', 'Allocation saved.');
+        if ($created === 0) {
+            return back()->with('status', 'All selected allocations already exist.');
+        }
+
+        $message = $created === 1 ? '1 allocation saved.' : "{$created} allocations saved.";
+
+        return back()->with('status', $message);
     }
 
     public function destroyAllocation(User $teacher, SubjectAllocation $allocation)

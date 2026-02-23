@@ -83,6 +83,7 @@ class Form extends Component
     public function updatedClassId(): void
     {
         $this->section_id = null;
+        $this->dispatch('$refresh');
     }
 
     private function generateAdmissionNumber(): string
@@ -174,16 +175,14 @@ class Form extends Component
         $student->save();
 
         $isNew = !$this->student;
-        $this->dispatchSuccessModal(
-            $isNew ? 'Student Added' : 'Student Updated',
-            $isNew 
-                ? "Student {$student->full_name} ({$student->admission_number}) has been added successfully."
-                : "Student {$student->full_name} has been updated successfully."
-        );
+        $this->dispatch('student-saved', [
+            'isNew' => $isNew,
+            'name' => $student->full_name,
+            'admission' => $student->admission_number,
+            'downloadUrl' => route('students.admission-form', $student),
+        ]);
 
-        if ($isNew) {
-            return $this->redirect(route('students.index'), navigate: true);
-        }
+        return null;
     }
 
     public function render()

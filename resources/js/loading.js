@@ -1,143 +1,207 @@
-// Global loading indicator
+// Global loading indicator for Livewire 3
+// Livewire 3 request hook API: { uri, options, payload, respond, succeed, fail }
 document.addEventListener('livewire:init', () => {
-    // Show loading indicator on Livewire requests
-    Livewire.hook('request', ({ fail }) => {
-        // Show global loading
-        showGlobalLoading();
-        
-        fail(({ status, content }) => {
-            hideGlobalLoading();
-            
+    let loadingTimer = null;
+    let safetyTimer = null;
+    let activeUserRequests = 0;
+
+    /**
+     * Detect whether a Livewire request is a background polling request.
+     * Polling requests should NOT trigger the global loader.
+     */
+    function isPollingRequest({ options, payload }) {
+        try {
+            // Livewire 3 sends an X-Livewire header and the payload contains
+            // "components" with "calls". Polling calls use the method name
+            // that matches the wire:poll directive (e.g. '$refresh', 'tick',
+            // 'refreshCount'). But the simplest reliable signal is the
+            // 'X-Livewire-Polling' header that Livewire adds automatically.
+            const headers = options?.headers || {};
+            if (headers['X-Livewire-Is-Polling'] === true || headers['X-Livewire-Is-Polling'] === 'true') {
+                return true;
+            }
+
+            // Fallback: inspect the payload for polling fingerprints
+            // Livewire 3 sets a "polling" flag on the component memo
+            if (payload) {
+                const raw = typeof payload === 'string' ? JSON.parse(payload) : payload;
+                const components = raw?.components || [];
+                // If ALL components in this request are polling, skip loader
+                if (components.length > 0 && components.every(c => {
+                    const calls = c?.calls || [];
+                    // $refresh with no other calls = polling
+                    if (calls.length === 1 && calls[0]?.method === '$refresh') return true;
+                    // Known polling methods
+                    const pollingMethods = ['$refresh', 'tick', 'refreshCount'];
+                    return calls.length > 0 && calls.every(call => pollingMethods.includes(call?.method));
+                })) {
+                    return true;
+                }
+            }
+        } catch (e) {
+            // If we can't parse, assume it's NOT polling (safe default)
+        }
+        return false;
+    }
+
+    // Show loading indicator on user-initiated Livewire requests
+    Livewire.hook('request', (requestData) => {
+        const { succeed, fail } = requestData;
+
+        // Skip the global loader for background polling requests
+        if (isPollingRequest(requestData)) {
+            // Still wire up succeed/fail to avoid breaking the hook chain
+            succeed(() => { });
+            fail(() => { });
+            return;
+        }
+
+        activeUserRequests++;
+
+        // Debounce: only show loader if request takes > 300ms
+        // This prevents flashing on quick interactions
+        if (!loadingTimer && activeUserRequests === 1) {
+            loadingTimer = setTimeout(() => {
+                if (activeUserRequests > 0) {
+                    showGlobalLoading();
+
+                    // Safety net: auto-hide after 15 seconds to prevent infinite loaders
+                    clearTimeout(safetyTimer);
+                    safetyTimer = setTimeout(() => {
+                        activeUserRequests = 0;
+                        clearTimeout(loadingTimer);
+                        loadingTimer = null;
+                        hideGlobalLoading();
+                    }, 15000);
+                }
+            }, 300);
+        }
+
+        succeed(() => {
+            activeUserRequests = Math.max(0, activeUserRequests - 1);
+            if (activeUserRequests === 0) {
+                clearTimeout(loadingTimer);
+                loadingTimer = null;
+                clearTimeout(safetyTimer);
+                safetyTimer = null;
+                hideGlobalLoading();
+            }
+        });
+
+        fail(({ status }) => {
+            activeUserRequests = Math.max(0, activeUserRequests - 1);
+            if (activeUserRequests === 0) {
+                clearTimeout(loadingTimer);
+                loadingTimer = null;
+                clearTimeout(safetyTimer);
+                safetyTimer = null;
+                hideGlobalLoading();
+            }
+
             // Handle different error types
             if (status === 419) {
-                showError('Your session has expired. Please refresh the page.');
+                window.showError?.('Your session has expired. Please refresh the page.');
             } else if (status === 403) {
-                showError('You do not have permission to perform this action.');
-            } else if (status === 404) {
-                showError('The requested resource was not found.');
+                window.showError?.('You do not have permission to perform this action.');
             } else if (status === 500) {
-                showError('A server error occurred. Please try again or contact support.');
-            } else if (status === 422) {
-                // Validation errors are handled by Livewire
-                return;
-            } else {
-                showError('An unexpected error occurred. Please try again.');
+                window.showError?.('A server error occurred. Please try again or contact support.');
             }
         });
     });
-    
-    Livewire.hook('commit', () => {
-        hideGlobalLoading();
-    });
-    
-    // Handle alert events
+
+    // Handle alert events from Livewire
     Livewire.on('alert', (event) => {
         const data = event[0] || event;
         const message = data?.message || 'Action completed';
         const type = data?.type || 'info';
-        
-        showNotification(message, type);
+
+        if (window.showNotification) {
+            window.showNotification(message, type);
+        }
+    });
+
+    // Safety net: hide loader on unhandled JS errors
+    window.addEventListener('error', () => {
+        activeUserRequests = 0;
+        clearTimeout(loadingTimer);
+        loadingTimer = null;
+        clearTimeout(safetyTimer);
+        safetyTimer = null;
+        hideGlobalLoading();
     });
 });
 
-// Global loading indicator
+// Global loading indicator element management
 function showGlobalLoading() {
     let loader = document.getElementById('global-loader');
     if (!loader) {
         loader = document.createElement('div');
         loader.id = 'global-loader';
-        loader.className = 'fixed top-20 right-6 z-50 rounded-xl bg-white shadow-lg border border-slate-200 p-4';
+        loader.className = 'fixed top-24 right-8 z-[100] rounded-2xl bg-white/90 backdrop-blur-md shadow-2xl border border-slate-200/50 p-4 transition-all duration-300';
         loader.innerHTML = `
-            <div class="flex items-center gap-3">
-                <div class="relative h-6 w-6">
-                    <div class="absolute inset-0 rounded-full border-4 border-amber-200"></div>
+            <div class="flex items-center gap-4">
+                <div class="relative h-7 w-7">
+                    <div class="absolute inset-0 rounded-full border-4 border-amber-100"></div>
                     <div class="absolute inset-0 rounded-full border-4 border-amber-500 border-t-transparent animate-spin"></div>
                 </div>
-                <span class="text-sm font-medium text-slate-700">Loading...</span>
+                <div class="flex flex-col">
+                    <span class="text-sm font-bold text-slate-800">Processing</span>
+                    <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Please wait...</span>
+                </div>
             </div>
         `;
         document.body.appendChild(loader);
     }
     loader.style.display = 'block';
+    // Trigger reflow before transition
+    loader.offsetHeight;
+    loader.style.opacity = '1';
+    loader.style.transform = 'translateX(0)';
 }
 
 function hideGlobalLoading() {
     const loader = document.getElementById('global-loader');
     if (loader) {
-        loader.style.display = 'none';
+        loader.style.opacity = '0';
+        loader.style.transform = 'translateX(20px)';
+        setTimeout(() => {
+            if (loader.style.opacity === '0') {
+                loader.style.display = 'none';
+            }
+        }, 300);
     }
 }
 
-// Notification system
-function showNotification(message, type = 'info') {
-    const colors = {
-        success: 'bg-green-50 border-green-200 text-green-800',
-        error: 'bg-red-50 border-red-200 text-red-800',
-        warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-        info: 'bg-blue-50 border-blue-200 text-blue-800',
-    };
-    
-    const icons = {
-        success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />',
-        error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />',
-        warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />',
-        info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
-    };
-    
-    const notification = document.createElement('div');
-    notification.className = `fixed top-20 right-6 z-50 rounded-xl border-2 ${colors[type] || colors.info} p-4 shadow-lg animate-slide-in-right`;
-    notification.innerHTML = `
-        <div class="flex items-start gap-3">
-            <svg class="h-5 w-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                ${icons[type] || icons.info}
-            </svg>
-            <p class="text-sm font-semibold leading-relaxed flex-1">${message}</p>
-            <button onclick="this.closest('div').remove()" class="flex-shrink-0 rounded-lg p-1 hover:bg-black/5 transition-colors">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
+// Global error/success helpers that use the enhanced notification system
+window.showError = function (message) {
+    if (window.showNotification) {
+        window.showNotification(message, 'error');
+    } else {
+        alert(message);
+    }
+};
+
+window.showSuccess = function (message) {
+    if (window.showNotification) {
+        window.showNotification(message, 'success');
+    } else {
+        console.log('Success:', message);
+    }
+};
+
+// Ensure animation styles are present
+if (!document.getElementById('loading-animations')) {
+    const style = document.createElement('style');
+    style.id = 'loading-animations';
+    style.textContent = `
+        @keyframes slide-in-right {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in-right {
+            animation: slide-in-right 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
     `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => notification.remove(), 300);
-    }, 5000);
+    document.head.appendChild(style);
 }
 
-function showError(message) {
-    showNotification(message, 'error');
-}
-
-function showSuccess(message) {
-    showNotification(message, 'success');
-}
-
-// Add animation styles
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slide-in-right {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    .animate-slide-in-right {
-        animation: slide-in-right 0.3s ease-out;
-    }
-`;
-document.head.appendChild(style);
-
-// Export for use in other scripts
-window.showNotification = showNotification;
-window.showError = showError;
-window.showSuccess = showSuccess;
