@@ -106,33 +106,104 @@
                             </svg>
                             Live Design Preview
                         </h3>
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
+                            {{-- Previous Arrow --}}
+                            <button wire:click="prevTemplate" type="button"
+                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                                title="Previous template">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+
+                            {{-- Template Label & Counter --}}
                             <span
                                 class="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">{{ $this->templateLabel }}</span>
-                            <span class="text-xs text-slate-400">{{ $previewIndex + 1 }} /
+                            <span class="text-xs text-slate-400 tabular-nums">{{ $previewIndex + 1 }} /
                                 {{ $this->templateCount }}</span>
+
+                            {{-- Next Arrow --}}
+                            <button wire:click="nextTemplate" type="button"
+                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                                title="Next template">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+
+                            {{-- Divider --}}
+                            <div class="w-px h-6 bg-slate-200 mx-1"></div>
+
+                            {{-- Show All Button --}}
+                            <button wire:click="toggleShowAll" type="button"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors {{ $showAllTemplates ? 'bg-amber-500 text-white hover:bg-amber-600' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100' }}">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                </svg>
+                                {{ $showAllTemplates ? 'Hide All' : 'Show All' }}
+                            </button>
                         </div>
                     </div>
                 </div>
-                <div class="p-8 relative">
-                    <!-- Left Arrow -->
-                    <button wire:click="prevTemplate"
-                        class="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 shadow-lg border border-slate-200 hover:bg-slate-50 hover:shadow-xl transition-all group"
-                        title="Previous template">
-                        <svg class="h-5 w-5 text-slate-400 group-hover:text-slate-700 transition-colors" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                    <!-- Right Arrow -->
-                    <button wire:click="nextTemplate"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 shadow-lg border border-slate-200 hover:bg-slate-50 hover:shadow-xl transition-all group"
-                        title="Next template">
-                        <svg class="h-5 w-5 text-slate-400 group-hover:text-slate-700 transition-colors" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
+
+                {{-- Grid View: Show All Templates --}}
+                @if($showAllTemplates)
+                    <div class="p-6 bg-slate-50/30">
+                        <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                            @foreach($availableTemplates as $i => $tpl)
+                                <button wire:click="setTemplate({{ $i }})" type="button"
+                                    class="group relative rounded-xl border-2 p-3 text-center transition-all hover:shadow-md {{ $previewIndex === $i ? 'border-amber-500 bg-amber-50 shadow-md ring-2 ring-amber-200' : 'border-slate-200 bg-white hover:border-slate-300' }}">
+                                    {{-- Template icon/preview --}}
+                                    <div class="w-full aspect-[1.414/1] rounded-lg mb-2 flex items-center justify-center overflow-hidden {{ $previewIndex === $i ? 'ring-1 ring-amber-300' : '' }}"
+                                        @php
+                                            $bgStyles = [
+                                                'modern' => 'background: linear-gradient(135deg, #f8fafc, #e2e8f0);',
+                                                'classic' => 'background: #fff; border: 3px solid #3b82f6;',
+                                                'elegant' => 'background: linear-gradient(135deg, #fffef5, #fef9e7); border: 3px solid #d4af37;',
+                                                'vibrant' => 'background: linear-gradient(135deg, #6c5ce7, #a855f7, #ec4899);',
+                                                'minimal' => 'background: #fff; border-top: 3px solid #0ea5e9;',
+                                                'royal' => 'background: linear-gradient(180deg, #581c87, #7c3aed, #a855f7);',
+                                                'prestige' => 'background: linear-gradient(160deg, #0a1628, #0f2241, #162d50);',
+                                                'botanical' => 'background: linear-gradient(170deg, #f7faf4, #eef5e8);',
+                                                'aurora' => 'background: linear-gradient(135deg, #0d9488, #7c3aed, #ec4899);',
+                                                'heritage' => 'background: linear-gradient(150deg, #fdf6ec, #f5e8d0); border: 3px solid #8b1a1a;',
+                                                'obsidian' => 'background: linear-gradient(145deg, #1a1a1a, #2d2d2d);',
+                                                'sahara' => 'background: linear-gradient(155deg, #faf3e6, #e8d5b0);',
+                                                'oceanic' => 'background: linear-gradient(165deg, #e8f4f8, #c0e6f0);',
+                                                'crimson' => 'background: linear-gradient(145deg, #1a0a0a, #2d1515);',
+                                                'ivory' => 'background: #fffef9; border: 2px solid rgba(183,110,121,0.3);',
+                                            ];
+                                        @endphp
+                                        style="{{ $bgStyles[$tpl['key']] ?? 'background: #f1f5f9;' }}">
+                                        <svg class="h-5 w-5 {{ in_array($tpl['key'], ['vibrant', 'royal', 'prestige', 'aurora', 'obsidian', 'crimson']) ? 'text-white/60' : 'text-slate-300' }}"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <span
+                                        class="text-[11px] font-semibold {{ $previewIndex === $i ? 'text-amber-700' : 'text-slate-600 group-hover:text-slate-900' }}">
+                                        {{ $tpl['label'] }}
+                                    </span>
+                                    @if($previewIndex === $i)
+                                        <div
+                                            class="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center">
+                                            <svg class="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                                    d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                    @endif
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <div class="p-8">
 
                     {{-- Modern --}}
                     @if($template === 'modern')
@@ -666,20 +737,24 @@
                             </div>
                             <div class="relative z-10">
                                 <h3 class="text-[10px] font-bold uppercase tracking-[0.4em]" style="color: #999;">
-                                    {{ config('app.name') }}</h3>
+                                    {{ config('app.name') }}
+                                </h3>
                                 <div class="w-20 h-px mx-auto my-3"
                                     style="background: linear-gradient(90deg, transparent, #888, transparent);"></div>
                                 <h1 class="text-3xl font-light uppercase tracking-[0.3em]" style="color: #ffffff;">
-                                    {{ $title ?: 'Certificate' }}</h1>
+                                    {{ $title ?: 'Certificate' }}
+                                </h1>
                                 <p class="text-xs font-bold uppercase tracking-[0.3em] mt-1" style="color: #c0c0c0;">
-                                    {{ $type }}</p>
+                                    {{ $type }}
+                                </p>
                                 <p class="text-[10px] mt-5 uppercase tracking-wider" style="color: #777;">Awarded to</p>
                                 <span class="text-2xl font-light mt-2 inline-block tracking-wide"
                                     style="color: #ffffff;">Student Name</span>
                                 <div class="w-44 h-px mx-auto mt-2"
                                     style="background: linear-gradient(90deg, transparent, #c0c0c0, transparent);"></div>
                                 <p class="text-xs italic mt-3 max-w-xs mx-auto" style="color: #999;">
-                                    {{ $description ?: 'Outstanding performance' }}</p>
+                                    {{ $description ?: 'Outstanding performance' }}
+                                </p>
                                 <div class="mt-3 w-14 h-14 rounded-full mx-auto flex items-center justify-center text-[7px] font-extrabold uppercase"
                                     style="background: linear-gradient(135deg, #888, #ccc, #888); border: 2px solid #666; color: #222;">
                                     PLATI-<br>NUM</div>
@@ -725,15 +800,18 @@
                                 style="bottom: 8px; right: 4px; background: #c2703e; transform: rotate(45deg);"></div>
                             <div class="relative z-10">
                                 <h3 class="text-sm font-bold uppercase tracking-[0.3em]" style="color: #5c3a1e;">
-                                    {{ config('app.name') }}</h3>
+                                    {{ config('app.name') }}
+                                </h3>
                                 <div class="w-40 mx-auto my-3 relative" style="border-top: 1px solid #b87333;">
                                     <span class="absolute -top-2 left-1/2 -translate-x-1/2 px-2 text-sm"
                                         style="background: #f0e0c4; color: #c2703e;">❖</span>
                                 </div>
                                 <h1 class="text-3xl font-serif" style="color: #5c3a1e;">
-                                    {{ $title ?: 'Certificate of Achievement' }}</h1>
+                                    {{ $title ?: 'Certificate of Achievement' }}
+                                </h1>
                                 <p class="text-xs font-bold uppercase tracking-[0.3em] mt-1" style="color: #c2703e;">
-                                    {{ $type }}</p>
+                                    {{ $type }}
+                                </p>
                                 <p class="text-xs italic mt-5 uppercase tracking-wider" style="color: #8b6b4a;">This Honor
                                     is Bestowed Upon</p>
                                 <span class="text-2xl font-serif italic mt-2 inline-block" style="color: #5c3a1e;">Student
@@ -742,7 +820,8 @@
                                     style="background: linear-gradient(90deg, transparent, #c2703e, #d4874e, #c2703e, transparent);">
                                 </div>
                                 <p class="text-xs italic mt-3 max-w-xs mx-auto" style="color: #8b6b4a;">
-                                    {{ $description ?: 'Outstanding performance' }}</p>
+                                    {{ $description ?: 'Outstanding performance' }}
+                                </p>
                                 <div class="mt-3 w-14 h-14 rounded-full mx-auto flex items-center justify-center text-[7px] font-extrabold uppercase"
                                     style="background: linear-gradient(135deg, #b87333, #d4874e, #b87333); border: 3px solid #8b5a2b; color: #fff;">
                                     HONOR<br>SEAL</div>
@@ -792,15 +871,18 @@
                                 style="bottom: 22px; left: 16px; background: rgba(86,197,208,0.35);"></div>
                             <div class="relative z-10">
                                 <h3 class="text-xs font-bold uppercase tracking-[0.3em] text-white drop-shadow mb-2">
-                                    {{ config('app.name') }}</h3>
+                                    {{ config('app.name') }}
+                                </h3>
                                 <div class="w-36 mx-auto my-3 relative" style="border-top: 1px solid #0e6b8a;">
                                     <span class="absolute -top-2 left-1/2 -translate-x-1/2 px-2 text-xs"
                                         style="background: #d4eef5; color: #0e6b8a;">◈</span>
                                 </div>
                                 <h1 class="text-3xl font-serif" style="color: #0a2540;">
-                                    {{ $title ?: 'Certificate of Achievement' }}</h1>
+                                    {{ $title ?: 'Certificate of Achievement' }}
+                                </h1>
                                 <p class="text-xs font-bold uppercase tracking-[0.3em] mt-1" style="color: #1090b0;">
-                                    {{ $type }}</p>
+                                    {{ $type }}
+                                </p>
                                 <p class="text-xs italic mt-4 uppercase tracking-wider" style="color: #5a8a9a;">Proudly
                                     Presented To</p>
                                 <span class="text-2xl font-serif italic mt-2 inline-block" style="color: #0a2540;">Student
@@ -809,7 +891,8 @@
                                     style="background: linear-gradient(90deg, transparent, #56c5d0, #0e6b8a, #56c5d0, transparent);">
                                 </div>
                                 <p class="text-xs italic mt-3 max-w-xs mx-auto" style="color: #5a8a9a;">
-                                    {{ $description ?: 'Outstanding performance' }}</p>
+                                    {{ $description ?: 'Outstanding performance' }}
+                                </p>
                                 <div class="mt-3 w-14 h-14 rounded-full mx-auto flex items-center justify-center text-[7px] font-extrabold uppercase text-white"
                                     style="background: linear-gradient(135deg, #0e6b8a, #1090b0, #56c5d0); border: 3px solid #0a4d68;">
                                     NAUTI-<br>CAL</div>
@@ -848,7 +931,8 @@
                             {{-- School name in left panel --}}
                             <div class="absolute top-4 left-2 w-16 text-center z-10">
                                 <p class="text-[7px] font-bold uppercase text-white/90 tracking-wider leading-tight">
-                                    {{ config('app.name') }}</p>
+                                    {{ config('app.name') }}
+                                </p>
                             </div>
                             {{-- Content area --}}
                             <div
@@ -857,7 +941,8 @@
                                     Certificate</div>
                                 <div class="text-base font-semibold italic" style="color: #e63946;">of</div>
                                 <div class="text-xl font-extrabold uppercase tracking-wider" style="color: #c41e1e;">
-                                    {{ $type ?: 'Achievement' }}</div>
+                                    {{ $type ?: 'Achievement' }}
+                                </div>
                                 <div class="w-16 h-0.5 mx-auto my-3" style="background: #e63946;"></div>
                                 <p class="text-[10px] uppercase tracking-wider" style="color: #888;">This is Proudly
                                     Presented To</p>
@@ -865,7 +950,8 @@
                                     style="color: #1a0000;">Student Name</span>
                                 <div class="w-44 mx-auto mt-1" style="border-top: 3px solid #e63946;"></div>
                                 <p class="text-xs italic mt-3 max-w-xs mx-auto" style="color: #555;">
-                                    {{ $description ?: 'Outstanding performance' }}</p>
+                                    {{ $description ?: 'Outstanding performance' }}
+                                </p>
                                 <div class="mt-3 w-14 h-14 rounded-full mx-auto flex items-center justify-center text-[7px] font-extrabold uppercase text-white"
                                     style="background: linear-gradient(135deg, #8b0000, #c41e1e, #e63946); border: 3px solid #5a0000;">
                                     SUPREME<br>AWARD</div>
@@ -911,16 +997,19 @@
                                 style="background: linear-gradient(90deg, transparent, #b76e79, transparent);"></div>
                             <div class="relative z-10">
                                 <h3 class="text-[10px] font-bold uppercase tracking-[0.35em]" style="color: #b76e79;">
-                                    {{ config('app.name') }}</h3>
+                                    {{ config('app.name') }}
+                                </h3>
                                 <div class="w-32 mx-auto my-3 relative"
                                     style="border-top: 1px solid rgba(183,110,121,0.5);">
                                     <span class="absolute -top-1.5 left-1/2 -translate-x-1/2 px-2 text-[9px]"
                                         style="background: #fffef9; color: #b76e79;">⬥</span>
                                 </div>
                                 <h1 class="text-3xl font-normal" style="color: #3a2f2f;">
-                                    {{ $title ?: 'Certificate of Achievement' }}</h1>
+                                    {{ $title ?: 'Certificate of Achievement' }}
+                                </h1>
                                 <p class="text-xs font-bold uppercase tracking-[0.3em] mt-1" style="color: #b76e79;">
-                                    {{ $type }}</p>
+                                    {{ $type }}
+                                </p>
                                 <p class="text-[10px] mt-5 uppercase tracking-wider" style="color: #c0a0a5;">Gracefully
                                     Presented To</p>
                                 <span class="text-2xl font-normal italic mt-2 inline-block" style="color: #3a2f2f;">Student
@@ -928,7 +1017,8 @@
                                 <div class="w-44 h-px mx-auto mt-1"
                                     style="background: linear-gradient(90deg, transparent, #b76e79, transparent);"></div>
                                 <p class="text-xs italic mt-3 max-w-xs mx-auto" style="color: #c0a0a5;">
-                                    {{ $description ?: 'Outstanding performance' }}</p>
+                                    {{ $description ?: 'Outstanding performance' }}
+                                </p>
                                 <div class="mt-3 w-14 h-14 rounded-full mx-auto flex items-center justify-center text-[7px] font-bold uppercase text-white"
                                     style="background: linear-gradient(135deg, #b76e79, #d4a0a7, #e8c4c9, #d4a0a7, #b76e79); border: 2px solid #a05a65;">
                                     GRACE<br>AWARD</div>
@@ -1003,22 +1093,22 @@
 @once
     @push('scripts')
         <script>
-                    document.addEventListener('livewire:init', () => {
-                        Livewire.on('open-url', (event) => {
-                            const data = event[0] || event;
-                            const url = data?.url || data;
-                            if (url) {
-                                window.o pen(url, '_blank');
-                            }
-                        });
+                    document.addEventListener('livewire:i                                           nit', ()              => {
+                                        Livewire.on('open-url', (event) => {
+                                            const data = event[0] || event;
+                                            const url = data?.url || data;
+                                            if (url) {
+                                                window.o pen(url, '_blank');
+                                            }
+                                        });
 
-                        Livewire.on('alert', (event) => {
-                            const data = event[0] || event;
-                            if (data?.message) {
-                                alert(data.message);
-                            }
-                        });
-                    });
-                </script>
+                                        Livewire.on('alert', (event) => {
+                                            const data = event[0] || event;
+                                            if (data?.message) {
+                                                alert(data.message);
+                                            }
+                                        });
+                                    });
+                                </script>
     @endpush
 @endonce

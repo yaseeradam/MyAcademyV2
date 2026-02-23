@@ -33,6 +33,7 @@ class Manager extends Component
     public bool $showModal = false;
     public $templateFile;
     public int $previewIndex = 0;
+    public bool $showAllTemplates = false;
 
     public string $search = '';
 
@@ -87,6 +88,12 @@ class Manager extends Component
         $index = max(0, min($index, count($this->availableTemplates) - 1));
         $this->previewIndex = $index;
         $this->template = $this->availableTemplates[$this->previewIndex]['key'];
+        $this->showAllTemplates = false;
+    }
+
+    public function toggleShowAll(): void
+    {
+        $this->showAllTemplates = !$this->showAllTemplates;
     }
 
     #[Computed]
