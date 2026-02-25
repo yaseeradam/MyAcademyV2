@@ -24,7 +24,7 @@
                 </div>
                 <div>
                     <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">From section</label>
-                    <select wire:model.live="fromSectionId" @disabled(! $fromClassId) class="mt-2 select w-full">
+                    <select wire:model.live="fromSectionId" @disabled(!$fromClassId) class="mt-2 select w-full">
                         <option value="">All</option>
                         @foreach($this->fromSections as $s)
                             <option value="{{ $s->id }}">{{ $s->name }}</option>
@@ -42,7 +42,7 @@
                 </div>
                 <div>
                     <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">To section</label>
-                    <select wire:model.live="toSectionId" @disabled(! $toClassId) class="mt-2 select w-full">
+                    <select wire:model.live="toSectionId" @disabled(!$toClassId) class="mt-2 select w-full">
                         <option value="">None</option>
                         @foreach($this->toSections as $s)
                             <option value="{{ $s->id }}">{{ $s->name }}</option>
@@ -66,16 +66,11 @@
                 {{ $this->students->count() }} active student(s)
             </div>
             <div class="flex flex-wrap items-center gap-2">
-                <button type="button" wire:click="toggleSelectAll" @disabled(! $fromClassId) class="btn-outline">
+                <button type="button" wire:click="toggleSelectAll" @disabled(!$fromClassId) class="btn-outline">
                     {{ $selectAll ? 'Clear selection' : 'Select all' }}
                 </button>
-                <button
-                    type="button"
-                    wire:click="promoteSelected"
-                    @disabled(! $fromClassId || ! $toClassId)
-                    onclick="return confirm('Promote selected students?')"
-                    class="btn-primary"
-                >
+                <button type="button" wire:click="promoteSelected" @disabled(!$fromClassId || !$toClassId)
+                    onclick="return confirm('Promote selected students?')" class="btn-primary">
                     Promote Selected
                 </button>
             </div>
@@ -89,30 +84,32 @@
         <div class="mt-4 overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100">
                 <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                <tr>
-                    <th class="px-5 py-3 w-12"></th>
-                    <th class="px-5 py-3 text-left">Student</th>
-                    <th class="px-5 py-3 text-left">Admission</th>
-                    <th class="px-5 py-3 text-left">Status</th>
-                </tr>
+                    <tr>
+                        <th class="px-5 py-3 w-12"></th>
+                        <th class="px-5 py-3 text-left">Student</th>
+                        <th class="px-5 py-3 text-left">Admission</th>
+                        <th class="px-5 py-3 text-left">Status</th>
+                    </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 bg-white">
-                @forelse($this->students as $student)
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-5 py-4">
-                            <input type="checkbox" wire:model="selected" value="{{ $student->id }}" class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
-                        </td>
-                        <td class="px-5 py-4">
-                            <div class="text-sm font-semibold text-gray-900">{{ $student->full_name }}</div>
-                        </td>
-                        <td class="px-5 py-4 text-sm text-gray-700">{{ $student->admission_number }}</td>
-                        <td class="px-5 py-4 text-sm text-gray-700">{{ $student->status }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" class="px-5 py-10 text-center text-sm text-gray-500">Select a class to load students.</td>
-                    </tr>
-                @endforelse
+                    @forelse($this->students as $student)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-5 py-4">
+                                <input type="checkbox" wire:model.live="selected" value="{{ $student->id }}"
+                                    class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="text-sm font-semibold text-gray-900">{{ $student->full_name }}</div>
+                            </td>
+                            <td class="px-5 py-4 text-sm text-gray-700">{{ $student->admission_number }}</td>
+                            <td class="px-5 py-4 text-sm text-gray-700">{{ $student->status }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="px-5 py-10 text-center text-sm text-gray-500">Select a class to load
+                                students.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -133,11 +130,11 @@
                     </div>
                 </div>
             @empty
-                <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-600">
+                <div
+                    class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-600">
                     No promotions yet.
                 </div>
             @endforelse
         </div>
     </div>
 </div>
-
