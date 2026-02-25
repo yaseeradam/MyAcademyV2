@@ -1,4 +1,5 @@
 @php
+    use App\Models\AcademicTerm;
     use App\Models\AttendanceMark;
     use App\Models\CbtExam;
     use App\Models\SchoolClass;
@@ -11,6 +12,7 @@
     $todayLabel = now()->format('l, F j, Y');
     $user = auth()->user();
     $schoolName = config('myacademy.school_name', config('app.name', 'MyAcademy'));
+    $currentTerm = AcademicTerm::active();
 
     $studentsTotal = Student::query()->count();
     $studentsBoys = Student::query()->where('gender', 'Male')->count();
@@ -152,7 +154,7 @@
                                         <line x1="8" y1="2" x2="8" y2="6"/>
                                         <line x1="3" y1="10" x2="21" y2="10"/>
                                     </svg>
-                                    <span class="text-sm font-bold text-white">{{ config('myacademy.current_term', 'Term 1') }}</span>
+                                    <span class="text-sm font-bold text-white">{{ $currentTerm ? $currentTerm->name : 'No Active Term' }}</span>
                                 </div>
                                 <div class="inline-flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 backdrop-blur-md">
                                     <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

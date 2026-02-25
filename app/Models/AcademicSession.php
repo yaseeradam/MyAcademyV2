@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AcademicSession extends Model
 {
@@ -18,6 +19,11 @@ class AcademicSession extends Model
         'ends_on' => 'date',
         'is_active' => 'boolean',
     ];
+
+    public function terms(): HasMany
+    {
+        return $this->hasMany(AcademicTerm::class);
+    }
 
     public static function activeName(): ?string
     {

@@ -1,58 +1,104 @@
 // Global loading indicator for Livewire 3
-// Livewire 3 request hook API: { uri, options, payload, respond, succeed, fail }
+// Only shows the loader when the user EXPLICITLY clicks a button or submits a form.
+// Background requests (polling, wire:model.live, $refresh, etc.) will NOT trigger it.
+
+// ── User-action tracking ──────────────────────────────────────────────
+// We set a flag whenever the user clicks or submits something.
+// The flag is cleared after a short window. Livewire requests that land
+// inside this window AND contain an explicit method call are considered
+// "user-initiated" and will show the loader; everything else is silent.
+let _userActionTimestamp = 0;
+const USER_ACTION_WINDOW_MS = 150; // ms after click/submit to accept as user-initiated
+
+function markUserAction() {
+    _userActionTimestamp = Date.now();
+}
+
+// Listen on the capture phase so we catch the event before Livewire does
+document.addEventListener('click', markUserAction, true);
+document.addEventListener('submit', markUserAction, true);
+document.addEventListener('keydown', (e) => {
+    // Enter key on buttons / inside forms counts as an action
+    if (e.key === 'Enter') markUserAction();
+}, true);
+
 document.addEventListener('livewire:init', () => {
     let loadingTimer = null;
     let safetyTimer = null;
     let activeUserRequests = 0;
 
     /**
-     * Detect whether a Livewire request is a background polling request.
-     * Polling requests should NOT trigger the global loader.
+     * Methods that are considered "background" – they do NOT warrant a loader
+     * even if they happen to coincide with the user-action window.
      */
-    function isPollingRequest({ options, payload }) {
+    const BACKGROUND_METHODS = new Set([
+        '$refresh',
+        'tick',
+        'refreshCount',
+    ]);
+
+    /**
+     * Decide whether a Livewire request should show the global loader.
+     * Returns TRUE only for explicit user-initiated actions.
+     */
+    function shouldShowLoader({ options, payload }) {
         try {
-            // Livewire 3 sends an X-Livewire header and the payload contains
-            // "components" with "calls". Polling calls use the method name
-            // that matches the wire:poll directive (e.g. '$refresh', 'tick',
-            // 'refreshCount'). But the simplest reliable signal is the
-            // 'X-Livewire-Polling' header that Livewire adds automatically.
+            // ── 1. Polling header ──────────────────────────────────
             const headers = options?.headers || {};
-            if (headers['X-Livewire-Is-Polling'] === true || headers['X-Livewire-Is-Polling'] === 'true') {
-                return true;
+            if (
+                headers['X-Livewire-Is-Polling'] === true ||
+                headers['X-Livewire-Is-Polling'] === 'true'
+            ) {
+                return false;
             }
 
-            // Fallback: inspect the payload for polling fingerprints
-            // Livewire 3 sets a "polling" flag on the component memo
-            if (payload) {
-                const raw = typeof payload === 'string' ? JSON.parse(payload) : payload;
-                const components = raw?.components || [];
-                // If ALL components in this request are polling, skip loader
-                if (components.length > 0 && components.every(c => {
-                    const calls = c?.calls || [];
-                    // $refresh with no other calls = polling
-                    if (calls.length === 1 && calls[0]?.method === '$refresh') return true;
-                    // Known polling methods
-                    const pollingMethods = ['$refresh', 'tick', 'refreshCount'];
-                    return calls.length > 0 && calls.every(call => pollingMethods.includes(call?.method));
-                })) {
-                    return true;
-                }
+            // ── 2. Parse payload ───────────────────────────────────
+            const raw = payload
+                ? typeof payload === 'string'
+                    ? JSON.parse(payload)
+                    : payload
+                : null;
+            const components = raw?.components || [];
+
+            // ── 3. Collect every method being called ───────────────
+            const allCalls = components.flatMap(c => c?.calls || []);
+            const methods = allCalls.map(c => c?.method).filter(Boolean);
+
+            // If there are NO explicit calls (e.g. a pure model sync / dehydrate),
+            // this is a background request – skip loader.
+            if (methods.length === 0) {
+                return false;
             }
+
+            // If ALL methods are background-only, skip loader.
+            if (methods.every(m => BACKGROUND_METHODS.has(m))) {
+                return false;
+            }
+
+            // ── 4. Check if a recent user action triggered this ────
+            const elapsed = Date.now() - _userActionTimestamp;
+            if (elapsed > USER_ACTION_WINDOW_MS) {
+                // No recent click/submit – this was triggered automatically
+                // (e.g. wire:model.live, wire:change="$refresh", etc.)
+                return false;
+            }
+
+            // Has explicit method calls AND was triggered by user action ✓
+            return true;
         } catch (e) {
-            // If we can't parse, assume it's NOT polling (safe default)
+            // If we can't parse, don't show loader (safe default)
+            return false;
         }
-        return false;
     }
 
-    // Show loading indicator on user-initiated Livewire requests
+    // ── Livewire request hook ─────────────────────────────────────────
     Livewire.hook('request', (requestData) => {
         const { succeed, fail } = requestData;
 
-        // Skip the global loader for background polling requests
-        if (isPollingRequest(requestData)) {
-            // Still wire up succeed/fail to avoid breaking the hook chain
-            succeed(() => { });
-            fail(() => { });
+        if (!shouldShowLoader(requestData)) {
+            // Still wire up succeed/fail to keep the hook chain intact
+            succeed(() => {});
+            fail(() => {});
             return;
         }
 
@@ -65,7 +111,7 @@ document.addEventListener('livewire:init', () => {
                 if (activeUserRequests > 0) {
                     showGlobalLoading();
 
-                    // Safety net: auto-hide after 15 seconds to prevent infinite loaders
+                    // Safety net: auto-hide after 15 seconds
                     clearTimeout(safetyTimer);
                     safetyTimer = setTimeout(() => {
                         activeUserRequests = 0;
@@ -131,7 +177,7 @@ document.addEventListener('livewire:init', () => {
     });
 });
 
-// Global loading indicator element management
+// ── Global loading indicator element management ──────────────────────
 function showGlobalLoading() {
     let loader = document.getElementById('global-loader');
     if (!loader) {

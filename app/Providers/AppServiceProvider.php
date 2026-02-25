@@ -17,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(LicenseManager::class, fn () => new LicenseManager());
+        $this->app->singleton(LicenseManager::class, fn() => new LicenseManager());
     }
 
     /**
@@ -37,14 +37,14 @@ class AppServiceProvider extends ServiceProvider
 
         $path = storage_path('app/myacademy/settings.json');
 
-        if (! File::exists($path)) {
+        if (!File::exists($path)) {
             return;
         }
 
         $raw = File::get($path);
         $data = json_decode($raw, true);
 
-        if (! is_array($data)) {
+        if (!is_array($data)) {
             return;
         }
 
@@ -55,7 +55,6 @@ class AppServiceProvider extends ServiceProvider
             'school_email',
             'school_logo',
             'currency_symbol',
-            'current_term',
             'current_week',
             'tagline',
             'results_ca1_max',

@@ -3,6 +3,7 @@
 namespace App\Livewire\Attendance;
 
 use App\Models\AcademicSession;
+use App\Models\AcademicTerm;
 use App\Models\TeacherAttendanceMark;
 use App\Models\TeacherAttendanceSheet;
 use App\Models\User;
@@ -90,7 +91,7 @@ class Teachers extends Component
 
         foreach ($this->teachers as $teacher) {
             $status = (string) ($this->marks[$teacher->id]['status'] ?? 'Present');
-            if (! array_key_exists($status, $counts)) {
+            if (!array_key_exists($status, $counts)) {
                 $status = 'Present';
             }
 
@@ -117,7 +118,7 @@ class Teachers extends Component
 
     public function setTool(string $tool): void
     {
-        if (! in_array($tool, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+        if (!in_array($tool, ['Present', 'Absent', 'Late', 'Excused'], true)) {
             return;
         }
 
@@ -127,7 +128,7 @@ class Teachers extends Component
     public function applyTool(int $teacherId): void
     {
         $tool = $this->tool;
-        if (! in_array($tool, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+        if (!in_array($tool, ['Present', 'Absent', 'Late', 'Excused'], true)) {
             $tool = 'Absent';
         }
 
@@ -183,7 +184,7 @@ class Teachers extends Component
                 $status = (string) ($row['status'] ?? 'Present');
                 $note = $row['note'] ?? null;
 
-                if (! in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+                if (!in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
                     throw ValidationException::withMessages([
                         'marks' => "Invalid attendance status for {$teacher->name}.",
                     ]);
@@ -207,7 +208,7 @@ class Teachers extends Component
 
     public function markAll(string $status): void
     {
-        if (! in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+        if (!in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
             return;
         }
 
@@ -258,7 +259,7 @@ class Teachers extends Component
         $this->sheetId = null;
         $this->marks = [];
 
-        if (! $this->date || ! $this->term || ! $this->session) {
+        if (!$this->date || !$this->term || !$this->session) {
             return;
         }
 
@@ -268,7 +269,7 @@ class Teachers extends Component
             ->where('session', $this->session)
             ->first();
 
-        if (! $sheet) {
+        if (!$sheet) {
             return;
         }
 
@@ -291,15 +292,7 @@ class Teachers extends Component
 
     private function defaultTerm(): int
     {
-        $term = (string) config('myacademy.current_term', 'Term 1');
-        if (preg_match('/(\\d)/', $term, $m)) {
-            $n = (int) $m[1];
-            if ($n >= 1 && $n <= 3) {
-                return $n;
-            }
-        }
-
-        return 1;
+        return AcademicTerm::activeTermNumber();
     }
 
     public function render()

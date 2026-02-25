@@ -3,6 +3,7 @@
 namespace App\Livewire\DataCollection;
 
 use App\Models\AcademicSession;
+use App\Models\AcademicTerm;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\WeeklyDataCollection;
@@ -46,7 +47,7 @@ class Weekly extends Component
     #[Computed]
     public function sections()
     {
-        if (! $this->classId) {
+        if (!$this->classId) {
             return collect();
         }
 
@@ -88,7 +89,7 @@ class Weekly extends Component
     #[Computed]
     public function existing(): ?WeeklyDataCollection
     {
-        if (! $this->classId || ! $this->sectionId || trim($this->weekStart) === '') {
+        if (!$this->classId || !$this->sectionId || trim($this->weekStart) === '') {
             return null;
         }
 
@@ -106,7 +107,7 @@ class Weekly extends Component
     public function recent()
     {
         $user = auth()->user();
-        if (! $user) {
+        if (!$user) {
             return collect();
         }
 
@@ -126,7 +127,7 @@ class Weekly extends Component
     public function loadFromExisting(): void
     {
         $row = $this->existing;
-        if (! $row) {
+        if (!$row) {
             return;
         }
 
@@ -221,7 +222,7 @@ class Weekly extends Component
 
     public function bump(string $field, int $delta): void
     {
-        if (! in_array($field, ['boysPresent', 'boysAbsent', 'girlsPresent', 'girlsAbsent'], true)) {
+        if (!in_array($field, ['boysPresent', 'boysAbsent', 'girlsPresent', 'girlsAbsent'], true)) {
             return;
         }
 
@@ -249,15 +250,7 @@ class Weekly extends Component
 
     private function defaultTerm(): int
     {
-        $term = (string) config('myacademy.current_term', 'Term 1');
-        if (preg_match('/(\d)/', $term, $m)) {
-            $n = (int) $m[1];
-            if ($n >= 1 && $n <= 3) {
-                return $n;
-            }
-        }
-
-        return 1;
+        return AcademicTerm::activeTermNumber();
     }
 
     public function render()

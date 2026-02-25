@@ -3,6 +3,7 @@
 namespace App\Livewire\Attendance;
 
 use App\Models\AcademicSession;
+use App\Models\AcademicTerm;
 use App\Models\AttendanceMark;
 use App\Models\AttendanceSheet;
 use App\Models\SchoolClass;
@@ -54,7 +55,7 @@ class Index extends Component
     #[Computed]
     public function sections()
     {
-        if (! $this->classId) {
+        if (!$this->classId) {
             return collect();
         }
 
@@ -67,7 +68,7 @@ class Index extends Component
     #[Computed]
     public function students()
     {
-        if (! $this->classId || ! $this->sectionId) {
+        if (!$this->classId || !$this->sectionId) {
             return collect();
         }
 
@@ -118,7 +119,7 @@ class Index extends Component
 
         foreach ($this->students as $student) {
             $status = (string) ($this->marks[$student->id]['status'] ?? 'Present');
-            if (! array_key_exists($status, $counts)) {
+            if (!array_key_exists($status, $counts)) {
                 $status = 'Present';
             }
 
@@ -164,7 +165,7 @@ class Index extends Component
 
     public function setTool(string $tool): void
     {
-        if (! in_array($tool, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+        if (!in_array($tool, ['Present', 'Absent', 'Late', 'Excused'], true)) {
             return;
         }
 
@@ -174,7 +175,7 @@ class Index extends Component
     public function applyTool(int $studentId): void
     {
         $tool = $this->tool;
-        if (! in_array($tool, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+        if (!in_array($tool, ['Present', 'Absent', 'Late', 'Excused'], true)) {
             $tool = 'Absent';
         }
 
@@ -192,7 +193,7 @@ class Index extends Component
     {
         [$section] = $this->validateSelection();
 
-        if (! $section) {
+        if (!$section) {
             $this->dispatch('alert', message: 'Please select a valid section.', type: 'error');
             return;
         }
@@ -239,7 +240,7 @@ class Index extends Component
                 $status = (string) ($row['status'] ?? 'Present');
                 $note = $row['note'] ?? null;
 
-                if (! in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+                if (!in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
                     throw ValidationException::withMessages([
                         'marks' => "Invalid attendance status for {$student->full_name}.",
                     ]);
@@ -263,7 +264,7 @@ class Index extends Component
 
     public function markAll(string $status): void
     {
-        if (! in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+        if (!in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
             return;
         }
 
@@ -284,7 +285,7 @@ class Index extends Component
 
     public function setMark(int $studentId, string $status): void
     {
-        if (! in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+        if (!in_array($status, ['Present', 'Absent', 'Late', 'Excused'], true)) {
             return;
         }
 
@@ -333,7 +334,7 @@ class Index extends Component
             ->where('class_id', $this->classId)
             ->first();
 
-        if (! $section) {
+        if (!$section) {
             throw ValidationException::withMessages([
                 'sectionId' => 'Please select a valid section for the chosen class.',
             ]);
@@ -347,7 +348,7 @@ class Index extends Component
         $this->sheetId = null;
         $this->marks = [];
 
-        if (! $this->classId || ! $this->sectionId || ! $this->date || ! $this->term || ! $this->session) {
+        if (!$this->classId || !$this->sectionId || !$this->date || !$this->term || !$this->session) {
             return;
         }
 
@@ -359,7 +360,7 @@ class Index extends Component
             ->where('session', $this->session)
             ->first();
 
-        if (! $sheet) {
+        if (!$sheet) {
             return;
         }
 
@@ -382,15 +383,7 @@ class Index extends Component
 
     private function defaultTerm(): int
     {
-        $term = (string) config('myacademy.current_term', 'Term 1');
-        if (preg_match('/(\d)/', $term, $m)) {
-            $n = (int) $m[1];
-            if ($n >= 1 && $n <= 3) {
-                return $n;
-            }
-        }
-
-        return 1;
+        return AcademicTerm::activeTermNumber();
     }
 
     public function render()
