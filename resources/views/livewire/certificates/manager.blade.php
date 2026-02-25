@@ -1093,22 +1093,22 @@
 @once
     @push('scripts')
         <script>
-                    document.addEventListener('livewire:i                                           nit', ()              => {
-                                        Livewire.on('open-url', (event) => {
-                                            const data = event[0] || event;
-                                            const url = data?.url || data;
-                                            if (url) {
-                                                window.o pen(url, '_blank');
-                                            }
-                                        });
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('open-url', (event) => {
+                    const data = event[0] || event;
+                    const url = data?.url || data;
+                    if (url) {
+                        window.open(url, '_blank');
+                    }
+                });
 
-                                        Livewire.on('alert', (event) => {
-                                            const data = event[0] || event;
-                                            if (data?.message) {
-                                                alert(data.message);
-                                            }
-                                        });
-                                    });
-                                </script>
+                Livewire.on('alert', (event) => {
+                    const data = event[0] || event;
+                    if (data?.message) {
+                        alert(data.message);
+                    }
+                });
+            });
+        </script>
     @endpush
 @endonce

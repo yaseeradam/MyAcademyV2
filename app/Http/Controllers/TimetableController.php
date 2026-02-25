@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicSession;
+use App\Models\AcademicTerm;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\TimetableEntry;
@@ -26,6 +28,7 @@ class TimetableController extends Controller
             ->orderBy('starts_at')
             ->get();
 
+        // Build days
         $days = [
             1 => 'Monday',
             2 => 'Tuesday',
@@ -34,20 +37,87 @@ class TimetableController extends Controller
             5 => 'Friday',
         ];
 
-        $grouped = $entries->groupBy('day_of_week')->map(function ($rows, $day) use ($days) {
-            return [
-                'day' => (int) $day,
-                'label' => $days[$day] ?? 'Day',
-                'rows' => $rows,
+        // Build time-slot grid (same logic as the Livewire editor)
+        $boundaries = [];
+        for ($hour = 8; $hour <= 16; $hour++) {
+            $boundaries[] = sprintf('%02d:00', $hour);
+        }
+        foreach ($entries as $entry) {
+            $boundaries[] = substr((string) $entry->starts_at, 0, 5);
+            $boundaries[] = substr((string) $entry->ends_at, 0, 5);
+        }
+
+        $unique = [];
+        foreach ($boundaries as $time) {
+            [$h, $m] = array_map('intval', explode(':', $time, 2));
+            $sec = ($h * 3600) + ($m * 60);
+            $unique[$sec] = $time;
+        }
+        ksort($unique);
+        $sortedTimes = array_values($unique);
+
+        $timeSlots = [];
+        for ($i = 0; $i < count($sortedTimes) - 1; $i++) {
+            $start = $sortedTimes[$i];
+            $end = $sortedTimes[$i + 1];
+            $timeSlots[] = [
+                'key' => $start . '-' . $end,
+                'start' => $start,
+                'end' => $end,
+                'label' => $start . ' – ' . $end,
+                'startSec' => $this->timeToSeconds($start),
+                'endSec' => $this->timeToSeconds($end),
             ];
-        })->sortBy('day')->values();
+        }
+
+        // Map entries into the grid (day × slot)
+        $slotMap = [];
+        foreach ($entries as $entry) {
+            $entryStart = $this->timeToSeconds(substr((string) $entry->starts_at, 0, 5));
+            $entryEnd = $this->timeToSeconds(substr((string) $entry->ends_at, 0, 5));
+
+            foreach ($timeSlots as $slot) {
+                if (max($entryStart, $slot['startSec']) < min($entryEnd, $slot['endSec'])) {
+                    $slotMap[$entry->day_of_week][$slot['key']] = $entry;
+                }
+            }
+        }
+
+        // School info
+        $schoolName = config('myacademy.school_name', config('app.name', 'School'));
+        $schoolAddress = config('myacademy.school_address', '');
+        $schoolPhone = config('myacademy.school_phone', '');
+        $schoolEmail = config('myacademy.school_email', '');
+        $logoPath = config('myacademy.school_logo');
+
+        $logoBase64 = null;
+        if ($logoPath) {
+            $fullPath = storage_path('app/public/' . $logoPath);
+            if (file_exists($fullPath)) {
+                $mime = mime_content_type($fullPath) ?: 'image/png';
+                $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
+            }
+        }
+
+        // Term + session
+        $activeTerm = AcademicTerm::active();
+        $termLabel = $activeTerm?->name ?? 'Term';
+        $sessionLabel = $activeTerm?->session?->name ?? AcademicSession::activeName() ?? now()->format('Y');
 
         $pdf = Pdf::loadView('pdf.timetable', [
             'class' => $class,
             'section' => $section,
-            'grouped' => $grouped,
-            'schoolName' => config('myacademy.school_name', 'School'),
-        ]);
+            'days' => $days,
+            'timeSlots' => $timeSlots,
+            'slotMap' => $slotMap,
+            'schoolName' => $schoolName,
+            'schoolAddress' => $schoolAddress,
+            'schoolPhone' => $schoolPhone,
+            'schoolEmail' => $schoolEmail,
+            'logoBase64' => $logoBase64,
+            'termLabel' => $termLabel,
+            'sessionLabel' => $sessionLabel,
+        ])->setPaper('a4', 'landscape');
 
         $filename = 'Timetable_' . str_replace(' ', '_', $class->name);
         if ($section) {
@@ -56,5 +126,11 @@ class TimetableController extends Controller
         $filename .= '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    private function timeToSeconds(string $time): int
+    {
+        [$h, $m] = array_map('intval', explode(':', $time, 2));
+        return ($h * 3600) + ($m * 60);
     }
 }
