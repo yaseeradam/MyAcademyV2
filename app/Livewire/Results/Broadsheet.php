@@ -52,7 +52,7 @@ class Broadsheet extends Component
     #[Computed]
     public function subjects()
     {
-        if (! $this->classId) {
+        if (!$this->classId) {
             return collect();
         }
 
@@ -71,7 +71,7 @@ class Broadsheet extends Component
     #[Computed]
     public function rows(): Collection
     {
-        if (! $this->classId || ! $this->session) {
+        if (!$this->classId || !$this->session) {
             return collect();
         }
 
@@ -92,7 +92,7 @@ class Broadsheet extends Component
 
         $byStudent = $scores
             ->groupBy('student_id')
-            ->map(fn ($rows) => $rows->keyBy('subject_id'));
+            ->map(fn($rows) => $rows->keyBy('subject_id'));
 
         $subjectCount = max(1, (int) $subjectIds->count());
 
@@ -154,7 +154,7 @@ class Broadsheet extends Component
         $user = auth()->user();
         abort_unless($user && $user->hasPermission('results.broadsheet'), 403);
 
-        if (! $this->classId) {
+        if (!$this->classId) {
             session()->flash('error', 'Please select a class.');
             abort(400, 'Please select a class.');
         }
@@ -174,14 +174,14 @@ class Broadsheet extends Component
 
         $service = app(ReportCardService::class);
         $safeSession = str_replace('/', '-', $this->session);
-        $tmpDir = storage_path('app/_bulk_report_cards/'.Str::random(12));
-        $pdfDir = $tmpDir.DIRECTORY_SEPARATOR.'pdfs';
+        $tmpDir = storage_path('app/_bulk_report_cards/' . Str::random(12));
+        $pdfDir = $tmpDir . DIRECTORY_SEPARATOR . 'pdfs';
         File::ensureDirectoryExists($pdfDir);
 
         $timestamp = now()->format('Y-m-d_H-i-s');
         $zipDir = storage_path('app/report-cards');
         File::ensureDirectoryExists($zipDir);
-        $zipPath = $zipDir.DIRECTORY_SEPARATOR."report_cards_class{$this->classId}_{$safeSession}_T{$this->term}_{$timestamp}.zip";
+        $zipPath = $zipDir . DIRECTORY_SEPARATOR . "report_cards_class{$this->classId}_{$safeSession}_T{$this->term}_{$timestamp}.zip";
 
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
@@ -193,11 +193,17 @@ class Broadsheet extends Component
             foreach ($students as $student) {
                 $payload = $service->build($student, $this->term, $this->session);
                 $template = (string) config('myacademy.report_card_template', 'standard');
-                $view = $template === 'compact' ? 'pdf.report-card-compact' : 'pdf.report-card';
+                $view = match ($template) {
+                    'compact' => 'pdf.report-card-compact',
+                    'elegant' => 'pdf.report-card-elegant',
+                    'modern' => 'pdf.report-card-modern',
+                    'classic' => 'pdf.report-card-classic',
+                    default => 'pdf.report-card',
+                };
                 $pdf = Pdf::loadView($view, $payload)->setPaper('a4');
                 $safeAdm = preg_replace('/[^A-Za-z0-9\\-_.]+/', '-', (string) $student->admission_number) ?: (string) $student->id;
                 $filename = "report-card-{$safeAdm}-{$safeSession}-T{$this->term}.pdf";
-                $path = $pdfDir.DIRECTORY_SEPARATOR.$filename;
+                $path = $pdfDir . DIRECTORY_SEPARATOR . $filename;
                 File::put($path, $pdf->output());
                 $zip->addFile($path, $filename);
             }

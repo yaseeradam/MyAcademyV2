@@ -62,18 +62,18 @@ class BulkReportCardsController extends Controller
             ->whereNotNull('published_at')
             ->exists();
 
-        if (! $published) {
+        if (!$published) {
             return back()->withErrors(['class_id' => 'Results are not published for this class / term / session. Publish results first.']);
         }
 
-        $tmpDir = storage_path('app/_bulk_report_cards/'.Str::random(12));
-        $pdfDir = $tmpDir.DIRECTORY_SEPARATOR.'pdfs';
+        $tmpDir = storage_path('app/_bulk_report_cards/' . Str::random(12));
+        $pdfDir = $tmpDir . DIRECTORY_SEPARATOR . 'pdfs';
         File::ensureDirectoryExists($pdfDir);
 
         $timestamp = now()->format('Y-m-d_H-i-s');
         $zipDir = storage_path('app/report-cards');
         File::ensureDirectoryExists($zipDir);
-        $zipPath = $zipDir.DIRECTORY_SEPARATOR."report_cards_class{$classId}_{$safeSession}_T{$term}_{$timestamp}.zip";
+        $zipPath = $zipDir . DIRECTORY_SEPARATOR . "report_cards_class{$classId}_{$safeSession}_T{$term}_{$timestamp}.zip";
 
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
@@ -86,7 +86,13 @@ class BulkReportCardsController extends Controller
                 $payload = $service->build($student, $term, $session);
 
                 $template = (string) config('myacademy.report_card_template', 'standard');
-                $view = $template === 'compact' ? 'pdf.report-card-compact' : 'pdf.report-card';
+                $view = match ($template) {
+                    'compact' => 'pdf.report-card-compact',
+                    'elegant' => 'pdf.report-card-elegant',
+                    'modern' => 'pdf.report-card-modern',
+                    'classic' => 'pdf.report-card-classic',
+                    default => 'pdf.report-card',
+                };
 
                 $pdf = Pdf::loadView($view, [
                     ...$payload,
@@ -94,7 +100,7 @@ class BulkReportCardsController extends Controller
 
                 $safeAdm = preg_replace('/[^A-Za-z0-9\\-_.]+/', '-', (string) $student->admission_number) ?: (string) $student->id;
                 $filename = "report-card-{$safeAdm}-{$safeSession}-T{$term}.pdf";
-                $path = $pdfDir.DIRECTORY_SEPARATOR.$filename;
+                $path = $pdfDir . DIRECTORY_SEPARATOR . $filename;
                 File::put($path, $pdf->output());
 
                 $zip->addFile($path, $filename);

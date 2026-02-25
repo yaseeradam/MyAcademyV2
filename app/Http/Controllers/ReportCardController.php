@@ -50,13 +50,19 @@ class ReportCardController extends Controller
         $data = app(ReportCardService::class)->build($student, $term, $session);
 
         $template = (string) config('myacademy.report_card_template', 'standard');
-        $view = $template === 'compact' ? 'pdf.report-card-compact' : 'pdf.report-card';
+        $view = match ($template) {
+            'compact' => 'pdf.report-card-compact',
+            'elegant' => 'pdf.report-card-elegant',
+            'modern' => 'pdf.report-card-modern',
+            'classic' => 'pdf.report-card-classic',
+            default => 'pdf.report-card',
+        };
 
         $pdf = Pdf::loadView($view, [
             ...$data,
         ])->setPaper('a4');
 
-        $filename = 'report-card-'.$student->admission_number.'-'.$session.'-T'.$term.'.pdf';
+        $filename = 'report-card-' . $student->admission_number . '-' . $session . '-T' . $term . '.pdf';
 
         Audit::log('results.report_card_downloaded', $student, [
             'term' => $term,

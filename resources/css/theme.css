@@ -6,14 +6,31 @@ button[type="submit"]:not(.btn-outline):not(.btn-secondary) {
     @apply rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-amber-600 transition-all;
 }
 
+.dark .btn-primary,
+.dark button[type="submit"]:not(.btn-outline):not(.btn-secondary) {
+    @apply bg-amber-600 hover:bg-amber-500 shadow-amber-900/30;
+}
+
 /* Secondary Buttons */
-.btn-secondary, .btn-outline {
+.btn-secondary,
+.btn-outline {
     @apply rounded-xl bg-slate-100 px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-200 transition-all;
 }
 
+.dark .btn-secondary,
+.dark .btn-outline {
+    @apply bg-[#2a2a2a] text-gray-200 hover:bg-[#333];
+}
+
 /* Cards */
-.card, .card-interactive {
+.card,
+.card-interactive {
     @apply rounded-2xl bg-white p-5 shadow-md ring-1 ring-slate-100 transition-all;
+}
+
+.dark .card,
+.dark .card-interactive {
+    @apply bg-[#1e1e1e] ring-[#333] shadow-black/20;
 }
 
 .card-interactive:hover {
@@ -32,21 +49,48 @@ textarea {
     @apply rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-300 transition-all;
 }
 
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="date"],
+.dark input[type="time"],
+.dark select,
+.dark textarea {
+    @apply border-[#444] bg-[#2a2a2a] text-gray-100 placeholder-gray-500 focus:border-amber-500 focus:ring-amber-500/30;
+}
+
 /* Badges */
 .badge {
     @apply inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700;
+}
+
+.dark .badge {
+    @apply bg-amber-900/30 text-amber-300;
 }
 
 .badge-success {
     @apply bg-emerald-50 text-emerald-700;
 }
 
+.dark .badge-success {
+    @apply bg-emerald-900/30 text-emerald-300;
+}
+
 .badge-error {
     @apply bg-rose-50 text-rose-700;
 }
 
+.dark .badge-error {
+    @apply bg-rose-900/30 text-rose-300;
+}
+
 .badge-warning {
     @apply bg-orange-50 text-orange-700;
+}
+
+.dark .badge-warning {
+    @apply bg-orange-900/30 text-orange-300;
 }
 
 /* Tables */
@@ -58,20 +102,40 @@ thead {
     @apply bg-amber-50;
 }
 
+.dark thead {
+    @apply bg-[#252525];
+}
+
 th {
     @apply px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-700;
+}
+
+.dark th {
+    @apply text-gray-300;
 }
 
 td {
     @apply px-4 py-3 text-sm text-slate-800;
 }
 
+.dark td {
+    @apply text-gray-200;
+}
+
 tr {
     @apply border-b border-slate-100;
 }
 
+.dark tr {
+    @apply border-[#333];
+}
+
 tbody tr:hover {
     @apply bg-amber-50/50;
+}
+
+.dark tbody tr:hover {
+    @apply bg-white/5;
 }
 
 /* Alerts */
@@ -83,16 +147,32 @@ tbody tr:hover {
     @apply bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200;
 }
 
+.dark .alert-success {
+    @apply bg-emerald-900/20 text-emerald-300 ring-emerald-700/50;
+}
+
 .alert-error {
     @apply bg-rose-50 text-rose-800 ring-1 ring-rose-200;
+}
+
+.dark .alert-error {
+    @apply bg-rose-900/20 text-rose-300 ring-rose-700/50;
 }
 
 .alert-warning {
     @apply bg-amber-50 text-amber-800 ring-1 ring-amber-200;
 }
 
+.dark .alert-warning {
+    @apply bg-amber-900/20 text-amber-300 ring-amber-700/50;
+}
+
 .alert-info {
     @apply bg-blue-50 text-blue-800 ring-1 ring-blue-200;
+}
+
+.dark .alert-info {
+    @apply bg-blue-900/20 text-blue-300 ring-blue-700/50;
 }
 
 /* Modal */
@@ -100,8 +180,16 @@ tbody tr:hover {
     @apply fixed inset-0 z-50 flex items-center justify-center bg-black/50;
 }
 
+.dark .modal-overlay {
+    @apply bg-black/70;
+}
+
 .modal-content {
     @apply w-full max-w-md rounded-2xl bg-white p-6 shadow-xl;
+}
+
+.dark .modal-content {
+    @apply bg-[#1e1e1e] shadow-black/40;
 }
 
 /* Tabs */
@@ -113,13 +201,25 @@ tbody tr:hover {
     @apply bg-amber-500 text-white shadow-md;
 }
 
+.dark .tab-active {
+    @apply bg-amber-600 shadow-amber-900/30;
+}
+
 .tab-inactive {
     @apply text-slate-700 hover:bg-amber-50;
+}
+
+.dark .tab-inactive {
+    @apply text-gray-300 hover:bg-white/5;
 }
 
 /* Progress Bar */
 .progress-bar {
     @apply h-2 w-full overflow-hidden rounded-full bg-slate-100;
+}
+
+.dark .progress-bar {
+    @apply bg-[#333];
 }
 
 .progress-fill {
@@ -131,8 +231,16 @@ tbody tr:hover {
     @apply rounded-xl bg-white shadow-xl ring-1 ring-slate-100 py-2;
 }
 
+.dark .dropdown-menu {
+    @apply bg-[#1e1e1e] ring-[#333] shadow-black/40;
+}
+
 .dropdown-item {
     @apply px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-amber-50 transition-colors;
+}
+
+.dark .dropdown-item {
+    @apply text-gray-200 hover:bg-white/5;
 }
 
 /* Checkbox & Radio */
@@ -141,14 +249,37 @@ input[type="radio"] {
     @apply h-4 w-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400;
 }
 
+.dark input[type="checkbox"],
+.dark input[type="radio"] {
+    @apply border-[#555] bg-[#2a2a2a] focus:ring-amber-500/50;
+}
+
 /* Links */
 a:not(.btn):not(.tab):not(.dropdown-item) {
     @apply text-amber-600 hover:text-amber-700 font-semibold transition-colors;
 }
 
+.dark a:not(.btn):not(.tab):not(.dropdown-item) {
+    @apply text-amber-400 hover:text-amber-300;
+}
+
 /* Headings */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     @apply font-black text-slate-900;
+}
+
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+    @apply text-gray-100;
 }
 
 /* Sidebar Active State Override */
@@ -158,4 +289,170 @@ h1, h2, h3, h4, h5, h6 {
 
 .sidebar-inactive {
     @apply text-slate-700 hover:bg-amber-50 !important;
+}
+
+.dark .sidebar-inactive {
+    @apply text-gray-300 hover:bg-white/5 !important;
+}
+
+/* ─── Dark Mode: misc text color utils ─── */
+.dark .text-slate-900 {
+    color: #f1f5f9;
+}
+
+.dark .text-slate-800 {
+    color: #e2e8f0;
+}
+
+.dark .text-slate-700 {
+    color: #cbd5e1;
+}
+
+.dark .text-slate-600 {
+    color: #94a3b8;
+}
+
+.dark .text-gray-900 {
+    color: #f1f5f9;
+}
+
+.dark .text-gray-800 {
+    color: #e2e8f0;
+}
+
+.dark .text-gray-700 {
+    color: #cbd5e1;
+}
+
+.dark .text-gray-600 {
+    color: #94a3b8;
+}
+
+.dark .text-gray-500 {
+    color: #6b7280;
+}
+
+/* ─── Dark Mode: background flips ─── */
+.dark .bg-white {
+    background-color: #1e1e1e;
+}
+
+.dark .bg-slate-50 {
+    background-color: #1a1a1a;
+}
+
+.dark .bg-slate-100 {
+    background-color: #222;
+}
+
+.dark .bg-gray-50 {
+    background-color: #1a1a1a;
+}
+
+.dark .bg-gray-100 {
+    background-color: #222;
+}
+
+.dark .bg-amber-50 {
+    background-color: rgba(245, 158, 11, 0.08);
+}
+
+/* ─── Dark Mode: border flips ─── */
+.dark .border-slate-100 {
+    border-color: #333;
+}
+
+.dark .border-slate-200 {
+    border-color: #3a3a3a;
+}
+
+.dark .border-gray-100 {
+    border-color: #333;
+}
+
+.dark .border-gray-200 {
+    border-color: #3a3a3a;
+}
+
+/* ─── Dark Mode: ring flips ─── */
+.dark .ring-slate-100 {
+    --tw-ring-color: #333;
+}
+
+.dark .ring-slate-200 {
+    --tw-ring-color: #3a3a3a;
+}
+
+.dark .ring-gray-100 {
+    --tw-ring-color: #333;
+}
+
+.dark .ring-gray-200 {
+    --tw-ring-color: #3a3a3a;
+}
+
+/* ─── Dark Mode: divide flips ─── */
+.dark .divide-gray-100> :not([hidden])~ :not([hidden]) {
+    border-color: #333;
+}
+
+.dark .divide-slate-100> :not([hidden])~ :not([hidden]) {
+    border-color: #333;
+}
+
+/* ─── Dark Mode: small colored backgrounds ─── */
+.dark .bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.dark .bg-indigo-50 {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+.dark .bg-purple-50 {
+    background-color: rgba(168, 85, 247, 0.1);
+}
+
+.dark .bg-violet-50 {
+    background-color: rgba(139, 92, 246, 0.1);
+}
+
+.dark .bg-green-50 {
+    background-color: rgba(34, 197, 94, 0.1);
+}
+
+.dark .bg-emerald-50 {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.dark .bg-orange-50 {
+    background-color: rgba(249, 115, 22, 0.1);
+}
+
+.dark .bg-yellow-50 {
+    background-color: rgba(234, 179, 8, 0.1);
+}
+
+.dark .bg-rose-50 {
+    background-color: rgba(244, 63, 94, 0.1);
+}
+
+.dark .bg-cyan-50 {
+    background-color: rgba(6, 182, 212, 0.1);
+}
+
+.dark .bg-sky-50 {
+    background-color: rgba(14, 165, 233, 0.1);
+}
+
+.dark .bg-teal-50 {
+    background-color: rgba(20, 184, 166, 0.1);
+}
+
+.dark .bg-red-50 {
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.dark .bg-pink-50 {
+    background-color: rgba(236, 72, 153, 0.1);
 }

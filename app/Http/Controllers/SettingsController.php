@@ -14,7 +14,7 @@ use Illuminate\Support\Fluent;
 class SettingsController extends Controller
 {
     private const CERTIFICATE_TEMPLATES = ['modern', 'classic', 'elegant', 'vibrant', 'minimal', 'royal'];
-    private const REPORT_CARD_TEMPLATES = ['standard', 'compact'];
+    private const REPORT_CARD_TEMPLATES = ['standard', 'compact', 'elegant', 'modern', 'classic'];
 
     public function updateSchool(Request $request)
     {
@@ -301,6 +301,9 @@ class SettingsController extends Controller
 
             $view = match ($template) {
                 'compact' => 'pdf.report-card-compact',
+                'elegant' => 'pdf.report-card-elegant',
+                'modern' => 'pdf.report-card-modern',
+                'classic' => 'pdf.report-card-classic',
                 default => 'pdf.report-card',
             };
 
@@ -334,6 +337,13 @@ class SettingsController extends Controller
                 'average' => $average,
                 'position' => 1,
                 'classAverage' => $average,
+                'totalStudents' => 35,
+                'timesOpened' => 65,
+                'timesPresent' => 60,
+                'timesAbsent' => 5,
+                'teacherRemarks' => 'An excellent student with outstanding academic performance. Keep it up!',
+                'principalRemarks' => 'A commendable result. Continue to strive for excellence.',
+                'nextTermDate' => 'September 8, 2025',
             ])->setPaper('a4');
 
             return response($pdf->output(), 200, [

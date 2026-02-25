@@ -144,7 +144,7 @@
                             [
                                 'key' => 'standard',
                                 'title' => 'Standard',
-                                'desc' => 'Full report card layout with detailed sections.',
+                                'desc' => 'Warm amber brand with gradient stats, color-coded grades, and double border frame.',
                                 'preview' => route('settings.templates.preview', ['type' => 'report-card', 'template' => 'standard']),
                             ],
                             [
@@ -153,8 +153,27 @@
                                 'desc' => 'Clean, minimal layout focused on scores and summary.',
                                 'preview' => route('settings.templates.preview', ['type' => 'report-card', 'template' => 'compact']),
                             ],
+                            [
+                                'key' => 'elegant',
+                                'title' => 'Elegant',
+                                'desc' => 'Formal navy and gold theme with ornate borders and refined typography.',
+                                'preview' => route('settings.templates.preview', ['type' => 'report-card', 'template' => 'elegant']),
+                            ],
+                            [
+                                'key' => 'modern',
+                                'title' => 'Modern',
+                                'desc' => 'Bold dark mode design with cyan accents and card-based layout.',
+                                'preview' => route('settings.templates.preview', ['type' => 'report-card', 'template' => 'modern']),
+                            ],
+                            [
+                                'key' => 'classic',
+                                'title' => 'Classic',
+                                'desc' => 'Traditional black and white formal layout with maximum readability.',
+                                'preview' => route('settings.templates.preview', ['type' => 'report-card', 'template' => 'classic']),
+                            ],
                         ];
                     @endphp
+
 
                     @foreach ($reportTemplates as $t)
                         <label
