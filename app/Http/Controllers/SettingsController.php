@@ -58,6 +58,7 @@ class SettingsController extends Controller
         }
 
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        \Illuminate\Support\Facades\Cache::forget('myacademy_settings_cache');
 
         return back()->with('status', 'School settings saved.');
     }
@@ -93,6 +94,7 @@ class SettingsController extends Controller
         $settings['results_exam_max'] = (int) $data['results_exam_max'];
 
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        \Illuminate\Support\Facades\Cache::forget('myacademy_settings_cache');
 
         return back()->with('status', 'Result scoring marks saved.');
     }
@@ -220,6 +222,7 @@ class SettingsController extends Controller
         $settings['certificate_default_body'] = $data['certificate_default_body'] ?: null;
 
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        \Illuminate\Support\Facades\Cache::forget('myacademy_settings_cache');
 
         return back()->with('status', 'Certificate settings saved.');
     }
@@ -246,6 +249,7 @@ class SettingsController extends Controller
         $settings['report_card_template'] = (string) $data['report_card_template'];
 
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        \Illuminate\Support\Facades\Cache::forget('myacademy_settings_cache');
 
         return back()->with('status', 'Template selection saved.');
     }

@@ -192,8 +192,7 @@
                         ->take(2)
                         ->implode('');
                 @endphp
-                <tr class="bg-white dark:bg-dark-100 hover:bg-gray-50 dark:hover:bg-dark-200 animate-fade-in"
-                    wire:loading.class="opacity-50">
+                <tr class="bg-white hover:bg-gray-50 animate-fade-in" wire:loading.class="opacity-50">
                     <td class="px-5 py-4">
                         <input type="checkbox" class="checkbox-custom" value="{{ $student->id }}" />
                     </td>

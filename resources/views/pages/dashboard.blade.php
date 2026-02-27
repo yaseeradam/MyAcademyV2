@@ -54,44 +54,58 @@
         ->whereYear('date', now()->year)
         ->sum('amount_paid');
 
-    $estimatedTuitionDueAllTime = (float) DB::table('students')
-        ->leftJoin('fee_structures', function ($join) {
-            $join->on('fee_structures.class_id', '=', 'students.class_id')
-                ->where('fee_structures.category', '=', 'Tuition')
-                ->whereNull('fee_structures.term')
-                ->whereNull('fee_structures.session');
-        })
-        ->sum('fee_structures.amount_due');
+    $financeData = \Illuminate\Support\Facades\Cache::remember('dashboard_finance_all_time', \DateInterval::createFromDateString('15 minutes'), function () {
+        $estimatedTuitionDueAllTime = (float) DB::table('students')
+            ->leftJoin('fee_structures', function ($join) {
+                $join->on('fee_structures.class_id', '=', 'students.class_id')
+                    ->where('fee_structures.category', '=', 'Tuition')
+                    ->whereNull('fee_structures.term')
+                    ->whereNull('fee_structures.session');
+            })
+            ->sum('fee_structures.amount_due');
 
-    $incomeAllTime = (float) Transaction::query()
-        ->where('type', 'Income')
-        ->where('is_void', false)
-        ->sum('amount_paid');
+        $incomeAllTime = (float) Transaction::query()
+            ->where('type', 'Income')
+            ->where('is_void', false)
+            ->sum('amount_paid');
 
-    $outstandingPaymentsEstimate = max(0.0, $estimatedTuitionDueAllTime - $incomeAllTime);
+        $outstandingPaymentsEstimate = max(0.0, $estimatedTuitionDueAllTime - $incomeAllTime);
 
-    $dueByStudent = DB::table('students')
-        ->leftJoin('fee_structures', function ($join) {
-            $join->on('fee_structures.class_id', '=', 'students.class_id')
-                ->where('fee_structures.category', '=', 'Tuition')
-                ->whereNull('fee_structures.term')
-                ->whereNull('fee_structures.session');
-        })
-        ->select('students.id', DB::raw('COALESCE(SUM(fee_structures.amount_due), 0) as due'))
-        ->groupBy('students.id');
+        $dueByStudent = DB::table('students')
+            ->leftJoin('fee_structures', function ($join) {
+                $join->on('fee_structures.class_id', '=', 'students.class_id')
+                    ->where('fee_structures.category', '=', 'Tuition')
+                    ->whereNull('fee_structures.term')
+                    ->whereNull('fee_structures.session');
+            })
+            ->select('students.id', DB::raw('COALESCE(SUM(fee_structures.amount_due), 0) as due'))
+            ->groupBy('students.id');
 
-    $paidByStudent = DB::table('transactions')
-        ->where('type', 'Income')
-        ->where('is_void', false)
-        ->whereNotNull('student_id')
-        ->select('student_id', DB::raw('SUM(amount_paid) as paid'))
-        ->groupBy('student_id');
+        $paidByStudent = DB::table('transactions')
+            ->where('type', 'Income')
+            ->where('is_void', false)
+            ->whereNotNull('student_id')
+            ->select('student_id', DB::raw('SUM(amount_paid) as paid'))
+            ->groupBy('student_id');
 
-    $overdueInvoices = DB::query()
-        ->fromSub($dueByStudent, 'd')
-        ->leftJoinSub($paidByStudent, 'p', 'p.student_id', '=', 'd.id')
-        ->whereRaw('d.due > COALESCE(p.paid, 0)')
-        ->count();
+        $overdueInvoices = DB::query()
+            ->fromSub($dueByStudent, 'd')
+            ->leftJoinSub($paidByStudent, 'p', 'p.student_id', '=', 'd.id')
+            ->whereRaw('d.due > COALESCE(p.paid, 0)')
+            ->count();
+
+        return [
+            'estimatedTuitionDueAllTime' => $estimatedTuitionDueAllTime,
+            'incomeAllTime' => $incomeAllTime,
+            'outstandingPaymentsEstimate' => $outstandingPaymentsEstimate,
+            'overdueInvoices' => $overdueInvoices,
+        ];
+    });
+
+    $estimatedTuitionDueAllTime = $financeData['estimatedTuitionDueAllTime'];
+    $incomeAllTime = $financeData['incomeAllTime'];
+    $outstandingPaymentsEstimate = $financeData['outstandingPaymentsEstimate'];
+    $overdueInvoices = $financeData['overdueInvoices'];
 
     $latestScores = Score::query()
         ->with(['student', 'subject', 'schoolClass'])
@@ -100,28 +114,41 @@
         ->get();
 
     // Attendance data for last 7 days
-    $attendanceData = [];
-    for ($i = 6; $i >= 0; $i--) {
-        $date = now()->subDays($i);
-        $present = AttendanceMark::query()
-            ->whereHas('sheet', fn($q) => $q->whereDate('date', $date))
-            ->where('status', 'Present')
-            ->count();
-        $absent = AttendanceMark::query()
-            ->whereHas('sheet', fn($q) => $q->whereDate('date', $date))
-            ->where('status', 'Absent')
-            ->count();
-        $attendanceData[] = [
-            'label' => $date->format('D'),
-            'present' => $present,
-            'absent' => $absent,
-        ];
-    }
+    $attendanceData = \Illuminate\Support\Facades\Cache::remember('dashboard_attendance_trend', \DateInterval::createFromDateString('15 minutes'), function () {
+        $data = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $present = \App\Models\AttendanceMark::query()
+                ->whereHas('sheet', fn($q) => $q->whereDate('date', $date))
+                ->where('status', 'Present')
+                ->count();
+            $absent = \App\Models\AttendanceMark::query()
+                ->whereHas('sheet', fn($q) => $q->whereDate('date', $date))
+                ->where('status', 'Absent')
+                ->count();
+            $data[] = [
+                'label' => $date->format('D'),
+                'present' => $present,
+                'absent' => $absent,
+            ];
+        }
+        return $data;
+    });
 
     // Exam performance data
-    $totalScores = Score::query()->count();
-    $passScores = Score::query()->where('total', '>=', 50)->count();
-    $failScores = $totalScores - $passScores;
+    $examStats = \Illuminate\Support\Facades\Cache::remember('dashboard_exam_stats', \DateInterval::createFromDateString('15 minutes'), function () {
+        $totalScores = \App\Models\Score::query()->count();
+        $passScores = \App\Models\Score::query()->where('total', '>=', 50)->count();
+        return [
+            'totalScores' => $totalScores,
+            'passScores' => $passScores,
+            'failScores' => $totalScores - $passScores,
+        ];
+    });
+
+    $totalScores = $examStats['totalScores'];
+    $passScores = $examStats['passScores'];
+    $failScores = $examStats['failScores'];
 @endphp
 
 @extends('layouts.app')

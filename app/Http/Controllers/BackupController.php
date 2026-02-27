@@ -41,7 +41,7 @@ class BackupController extends Controller
         $timestamp = now()->format('Y-m-d_H-i-s');
         $zipDir = storage_path('app/backups');
         File::ensureDirectoryExists($zipDir);
-        $zipPath = $zipDir.DIRECTORY_SEPARATOR."backup_{$timestamp}.zip";
+        $zipPath = $zipDir . DIRECTORY_SEPARATOR . "backup_{$timestamp}.zip";
 
         try {
             $zip = new ZipArchive();
@@ -61,7 +61,7 @@ class BackupController extends Controller
                 if ($driver === 'mysql') {
                     $this->assertMySqlToolsAvailableForBackup();
 
-                    if (! app()->isDownForMaintenance()) {
+                    if (!app()->isDownForMaintenance()) {
                         Artisan::call('down');
                         $broughtDown = true;
                     }
@@ -103,7 +103,7 @@ class BackupController extends Controller
             ]);
 
             return response()->download($zipPath)->deleteFileAfterSend(true);
-        } catch (BackupPrerequisiteException|BackupOperationException $e) {
+        } catch (BackupPrerequisiteException | BackupOperationException $e) {
             report($e);
 
             if (is_file($zipPath)) {
@@ -136,11 +136,11 @@ class BackupController extends Controller
             return back()->withErrors(['backup' => 'File upload failed. The file may be too large or corrupted.']);
         }
 
-        $tmpDir = storage_path('app/_restore_tmp/'.Str::random(10));
+        $tmpDir = storage_path('app/_restore_tmp/' . Str::random(10));
         File::ensureDirectoryExists($tmpDir);
 
-        $zipPath = $request->file('backup')->storeAs('_restore_tmp/'.basename($tmpDir), 'backup.zip', 'local');
-        $zipPath = storage_path('app/'.$zipPath);
+        $zipPath = $request->file('backup')->storeAs('_restore_tmp/' . basename($tmpDir), 'backup.zip', 'local');
+        $zipPath = storage_path('app/' . $zipPath);
 
         $zip = new ZipArchive();
         if ($zip->open($zipPath) !== true) {
@@ -158,11 +158,11 @@ class BackupController extends Controller
             return back()->withErrors(['backup' => "Backup is for [{$backupDriver}] but this app is configured for [{$driver}]."]);
         }
 
-        $uploadsSrc = $tmpDir.DIRECTORY_SEPARATOR.'uploads';
+        $uploadsSrc = $tmpDir . DIRECTORY_SEPARATOR . 'uploads';
 
         try {
             try {
-                if (! app()->isDownForMaintenance()) {
+                if (!app()->isDownForMaintenance()) {
                     Artisan::call('down');
                     $broughtDown = true;
                 }
@@ -170,16 +170,16 @@ class BackupController extends Controller
                 if ($driver === 'mysql') {
                     $this->assertMySqlToolsAvailableForRestore();
 
-                    $sqlPath = $tmpDir.DIRECTORY_SEPARATOR.'database.sql';
-                    if (! is_file($sqlPath)) {
+                    $sqlPath = $tmpDir . DIRECTORY_SEPARATOR . 'database.sql';
+                    if (!is_file($sqlPath)) {
                         return back()->withErrors(['backup' => 'database.sql not found in zip.']);
                     }
 
                     $this->wipeDatabase();
                     $this->importSql($sqlPath);
                 } elseif ($driver === 'sqlite') {
-                    $sqliteSrc = $tmpDir.DIRECTORY_SEPARATOR.'database.sqlite';
-                    if (! is_file($sqliteSrc)) {
+                    $sqliteSrc = $tmpDir . DIRECTORY_SEPARATOR . 'database.sqlite';
+                    if (!is_file($sqliteSrc)) {
                         return back()->withErrors(['backup' => 'database.sqlite not found in zip.']);
                     }
 
@@ -188,25 +188,26 @@ class BackupController extends Controller
                     return back()->withErrors(['backup' => "Restore is not supported for database driver [{$driver}]."]);
                 }
 
-            $uploadsDest = public_path('uploads');
-            if (is_dir($uploadsSrc)) {
-                if (is_dir($uploadsDest)) {
-                    File::deleteDirectory($uploadsDest);
+                $uploadsDest = public_path('uploads');
+                if (is_dir($uploadsSrc)) {
+                    if (is_dir($uploadsDest)) {
+                        File::deleteDirectory($uploadsDest);
+                    }
+                    File::ensureDirectoryExists($uploadsDest);
+                    File::copyDirectory($uploadsSrc, $uploadsDest);
                 }
-                File::ensureDirectoryExists($uploadsDest);
-                File::copyDirectory($uploadsSrc, $uploadsDest);
-            }
 
-            $settingsSrc = $tmpDir.DIRECTORY_SEPARATOR.'settings.json';
-            if (! is_file($settingsSrc)) {
-                $settingsSrc = $tmpDir.DIRECTORY_SEPARATOR.'myacademy'.DIRECTORY_SEPARATOR.'settings.json';
-            }
+                $settingsSrc = $tmpDir . DIRECTORY_SEPARATOR . 'settings.json';
+                if (!is_file($settingsSrc)) {
+                    $settingsSrc = $tmpDir . DIRECTORY_SEPARATOR . 'myacademy' . DIRECTORY_SEPARATOR . 'settings.json';
+                }
 
-            if (is_file($settingsSrc)) {
-                $settingsDest = storage_path('app/myacademy/settings.json');
-                File::ensureDirectoryExists(dirname($settingsDest));
-                File::copy($settingsSrc, $settingsDest);
-            }
+                if (is_file($settingsSrc)) {
+                    $settingsDest = storage_path('app/myacademy/settings.json');
+                    File::ensureDirectoryExists(dirname($settingsDest));
+                    File::copy($settingsSrc, $settingsDest);
+                    \Illuminate\Support\Facades\Cache::forget('myacademy_settings_cache');
+                }
             } finally {
                 if ($broughtDown) {
                     Artisan::call('up');
@@ -216,7 +217,7 @@ class BackupController extends Controller
                     File::deleteDirectory($tmpDir);
                 }
             }
-        } catch (BackupPrerequisiteException|BackupOperationException $e) {
+        } catch (BackupPrerequisiteException | BackupOperationException $e) {
             report($e);
             return back()->withErrors(['backup' => $e->getMessage()]);
         }
@@ -246,13 +247,13 @@ class BackupController extends Controller
         $charset = (string) config('database.connections.mysql.charset', 'utf8mb4');
         $collation = (string) config('database.connections.mysql.collation', 'utf8mb4_unicode_ci');
 
-        $tmpDir = storage_path('app/backups/_tmp/'.Str::random(10));
+        $tmpDir = storage_path('app/backups/_tmp/' . Str::random(10));
         File::ensureDirectoryExists($tmpDir);
-        $sqlPath = $tmpDir.DIRECTORY_SEPARATOR.'database.sql';
+        $sqlPath = $tmpDir . DIRECTORY_SEPARATOR . 'database.sql';
 
         $sql = "-- MySQL dump via Laravel\n";
         $sql .= "-- Database: {$db}\n";
-        $sql .= "-- Date: ".now()->toDateTimeString()."\n\n";
+        $sql .= "-- Date: " . now()->toDateTimeString() . "\n\n";
         $sql .= "SET FOREIGN_KEY_CHECKS=0;\n";
         $sql .= "SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";\n";
         $sql .= "SET NAMES {$charset} COLLATE {$collation};\n\n";
@@ -260,30 +261,31 @@ class BackupController extends Controller
         // Backup tables
         $tables = DB::select('SHOW TABLES');
         foreach ($tables as $table) {
-            $tableName = array_values((array)$table)[0];
-            
+            $tableName = array_values((array) $table)[0];
+
             $sql .= "DROP TABLE IF EXISTS `{$tableName}`;\n";
-            
+
             $createTable = DB::select("SHOW CREATE TABLE `{$tableName}`");
-            $createStatement = array_values((array)$createTable[0])[1];
+            $createStatement = array_values((array) $createTable[0])[1];
             $sql .= $createStatement . ";\n\n";
-            
+
             $columns = DB::select("SHOW COLUMNS FROM `{$tableName}`");
             $columnNames = array_map(fn($col) => "`{$col->Field}`", $columns);
             $columnList = implode(', ', $columnNames);
-            
+
             $rows = DB::table($tableName)->get();
             if ($rows->isNotEmpty()) {
                 foreach ($rows->chunk(100) as $batch) {
                     $values = [];
                     foreach ($batch as $row) {
-                        $rowValues = collect((array)$row)->map(function ($value) {
-                            if ($value === null) return 'NULL';
-                            return "'" . str_replace(["'", "\\"], ["\\'", "\\\\"], (string)$value) . "'";
+                        $rowValues = collect((array) $row)->map(function ($value) {
+                            if ($value === null)
+                                return 'NULL';
+                            return "'" . str_replace(["'", "\\"], ["\\'", "\\\\"], (string) $value) . "'";
                         })->implode(', ');
                         $values[] = "({$rowValues})";
                     }
-                    
+
                     $sql .= "INSERT INTO `{$tableName}` ({$columnList}) VALUES \n";
                     $sql .= implode(",\n", $values) . ";\n";
                 }
@@ -296,9 +298,9 @@ class BackupController extends Controller
         foreach ($views as $view) {
             $viewName = $view->TABLE_NAME;
             $sql .= "DROP VIEW IF EXISTS `{$viewName}`;\n";
-            
+
             $createView = DB::select("SHOW CREATE VIEW `{$viewName}`");
-            $createStatement = array_values((array)$createView[0])[1];
+            $createStatement = array_values((array) $createView[0])[1];
             $sql .= $createStatement . ";\n\n";
         }
 
@@ -307,9 +309,9 @@ class BackupController extends Controller
         foreach ($triggers as $trigger) {
             $triggerName = $trigger->TRIGGER_NAME;
             $sql .= "DROP TRIGGER IF EXISTS `{$triggerName}`;\n";
-            
+
             $createTrigger = DB::select("SHOW CREATE TRIGGER `{$triggerName}`");
-            $createStatement = array_values((array)$createTrigger[0])[2];
+            $createStatement = array_values((array) $createTrigger[0])[2];
             $sql .= $createStatement . ";\n\n";
         }
 
@@ -318,9 +320,9 @@ class BackupController extends Controller
         foreach ($procedures as $procedure) {
             $procName = $procedure->ROUTINE_NAME;
             $sql .= "DROP PROCEDURE IF EXISTS `{$procName}`;\n";
-            
+
             $createProc = DB::select("SHOW CREATE PROCEDURE `{$procName}`");
-            $createStatement = array_values((array)$createProc[0])[2];
+            $createStatement = array_values((array) $createProc[0])[2];
             $sql .= "DELIMITER ;;\n{$createStatement};;\nDELIMITER ;\n\n";
         }
 
@@ -329,9 +331,9 @@ class BackupController extends Controller
         foreach ($functions as $function) {
             $funcName = $function->ROUTINE_NAME;
             $sql .= "DROP FUNCTION IF EXISTS `{$funcName}`;\n";
-            
+
             $createFunc = DB::select("SHOW CREATE FUNCTION `{$funcName}`");
-            $createStatement = array_values((array)$createFunc[0])[2];
+            $createStatement = array_values((array) $createFunc[0])[2];
             $sql .= "DELIMITER ;;\n{$createStatement};;\nDELIMITER ;\n\n";
         }
 
@@ -339,7 +341,7 @@ class BackupController extends Controller
 
         file_put_contents($sqlPath, $sql);
 
-        if (! is_file($sqlPath)) {
+        if (!is_file($sqlPath)) {
             throw new BackupOperationException('Database dump failed to create SQL file.');
         }
 
@@ -369,22 +371,22 @@ class BackupController extends Controller
         // Remove comments and split into statements
         $lines = explode("\n", $sql);
         $statement = '';
-        
+
         foreach ($lines as $line) {
             $line = trim($line);
-            
+
             // Skip comments and empty lines
             if (empty($line) || str_starts_with($line, '--') || str_starts_with($line, '/*')) {
                 continue;
             }
-            
+
             // Accumulate statement
             $statement .= $line . "\n";
-            
+
             // Execute when we hit a semicolon at end of line
             if (str_ends_with($line, ';')) {
                 $statement = trim($statement);
-                
+
                 if (!empty($statement)) {
                     try {
                         DB::unprepared($statement);
@@ -395,7 +397,7 @@ class BackupController extends Controller
                         }
                     }
                 }
-                
+
                 $statement = '';
             }
         }
@@ -420,7 +422,7 @@ class BackupController extends Controller
 
         foreach ($files as $file) {
             $relative = ltrim(str_replace($folder, '', $file->getPathname()), DIRECTORY_SEPARATOR);
-            $zip->addFile($file->getPathname(), $zipPrefix.'/'.str_replace(DIRECTORY_SEPARATOR, '/', $relative));
+            $zip->addFile($file->getPathname(), $zipPrefix . '/' . str_replace(DIRECTORY_SEPARATOR, '/', $relative));
         }
     }
 
@@ -439,7 +441,7 @@ class BackupController extends Controller
     {
         $resolved = $this->resolveMySqlBinaryOrNull($envKey, $fallbackName);
         if ($resolved === null) {
-            $hint = $this->mysqlBinaryHint($envKey, $fallbackName.'.exe');
+            $hint = $this->mysqlBinaryHint($envKey, $fallbackName . '.exe');
             throw new BackupPrerequisiteException("Unable to locate required MySQL tool [{$fallbackName}].{$hint}");
         }
 
@@ -488,7 +490,7 @@ class BackupController extends Controller
             $process->setTimeout(5);
             $process->run();
 
-            if (! $process->isSuccessful()) {
+            if (!$process->isSuccessful()) {
                 return null;
             }
 
@@ -503,11 +505,11 @@ class BackupController extends Controller
             return null;
         }
 
-        $process = new Process(['sh', '-lc', 'command -v '.escapeshellarg($name)]);
+        $process = new Process(['sh', '-lc', 'command -v ' . escapeshellarg($name)]);
         $process->setTimeout(5);
         $process->run();
 
-        if (! $process->isSuccessful()) {
+        if (!$process->isSuccessful()) {
             return null;
         }
 
@@ -524,17 +526,17 @@ class BackupController extends Controller
             return [];
         }
 
-        $exe = str_ends_with(strtolower($name), '.exe') ? $name : ($name.'.exe');
+        $exe = str_ends_with(strtolower($name), '.exe') ? $name : ($name . '.exe');
 
         $patterns = [
-            'C:\\Program Files\\MySQL\\MySQL Server*\\bin\\'.$exe,
-            'C:\\Program Files (x86)\\MySQL\\MySQL Server*\\bin\\'.$exe,
-            'C:\\Program Files\\MariaDB*\\bin\\'.$exe,
-            'C:\\Program Files (x86)\\MariaDB*\\bin\\'.$exe,
-            'C:\\xampp\\mysql\\bin\\'.$exe,
-            'C:\\laragon\\bin\\mysql\\mysql*\\bin\\'.$exe,
-            'C:\\wamp64\\bin\\mysql\\mysql*\\bin\\'.$exe,
-            'C:\\wamp\\bin\\mysql\\mysql*\\bin\\'.$exe,
+            'C:\\Program Files\\MySQL\\MySQL Server*\\bin\\' . $exe,
+            'C:\\Program Files (x86)\\MySQL\\MySQL Server*\\bin\\' . $exe,
+            'C:\\Program Files\\MariaDB*\\bin\\' . $exe,
+            'C:\\Program Files (x86)\\MariaDB*\\bin\\' . $exe,
+            'C:\\xampp\\mysql\\bin\\' . $exe,
+            'C:\\laragon\\bin\\mysql\\mysql*\\bin\\' . $exe,
+            'C:\\wamp64\\bin\\mysql\\mysql*\\bin\\' . $exe,
+            'C:\\wamp\\bin\\mysql\\mysql*\\bin\\' . $exe,
         ];
 
         $hits = [];
@@ -551,8 +553,8 @@ class BackupController extends Controller
     {
         $dbPath = $this->resolveSqliteDatabasePath();
 
-        if (! is_file($dbPath)) {
-            abort(500, 'SQLite database file not found: '.$dbPath);
+        if (!is_file($dbPath)) {
+            abort(500, 'SQLite database file not found: ' . $dbPath);
         }
 
         DB::disconnect();
@@ -561,13 +563,13 @@ class BackupController extends Controller
         clearstatcache(true, $dbPath);
         $zip->addFile($dbPath, 'database.sqlite');
 
-        $walPath = $dbPath.'-wal';
+        $walPath = $dbPath . '-wal';
         if (is_file($walPath)) {
             clearstatcache(true, $walPath);
             $zip->addFile($walPath, 'database.sqlite-wal');
         }
 
-        $shmPath = $dbPath.'-shm';
+        $shmPath = $dbPath . '-shm';
         if (is_file($shmPath)) {
             clearstatcache(true, $shmPath);
             $zip->addFile($shmPath, 'database.sqlite-shm');
@@ -620,21 +622,21 @@ class BackupController extends Controller
         File::copy($sqliteSrc, $dest);
         clearstatcache(true, $dest);
 
-        if (is_file($dest.'-wal')) {
-            File::delete($dest.'-wal');
+        if (is_file($dest . '-wal')) {
+            File::delete($dest . '-wal');
         }
-        if (is_file($dest.'-shm')) {
-            File::delete($dest.'-shm');
+        if (is_file($dest . '-shm')) {
+            File::delete($dest . '-shm');
         }
 
-        $walSrc = dirname($sqliteSrc).DIRECTORY_SEPARATOR.'database.sqlite-wal';
+        $walSrc = dirname($sqliteSrc) . DIRECTORY_SEPARATOR . 'database.sqlite-wal';
         if (is_file($walSrc)) {
-            File::copy($walSrc, $dest.'-wal');
+            File::copy($walSrc, $dest . '-wal');
         }
 
-        $shmSrc = dirname($sqliteSrc).DIRECTORY_SEPARATOR.'database.sqlite-shm';
+        $shmSrc = dirname($sqliteSrc) . DIRECTORY_SEPARATOR . 'database.sqlite-shm';
         if (is_file($shmSrc)) {
-            File::copy($shmSrc, $dest.'-shm');
+            File::copy($shmSrc, $dest . '-shm');
         }
 
         DB::reconnect();
@@ -642,7 +644,7 @@ class BackupController extends Controller
 
     private function detectBackupDriver(string $tmpDir): ?string
     {
-        $manifestPath = $tmpDir.DIRECTORY_SEPARATOR.'manifest.json';
+        $manifestPath = $tmpDir . DIRECTORY_SEPARATOR . 'manifest.json';
         if (is_file($manifestPath)) {
             $manifest = json_decode((string) file_get_contents($manifestPath), true);
             if (is_array($manifest) && isset($manifest['db_driver']) && is_string($manifest['db_driver'])) {
@@ -650,11 +652,11 @@ class BackupController extends Controller
             }
         }
 
-        if (is_file($tmpDir.DIRECTORY_SEPARATOR.'database.sqlite')) {
+        if (is_file($tmpDir . DIRECTORY_SEPARATOR . 'database.sqlite')) {
             return 'sqlite';
         }
 
-        if (is_file($tmpDir.DIRECTORY_SEPARATOR.'database.sql')) {
+        if (is_file($tmpDir . DIRECTORY_SEPARATOR . 'database.sql')) {
             return 'mysql';
         }
 

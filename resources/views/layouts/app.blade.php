@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
-<script>document.documentElement.classList.remove('dark');try{localStorage.removeItem('darkMode')}catch(e){}</script>
+<script>document.documentElement.classList.remove('dark'); try { localStorage.removeItem('darkMode') } catch (e) { }</script>
 
 <head>
     <meta charset="utf-8" />
@@ -13,10 +13,11 @@
     @livewireStyles
 
     {{-- Non-blocking font loading (preconnect + async link instead of @import) --}}
+    {{--
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet" media="print" onload="this.media='all'" />
+        rel="stylesheet" media="print" onload="this.media='all'" /> --}}
 
     <style>
         body {
