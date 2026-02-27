@@ -584,12 +584,12 @@
                     <div class="student-row">
                         <span class="student-label">Date of Birth</span>
                         <span
-                            class="student-value">{{ $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->format('d M, Y') : 'N/A' }}</span>
+                            class="student-value">{{ $student->dob ? \Carbon\Carbon::parse($student->dob)->format('d M, Y') : 'N/A' }}</span>
                     </div>
                     <div class="student-row">
                         <span class="student-label">Age</span>
                         <span
-                            class="student-value">{{ $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->age . ' years' : 'N/A' }}</span>
+                            class="student-value">{{ $student->dob ? \Carbon\Carbon::parse($student->dob)->age . ' years' : 'N/A' }}</span>
                     </div>
                     <div class="student-row">
                         <span class="student-label">No. in Class</span>

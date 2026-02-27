@@ -117,12 +117,12 @@
 
     <x-table sortable selectable :items="$this->students">
         <thead
-            class="bg-gradient-to-r from-blue-500 to-indigo-600 text-xs font-semibold uppercase tracking-wider text-white">
+            class="bg-white text-xs font-semibold uppercase tracking-wider text-gray-900 border-b-2 border-gray-300">
             <tr>
                 <th class="px-5 py-3">
                     <input type="checkbox" class="checkbox-custom" value="all" />
                 </th>
-                <th class="px-5 py-3 cursor-pointer hover:bg-blue-600/50" wire:click="sortBy('last_name')">
+                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('last_name')">
                     <div class="flex items-center gap-1">
                         Student
                         @if($sortBy === 'last_name')
@@ -136,7 +136,7 @@
                         @endif
                     </div>
                 </th>
-                <th class="px-5 py-3 cursor-pointer hover:bg-blue-600/50" wire:click="sortBy('admission_number')">
+                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('admission_number')">
                     <div class="flex items-center gap-1">
                         Admission No
                         @if($sortBy === 'admission_number')
@@ -151,7 +151,7 @@
                     </div>
                 </th>
                 <th class="px-5 py-3">Class / Section</th>
-                <th class="px-5 py-3 cursor-pointer hover:bg-blue-600/50" wire:click="sortBy('gender')">
+                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('gender')">
                     <div class="flex items-center gap-1">
                         Gender
                         @if($sortBy === 'gender')
@@ -166,7 +166,7 @@
                     </div>
                 </th>
                 <th class="px-5 py-3">Guardian</th>
-                <th class="px-5 py-3 cursor-pointer hover:bg-blue-600/50" wire:click="sortBy('status')">
+                <th class="px-5 py-3 cursor-pointer hover:bg-gray-100" wire:click="sortBy('status')">
                     <div class="flex items-center gap-1">
                         Status
                         @if($sortBy === 'status')

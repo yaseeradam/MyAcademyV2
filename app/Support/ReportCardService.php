@@ -71,6 +71,11 @@ class ReportCardService
 
         [$timesOpened, $timesPresent, $timesAbsent] = $this->attendanceSummary($student, $term, $session);
 
+        $totalStudents = Student::query()
+            ->where('class_id', $student->class_id)
+            ->where('status', 'Active')
+            ->count();
+
         return [
             'student' => $student,
             'term' => $term,
@@ -83,6 +88,7 @@ class ReportCardService
             'timesOpened' => $timesOpened,
             'timesPresent' => $timesPresent,
             'timesAbsent' => $timesAbsent,
+            'totalStudents' => $totalStudents,
         ];
     }
 
