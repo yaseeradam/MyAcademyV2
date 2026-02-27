@@ -99,14 +99,14 @@
 	            $maxMarks = $this->maxMarks();
 	        @endphp
 	        <x-table>
-            <thead class="bg-gradient-to-r from-indigo-600 to-purple-600 text-xs font-bold uppercase tracking-wider text-white">
+            <thead class="bg-white text-xs font-bold uppercase tracking-wider text-gray-900">
                 <tr>
-                    <th class="px-5 py-4">Student</th>
-                    <th class="px-5 py-4 text-right">CA1 /{{ $maxMarks['ca1'] }}</th>
-                    <th class="px-5 py-4 text-right">CA2 /{{ $maxMarks['ca2'] }}</th>
-                    <th class="px-5 py-4 text-right">Exam /{{ $maxMarks['exam'] }}</th>
-                    <th class="px-5 py-4 text-right">Total</th>
-                    <th class="px-5 py-4 text-right">Grade</th>
+                    <th class="px-5 py-4 border-b-2 border-gray-300">Student</th>
+                    <th class="px-5 py-4 text-right border-b-2 border-gray-300">CA1 /{{ $maxMarks['ca1'] }}</th>
+                    <th class="px-5 py-4 text-right border-b-2 border-gray-300">CA2 /{{ $maxMarks['ca2'] }}</th>
+                    <th class="px-5 py-4 text-right border-b-2 border-gray-300">Exam /{{ $maxMarks['exam'] }}</th>
+                    <th class="px-5 py-4 text-right border-b-2 border-gray-300">Total</th>
+                    <th class="px-5 py-4 text-right border-b-2 border-gray-300">Grade</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
@@ -170,5 +170,111 @@
                 @endforelse
             </tbody>
         </x-table>
+
+        <div class="mt-4 rounded-lg bg-blue-50 p-4">
+            <div class="text-xs font-semibold text-blue-900 mb-2">⌨️ Keyboard Shortcuts:</div>
+            <div class="grid grid-cols-2 gap-2 text-xs text-blue-700">
+                <div><kbd class="px-2 py-1 bg-white rounded shadow-sm">Enter</kbd> Move down</div>
+                <div><kbd class="px-2 py-1 bg-white rounded shadow-sm">Tab</kbd> Move right</div>
+                <div><kbd class="px-2 py-1 bg-white rounded shadow-sm">↑↓←→</kbd> Arrow keys</div>
+                <div><kbd class="px-2 py-1 bg-white rounded shadow-sm">Shift+Tab</kbd> Move left</div>
+            </div>
+        </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('tbody');
+            if (!table) return;
+
+            table.addEventListener('keydown', function(e) {
+                const input = e.target;
+                if (input.tagName !== 'INPUT' || input.type !== 'number') return;
+
+                const cell = input.closest('td');
+                const row = cell.closest('tr');
+                const cells = Array.from(row.querySelectorAll('td input[type="number"]'));
+                const rows = Array.from(table.querySelectorAll('tr:has(input)'));
+                const currentCellIndex = cells.indexOf(input);
+                const currentRowIndex = rows.indexOf(row);
+
+                let nextInput = null;
+                let shouldPrevent = false;
+
+                if (e.key === 'Enter') {
+                    shouldPrevent = true;
+                    if (currentRowIndex < rows.length - 1) {
+                        const nextRow = rows[currentRowIndex + 1];
+                        const nextRowInputs = nextRow.querySelectorAll('td input[type="number"]');
+                        nextInput = nextRowInputs[currentCellIndex];
+                    }
+                } else if (e.key === 'Tab' && !e.shiftKey) {
+                    shouldPrevent = true;
+                    if (currentCellIndex < cells.length - 1) {
+                        nextInput = cells[currentCellIndex + 1];
+                    } else if (currentRowIndex < rows.length - 1) {
+                        nextInput = rows[currentRowIndex + 1].querySelector('td input[type="number"]');
+                    }
+                } else if (e.key === 'Tab' && e.shiftKey) {
+                    shouldPrevent = true;
+                    if (currentCellIndex > 0) {
+                        nextInput = cells[currentCellIndex - 1];
+                    } else if (currentRowIndex > 0) {
+                        const prevRow = rows[currentRowIndex - 1];
+                        const prevCells = prevRow.querySelectorAll('td input[type="number"]');
+                        nextInput = prevCells[prevCells.length - 1];
+                    }
+                } else if (e.key === 'ArrowDown') {
+                    shouldPrevent = true;
+                    if (currentRowIndex < rows.length - 1) {
+                        const nextRow = rows[currentRowIndex + 1];
+                        const nextRowInputs = nextRow.querySelectorAll('td input[type="number"]');
+                        nextInput = nextRowInputs[currentCellIndex];
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    shouldPrevent = true;
+                    if (currentRowIndex > 0) {
+                        const prevRow = rows[currentRowIndex - 1];
+                        const prevRowInputs = prevRow.querySelectorAll('td input[type="number"]');
+                        nextInput = prevRowInputs[currentCellIndex];
+                    }
+                } else if (e.key === 'ArrowRight') {
+                    if (input.selectionStart === input.value.length) {
+                        shouldPrevent = true;
+                        if (currentCellIndex < cells.length - 1) {
+                            nextInput = cells[currentCellIndex + 1];
+                        }
+                    }
+                } else if (e.key === 'ArrowLeft') {
+                    if (input.selectionStart === 0) {
+                        shouldPrevent = true;
+                        if (currentCellIndex > 0) {
+                            nextInput = cells[currentCellIndex - 1];
+                        }
+                    }
+                }
+
+                if (shouldPrevent && nextInput) {
+                    e.preventDefault();
+                    nextInput.focus();
+                    nextInput.select();
+                }
+            });
+
+            table.addEventListener('focusin', function(e) {
+                if (e.target.tagName === 'INPUT') {
+                    e.target.closest('td').style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+                    e.target.closest('td').style.position = 'relative';
+                    e.target.closest('td').style.zIndex = '10';
+                }
+            });
+
+            table.addEventListener('focusout', function(e) {
+                if (e.target.tagName === 'INPUT') {
+                    e.target.closest('td').style.boxShadow = '';
+                    e.target.closest('td').style.zIndex = '';
+                }
+            });
+        });
+        </script>
     @endif
 </div>

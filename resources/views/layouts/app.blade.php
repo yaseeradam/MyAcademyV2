@@ -546,18 +546,6 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <!-- Notification Permission Button -->
-                        <button onclick="requestNotificationPermission()" id="notificationBtn"
-                            class="rounded-xl p-2.5 text-gray-500 hover:bg-white hover:shadow-md transition-all duration-200"
-                            title="Enable notifications">
-                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5">
-                                <path
-                                    d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7zm-6 13a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2z" />
-                            </svg>
-                        </button>
-
-
                         <livewire:notifications.bell />
                         <a href="{{ route('profile') }}"
                             class="flex items-center gap-2.5 rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all">
