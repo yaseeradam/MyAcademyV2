@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+<script>document.documentElement.classList.remove('dark');try{localStorage.removeItem('darkMode')}catch(e){}</script>
 
 <head>
     <meta charset="utf-8" />
@@ -11,30 +12,22 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
+    {{-- Non-blocking font loading (preconnect + async link instead of @import) --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'" />
 
+    <style>
         body {
             font-family: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
         }
     </style>
 
-    {{-- Flash-free dark mode init (runs before paint) --}}
-    <script>
-        (function () {
-            try {
-                if (localStorage.getItem('darkMode') === 'true') {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-            } catch (e) { }
-        })();
-    </script>
 </head>
 
 <body
-    class="h-full bg-gradient-to-br from-amber-50 via-white to-orange-50 text-slate-900 dark:from-[#111] dark:via-[#141414] dark:to-[#111] dark:text-gray-100 transition-colors duration-300">
+    class="h-full bg-gradient-to-br from-amber-50 via-white to-orange-50 text-slate-900 transition-colors duration-300">
     @php
         /** @var \App\Support\LicenseManager $licenses */
         $licenses = app(\App\Support\LicenseManager::class);
@@ -61,8 +54,8 @@
         <!-- Mobile Sidebar -->
         <aside id="mobileSidebar"
             class="fixed inset-y-0 left-0 z-50 w-80 transform -translate-x-full transition-transform duration-300 lg:hidden">
-            <div class="flex h-full flex-col bg-white dark:bg-[#1a1a1a]">
-                <div class="flex items-center justify-between border-b border-gray-100 dark:border-[#333] px-4 py-4">
+            <div class="flex h-full flex-col bg-white">
+                <div class="flex items-center justify-between border-b border-gray-100 px-4 py-4">
                     <div class="flex items-center gap-3">
                         @php($schoolLogo = config('myacademy.school_logo'))
                         <div
@@ -290,7 +283,7 @@
                 </div>
 
                 <!-- Mobile Logout Button -->
-                <div class="border-t border-gray-100 dark:border-[#333] p-4">
+                <div class="border-t border-gray-100 p-4">
                     <form method="POST" action="{{ route('logout') }}" id="mobileLogoutForm">
                         @csrf
                         <button type="button" onclick="confirmLogout('mobileLogoutForm')"
@@ -310,8 +303,8 @@
 
         <!-- Desktop Sidebar -->
         <aside id="desktopSidebar"
-            class="fixed inset-y-0 left-0 hidden w-64 flex-col bg-white dark:bg-[#1a1a1a] shadow-xl dark:shadow-black/40 transition-all duration-300 lg:flex">
-            <div class="flex items-center justify-between border-b border-slate-200 dark:border-[#333] px-4 py-4">
+            class="fixed inset-y-0 left-0 hidden w-64 flex-col bg-white shadow-xl transition-all duration-300 lg:flex">
+            <div class="flex items-center justify-between border-b border-slate-200 px-4 py-4">
                 @php($schoolLogo = config('myacademy.school_logo'))
                 <div class="flex items-center gap-2.5 min-w-0">
                     <div
@@ -342,7 +335,7 @@
             <nav class="flex-1 overflow-y-auto px-3 py-4">
                 @php($user = auth()->user())
 
-                <a href="{{ route('dashboard') }}"
+                <a href="{{ route('dashboard') }}" wire:navigate
                     class="{{ request()->routeIs('dashboard') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                     <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('dashboard') ? 'text-white' : 'text-amber-600' }}"
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -354,7 +347,7 @@
                     <span class="sidebar-text">Dashboard</span>
                 </a>
 
-                <a href="{{ route('students.index') }}"
+                <a href="{{ route('students.index') }}" wire:navigate
                     class="{{ request()->routeIs('students.*') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                     <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('students.*') ? 'text-white' : 'text-blue-600' }}"
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -365,7 +358,7 @@
                 </a>
 
                 @if ($user?->role === 'admin')
-                    <a href="{{ route('teachers') }}"
+                    <a href="{{ route('teachers') }}" wire:navigate
                         class="{{ request()->routeIs('teachers') || request()->routeIs('teachers.*') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('teachers') || request()->routeIs('teachers.*') ? 'text-white' : 'text-orange-600' }}"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -379,7 +372,7 @@
                 @endif
 
                 @if ($user?->role === 'admin' || $user?->role === 'teacher')
-                    <a href="{{ route('classes.index') }}"
+                    <a href="{{ route('classes.index') }}" wire:navigate
                         class="{{ request()->routeIs('classes.*') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('classes.*') ? 'text-white' : 'text-slate-600' }}"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -389,7 +382,7 @@
                         <span class="sidebar-text">Classes</span>
                     </a>
 
-                    <a href="{{ route('subjects.index') }}"
+                    <a href="{{ route('subjects.index') }}" wire:navigate
                         class="{{ request()->routeIs('subjects.*') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('subjects.*') ? 'text-white' : 'text-indigo-600' }}"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -399,7 +392,7 @@
                         <span class="sidebar-text">Subjects</span>
                     </a>
 
-                    <a href="{{ route('results.entry') }}"
+                    <a href="{{ route('results.entry') }}" wire:navigate
                         class="{{ request()->routeIs('results.entry') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('results.entry') ? 'text-white' : 'text-green-600' }}"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -411,7 +404,7 @@
                 @endif
 
                 @if ($user?->role === 'admin')
-                    <a href="{{ route('results.broadsheet') }}"
+                    <a href="{{ route('results.broadsheet') }}" wire:navigate
                         class="{{ request()->routeIs('results.broadsheet') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('results.broadsheet') ? 'text-white' : 'text-emerald-600' }}"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -426,7 +419,7 @@
                 @endif
 
                 @if ($user?->role === 'admin' || $user?->role === 'teacher')
-                <a href="{{ route('attendance') }}"
+                <a href="{{ route('attendance') }}" wire:navigate
                     class="{{ request()->routeIs('attendance') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                     <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('attendance') ? 'text-white' : 'text-blue-600' }}"
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -437,7 +430,7 @@
                     <span class="sidebar-text">Attendance</span>
                 </a>
 
-                <a href="{{ route('messages') }}"
+                <a href="{{ route('messages') }}" wire:navigate
                     class="{{ request()->routeIs('messages') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                     <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('messages') ? 'text-white' : 'text-purple-600' }}"
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -451,7 +444,7 @@
 
                 @php($cbtHref = $cbtLocked ? route('more-features') : route('cbt.index'))
                 @php($cbtIsActive = !$cbtLocked && request()->routeIs('cbt.*'))
-                <a href="{{ $cbtHref }}"
+                <a href="{{ $cbtHref }}" wire:navigate
                     class="{{ $cbtIsActive ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} {{ $cbtLocked ? 'opacity-60' : '' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                     <svg class="h-5 w-5 flex-shrink-0 {{ $cbtIsActive ? 'text-white' : 'text-violet-600' }}"
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -468,7 +461,7 @@
                 @endif
 
                 @if ($user?->role === 'admin' || $user?->role === 'bursar')
-                    <a href="{{ route('billing.index') }}"
+                    <a href="{{ route('billing.index') }}" wire:navigate
                         class="{{ request()->routeIs('billing.*') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('billing.*') ? 'text-white' : 'text-purple-600' }}"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -477,7 +470,7 @@
                         </svg>
                         <span class="sidebar-text">Billing</span>
                     </a>
-                    <a href="{{ route('accounts') }}"
+                    <a href="{{ route('accounts') }}" wire:navigate
                         class="{{ request()->routeIs('accounts') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('accounts') ? 'text-white' : 'text-yellow-600' }}"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -488,7 +481,7 @@
                     </a>
 
                     @if ($showSavingsLoan)
-                        <a href="{{ route('savings-loan.index') }}"
+                        <a href="{{ route('savings-loan.index') }}" wire:navigate
                             class="{{ request()->routeIs('savings-loan.*') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                             <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('savings-loan.*') ? 'text-white' : 'text-emerald-600' }}"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -502,7 +495,7 @@
                 @endif
 
                 @if (in_array($user?->role, ['admin', 'teacher', 'bursar'], true))
-                    <a href="{{ route('more-features') }}"
+                    <a href="{{ route('more-features') }}" wire:navigate
                         class="{{ request()->routeIs('more-features') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('more-features') ? 'text-white' : 'text-slate-600' }}"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -515,7 +508,7 @@
                 @endif
 
                 @if ($user?->role === 'admin')
-                    <a href="{{ route('settings.index') }}"
+                    <a href="{{ route('settings.index') }}" wire:navigate
                         class="{{ request()->routeIs('settings*') ? 'bg-amber-500 text-white shadow-md' : 'text-slate-700 hover:bg-amber-50' }} mb-0.5 group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all">
                         <svg class="h-5 w-5 flex-shrink-0 {{ request()->routeIs('settings*') ? 'text-white' : 'text-gray-600' }}"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -531,8 +524,7 @@
         </aside>
 
         <div id="mainContent" class="lg:pl-64 transition-all duration-300">
-            <header
-                class="sticky top-0 z-10 border-b border-slate-100 dark:border-[#333] bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-xl shadow-md dark:shadow-black/30">
+            <header class="sticky top-0 z-10 border-b border-slate-100 bg-white/80 backdrop-blur-xl shadow-md">
                 <div class="h-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500"></div>
                 <div class="flex h-16 items-center justify-between px-6">
                     <div class="flex items-center gap-4">
@@ -546,7 +538,8 @@
                         </button>
                         <div class="min-w-0">
                             <div class="truncate text-sm font-black text-slate-900">
-                                {{ config('myacademy.school_name', config('app.name', 'MyAcademy')) }}</div>
+                                {{ config('myacademy.school_name', config('app.name', 'MyAcademy')) }}
+                            </div>
                             <div class="text-xs font-semibold text-slate-600">
                                 {{ now()->format('l, F j, Y') }}
                             </div>
@@ -564,27 +557,6 @@
                             </svg>
                         </button>
 
-                        <!-- Dark Mode Toggle -->
-                        <button id="darkModeToggle"
-                            class="rounded-xl p-2.5 text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#2a2a2a] hover:shadow-md transition-all duration-200"
-                            title="Toggle dark mode">
-                            <svg id="darkModeIconSun" class="h-5 w-5 hidden" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2.5">
-                                <circle cx="12" cy="12" r="5" />
-                                <line x1="12" y1="1" x2="12" y2="3" />
-                                <line x1="12" y1="21" x2="12" y2="23" />
-                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                                <line x1="1" y1="12" x2="3" y2="12" />
-                                <line x1="21" y1="12" x2="23" y2="12" />
-                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                            </svg>
-                            <svg id="darkModeIconMoon" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2.5">
-                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                            </svg>
-                        </button>
 
                         <livewire:notifications.bell />
                         <a href="{{ route('profile') }}"
@@ -726,35 +698,7 @@
         }
     </script>
 
-    <script>
-        // ─── Dark Mode Toggle ───
-        (function() {
-            const toggle = document.getElementById('darkModeToggle');
-            const iconSun = document.getElementById('darkModeIconSun');
-            const iconMoon = document.getElementById('darkModeIconMoon');
 
-            function updateIcons() {
-                const isDark = document.documentElement.classList.contains('dark');
-                if (isDark) {
-                    iconSun.classList.remove('hidden');
-                    iconMoon.classList.add('hidden');
-                } else {
-                    iconSun.classList.add('hidden');
-                    iconMoon.classList.remove('hidden');
-                }
-            }
-
-            // Set initial icon state
-            updateIcons();
-
-            toggle.addEventListener('click', () => {
-                document.documentElement.classList.toggle('dark');
-                const isDark = document.documentElement.classList.contains('dark');
-                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
-                updateIcons();
-            });
-        })();
-    </script>
 
     <script>
         const sidebar = document.getElementById('desktopSidebar');

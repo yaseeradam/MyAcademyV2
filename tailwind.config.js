@@ -8,7 +8,6 @@ export default {
         './resources/**/*.vue',
         './app/**/*.php',
     ],
-    darkMode: 'class',
     theme: {
         extend: {
             colors: {

@@ -28,9 +28,16 @@ class Take extends Component
     public int $currentIndex = 0;
     public ?string $lastSavedAt = null;
 
+    /* ── Cached attempt to avoid re-querying within a single request ── */
+    private ?CbtAttempt $cachedAttempt = null;
+
+    /* ── Timer data sent to JS on mount (avoids per-second polling) ── */
+    public int $durationSeconds = 0;
+    public ?string $startedAtIso = null;
+
     public function minSubmitSeconds(): int
     {
-        $attempt = $this->attempt;
+        $attempt = $this->attempt();
 
         $durationMinutes = (int) ($attempt->exam?->duration_minutes ?? 0);
         $durationMinutes = max(1, $durationMinutes);
@@ -40,9 +47,9 @@ class Take extends Component
 
     public function elapsedSeconds(): int
     {
-        $attempt = $this->attempt;
+        $attempt = $this->attempt();
         $startedAt = $attempt->started_at ?? $attempt->created_at;
-        if (! $startedAt) {
+        if (!$startedAt) {
             return 0;
         }
 
@@ -51,7 +58,7 @@ class Take extends Component
 
     public function canSubmitNow(): bool
     {
-        $attempt = $this->attempt;
+        $attempt = $this->attempt();
         if ($attempt->submitted_at || $attempt->terminated_at) {
             return false;
         }
@@ -65,7 +72,7 @@ class Take extends Component
 
     public function submitUnlockInSeconds(): int
     {
-        $attempt = $this->attempt;
+        $attempt = $this->attempt();
         if ($attempt->submitted_at || $attempt->terminated_at) {
             return 0;
         }
@@ -80,21 +87,31 @@ class Take extends Component
         return max(0, (int) $need);
     }
 
-    public function tick(): void
+    /**
+     * Called every 30s by wire:poll (instead of every 1s).
+     * The client-side JS timer handles the countdown display.
+     */
+    public function heartbeatTick(): void
     {
-        $attempt = $this->attempt;
-        if ($attempt->terminated_at) {
-            return;
-        }
-        if ($attempt->submitted_at) {
+        $attempt = $this->attempt();
+        if ($attempt->terminated_at || $attempt->submitted_at) {
             return;
         }
 
-        $this->heartbeat($attempt);
+        // Update last_activity
+        CbtAttempt::query()
+            ->whereKey($attempt->id)
+            ->whereNull('submitted_at')
+            ->whereNull('terminated_at')
+            ->update(['last_activity_at' => now()]);
 
+        // Auto-submit if time is up
         if ($this->remainingSeconds() <= 0) {
             $this->submitExam();
         }
+
+        // Bust cache so render() gets fresh data
+        $this->cachedAttempt = null;
     }
 
     public function mount(CbtAttempt $attempt): void
@@ -102,24 +119,24 @@ class Take extends Component
         $this->attemptId = (int) $attempt->id;
         $this->examCode = strtoupper(trim((string) request('code', '')));
 
-        $attempt = $this->attempt;
+        $attempt = $this->attempt();
 
         abort_unless($attempt->exam && $attempt->exam->status === 'approved', 403, 'Exam is not active.');
         abort_unless((bool) $attempt->exam->published_at, 403, 'Exam is not live.');
         abort_unless($attempt->student && $attempt->student->status === 'Active', 403, 'Student is not active.');
         abort_unless((int) $attempt->student->class_id === (int) $attempt->exam->class_id, 403);
-        abort_unless(! $attempt->terminated_at, 403, 'Your attempt was terminated by an admin.');
+        abort_unless(!$attempt->terminated_at, 403, 'Your attempt was terminated by an admin.');
 
         $ip = (string) request()->ip();
         $allowedCidrs = trim((string) ($attempt->exam->allowed_cidrs ?? ''));
         if ($allowedCidrs !== '') {
             $cidrs = collect(preg_split('/[,\s]+/', $allowedCidrs) ?: [])
-                ->map(fn ($v) => trim((string) $v))
+                ->map(fn($v) => trim((string) $v))
                 ->filter()
                 ->values()
                 ->all();
 
-            if ($cidrs && ! \Symfony\Component\HttpFoundation\IpUtils::checkIp($ip, $cidrs)) {
+            if ($cidrs && !\Symfony\Component\HttpFoundation\IpUtils::checkIp($ip, $cidrs)) {
                 abort(403, 'This exam is restricted to the school network.');
             }
         }
@@ -130,13 +147,15 @@ class Take extends Component
         if ($attempt->exam->ends_at) {
             $grace = (int) ($attempt->exam->grace_minutes ?? 0);
             $end = $attempt->exam->ends_at->copy()->addMinutes(max(0, $grace));
-            if (now()->gt($end) && ! $attempt->started_at) {
+            if (now()->gt($end) && !$attempt->started_at) {
                 abort(403, 'This exam has ended.');
             }
         }
 
-        if (! $attempt->started_at) {
+        if (!$attempt->started_at) {
             $attempt->forceFill(['started_at' => now()])->save();
+            $this->cachedAttempt = null;
+            $attempt = $this->attempt();
         }
 
         $lockedIp = trim((string) ($attempt->ip_address ?? ''));
@@ -154,19 +173,34 @@ class Take extends Component
 
         $attempt->forceFill(['last_activity_at' => now()])->save();
 
+        // Prepare timer data for JS countdown
+        $startedAt = $attempt->started_at ?? $attempt->created_at;
+        $this->startedAtIso = $startedAt?->toIso8601String();
+        $this->durationSeconds = max(1, (int) ($attempt->exam->duration_minutes ?? 1)) * 60;
+
         $this->loadAnswers();
         $this->currentIndex = 0;
     }
 
-    #[Computed]
+    /**
+     * Return the attempt with eager-loaded relations. Cached within a single
+     * Livewire request so repeated calls (selectOption, remainingSeconds, render)
+     * don't hit the database multiple times.
+     */
     public function attempt(): CbtAttempt
     {
-        return CbtAttempt::query()
+        if ($this->cachedAttempt) {
+            return $this->cachedAttempt;
+        }
+
+        $this->cachedAttempt = CbtAttempt::query()
             ->with([
                 'student:id,admission_number,first_name,last_name,passport_photo,class_id,status',
-                'exam' => fn ($q) => $q->with(['schoolClass:id,name', 'subject:id,name', 'questions.options']),
+                'exam' => fn($q) => $q->with(['schoolClass:id,name', 'subject:id,name', 'questions.options']),
             ])
             ->findOrFail($this->attemptId);
+
+        return $this->cachedAttempt;
     }
 
     private function loadAnswers(): void
@@ -175,25 +209,25 @@ class Take extends Component
             ->where('attempt_id', $this->attemptId)
             ->whereNotNull('option_id')
             ->pluck('option_id', 'question_id')
-            ->map(fn ($v) => (int) $v)
+            ->map(fn($v) => (int) $v)
             ->all();
 
         $this->theoryAnswers = CbtAnswer::query()
             ->where('attempt_id', $this->attemptId)
             ->whereNotNull('text_answer')
             ->pluck('text_answer', 'question_id')
-            ->map(fn ($v) => (string) $v)
+            ->map(fn($v) => (string) $v)
             ->all();
     }
 
     public function updatedTheoryAnswers($value, $key): void
     {
         $questionId = (int) $key;
-        $attempt = $this->attempt;
+        $attempt = $this->attempt();
         if ($attempt->terminated_at || $attempt->submitted_at) {
             return;
         }
-        if (! $attempt->exam?->published_at) {
+        if (!$attempt->exam?->published_at) {
             $this->dispatch('alert', message: 'Exam is paused by admin.', type: 'warning');
             return;
         }
@@ -202,12 +236,9 @@ class Take extends Component
             return;
         }
 
-        $question = CbtQuestion::query()
-            ->whereKey($questionId)
-            ->where('exam_id', $attempt->exam_id)
-            ->first();
-
-        if (! $question || $question->type !== 'theory') {
+        // Validate via the already-loaded questions (no extra DB query)
+        $question = $attempt->exam->questions->firstWhere('id', $questionId);
+        if (!$question || $question->type !== 'theory') {
             return;
         }
 
@@ -225,13 +256,12 @@ class Take extends Component
             ]
         );
 
-        $attempt->forceFill(['last_activity_at' => now()])->save();
         $this->lastSavedAt = now()->format('H:i:s');
     }
 
     public function goTo(int $index): void
     {
-        $attempt = $this->attempt;
+        $attempt = $this->attempt();
         $total = (int) ($attempt->exam?->questions?->count() ?? 0);
         if ($total <= 0) {
             $this->currentIndex = 0;
@@ -253,7 +283,7 @@ class Take extends Component
 
     public function remainingSeconds(): int
     {
-        $attempt = $this->attempt;
+        $attempt = $this->attempt();
         if ($attempt->terminated_at) {
             return 0;
         }
@@ -262,7 +292,7 @@ class Take extends Component
         }
 
         $startedAt = $attempt->started_at ?? $attempt->created_at;
-        if (! $startedAt) {
+        if (!$startedAt) {
             return 0;
         }
 
@@ -275,16 +305,17 @@ class Take extends Component
         return max(0, (int) $seconds);
     }
 
+    /**
+     * Optimised: validate question/option from already-loaded eager data
+     * instead of running 2 extra queries per click.
+     */
     public function selectOption(int $questionId, int $optionId): void
     {
-        $attempt = $this->attempt;
-        if ($attempt->terminated_at) {
+        $attempt = $this->attempt();
+        if ($attempt->terminated_at || $attempt->submitted_at) {
             return;
         }
-        if ($attempt->submitted_at) {
-            return;
-        }
-        if (! $attempt->exam?->published_at) {
+        if (!$attempt->exam?->published_at) {
             $this->dispatch('alert', message: 'Exam is paused by admin.', type: 'warning');
             return;
         }
@@ -293,18 +324,11 @@ class Take extends Component
             return;
         }
 
-        $question = CbtQuestion::query()
-            ->whereKey($questionId)
-            ->where('exam_id', $attempt->exam_id)
-            ->first();
-
+        // Use eager-loaded data — zero extra queries
+        $question = $attempt->exam->questions->firstWhere('id', $questionId);
         abort_unless($question, 404);
 
-        $option = CbtOption::query()
-            ->whereKey($optionId)
-            ->where('question_id', $questionId)
-            ->first();
-
+        $option = $question->options->firstWhere('id', $optionId);
         abort_unless($option, 404);
 
         CbtAnswer::query()->updateOrCreate(
@@ -320,34 +344,13 @@ class Take extends Component
             ]
         );
 
-        $attempt->forceFill(['last_activity_at' => now()])->save();
         $this->answers[$questionId] = $optionId;
         $this->lastSavedAt = now()->format('H:i:s');
     }
 
-    private function heartbeat(CbtAttempt $attempt): void
-    {
-        $last = $attempt->last_activity_at ?? $attempt->started_at ?? $attempt->created_at;
-        if (! $last) {
-            return;
-        }
-
-        if ($last->diffInSeconds(now()) < 30) {
-            return;
-        }
-
-        CbtAttempt::query()
-            ->whereKey($attempt->id)
-            ->whereNull('submitted_at')
-            ->whereNull('terminated_at')
-            ->update(['last_activity_at' => now()]);
-
-        unset($this->attempt);
-    }
-
     public function submitExam(): void
     {
-        $attempt = $this->attempt;
+        $attempt = $this->attempt();
         if ($attempt->terminated_at) {
             return;
         }
@@ -355,7 +358,7 @@ class Take extends Component
             return;
         }
 
-        if (! $this->canSubmitNow()) {
+        if (!$this->canSubmitNow()) {
             $secs = $this->submitUnlockInSeconds();
             $mins = (int) ceil($secs / 60);
             $this->dispatch('alert', message: "You can only submit after half of the exam time. Try again in about {$mins} minute(s).", type: 'warning');
@@ -397,7 +400,7 @@ class Take extends Component
 
                 $correctOptionId = (int) ($question->options->firstWhere('is_correct', true)?->id ?? 0);
                 $selectedOptionId = (int) ($this->answers[$question->id] ?? 0);
-                if ($selectedOptionId > 0 && ! $question->options->contains('id', $selectedOptionId)) {
+                if ($selectedOptionId > 0 && !$question->options->contains('id', $selectedOptionId)) {
                     $selectedOptionId = 0;
                 }
 
@@ -430,14 +433,14 @@ class Take extends Component
             ])->save();
         });
 
-        unset($this->attempt);
+        $this->cachedAttempt = null;
         $this->loadAnswers();
         $this->dispatch('alert', message: 'Exam submitted.', type: 'success');
     }
 
     public function render()
     {
-        $attempt = $this->attempt;
+        $attempt = $this->attempt();
 
         return view('livewire.cbt.portal.take', [
             'attempt' => $attempt,

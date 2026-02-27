@@ -25,9 +25,9 @@
     $config = $accents[$accent] ?? $accents['brand'];
 @endphp
 
-<section {{ $attributes->class('relative overflow-hidden rounded-2xl border border-gray-100 dark:border-[#333] bg-gradient-to-br ' . $config['bg'] . ' shadow-sm') }}>
-    <div class="absolute inset-0 bg-white/60 dark:bg-[#1a1a1a]/70 backdrop-blur-sm"></div>
-    <div class="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-gradient-to-br {{ $config['icon'] }} opacity-10 dark:opacity-15"></div>
+<section {{ $attributes->class('relative overflow-hidden rounded-2xl border border-gray-100 bg-gradient-to-br ' . $config['bg'] . ' shadow-sm') }}>
+    <div class="absolute inset-0 bg-white/60 backdrop-blur-sm"></div>
+    <div class="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-gradient-to-br {{ $config['icon'] }} opacity-10"></div>
     
     <div class="relative px-6 py-5">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -49,11 +49,11 @@
                     </div>
                 @endif
                 <div class="min-w-0">
-                    <h1 class="text-2xl font-black tracking-tight text-gray-900 dark:text-gray-100">
+                    <h1 class="text-2xl font-black tracking-tight text-gray-900">
                         {{ $title }}
                     </h1>
                     @if ($subtitle)
-                        <p class="mt-1 text-sm font-semibold text-gray-600 dark:text-gray-400">{{ $subtitle }}</p>
+                        <p class="mt-1 text-sm font-semibold text-gray-600">{{ $subtitle }}</p>
                     @endif
                 </div>
             </div>
@@ -66,7 +66,7 @@
         </div>
 
         @isset($after)
-            <div class="mt-4 border-t border-gray-200/50 dark:border-[#333] pt-4">
+            <div class="mt-4 border-t border-gray-200/50 pt-4">
                 {{ $after }}
             </div>
         @endisset

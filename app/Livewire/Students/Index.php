@@ -72,7 +72,7 @@ class Index extends Component
 
         if ($user?->role === 'teacher') {
             $classIds = $this->teacherClassIds();
-            if (! $classIds->contains((int) $this->classFilter)) {
+            if (!$classIds->contains((int) $this->classFilter)) {
                 return collect();
             }
         }
@@ -100,7 +100,7 @@ class Index extends Component
         }
 
         if ($this->classFilter !== 'all') {
-            if ($teacherClassIds && ! $teacherClassIds->contains((int) $this->classFilter)) {
+            if ($teacherClassIds && !$teacherClassIds->contains((int) $this->classFilter)) {
                 return Student::query()->whereRaw('1 = 0')->paginate(15);
             }
 
@@ -109,7 +109,7 @@ class Index extends Component
 
         if ($this->sectionFilter !== 'all') {
             if ($this->classFilter === 'all') {
-                $query->whereHas('section', fn ($q) => $q->where('name', $this->sectionFilter));
+                $query->whereHas('section', fn($q) => $q->where('name', $this->sectionFilter));
             } else {
                 $query->where('section_id', $this->sectionFilter);
             }
@@ -135,31 +135,27 @@ class Index extends Component
     #[Computed]
     public function stats(): array
     {
-        $all = Student::query();
+        $query = Student::query();
         $user = auth()->user();
 
         if ($user?->role === 'teacher') {
             $classIds = $this->teacherClassIds();
             if ($classIds->isEmpty()) {
-                return [
-                    'total' => 0,
-                    'boys' => 0,
-                    'girls' => 0,
-                    'alumni' => 0,
-                ];
+                return ['total' => 0, 'boys' => 0, 'girls' => 0, 'alumni' => 0];
             }
-
-            $all->whereIn('class_id', $classIds);
+            $query->whereIn('class_id', $classIds);
         }
 
-        $total = (clone $all)->count();
-        $boys = (clone $all)->where('gender', 'Male')->count();
-        $girls = (clone $all)->where('gender', 'Female')->count();
+        $row = $query->selectRaw("
+            COUNT(*) as total,
+            SUM(gender = 'Male') as boys,
+            SUM(gender = 'Female') as girls
+        ")->first();
 
         return [
-            'total' => $total,
-            'boys' => $boys,
-            'girls' => $girls,
+            'total' => (int) ($row->total ?? 0),
+            'boys' => (int) ($row->boys ?? 0),
+            'girls' => (int) ($row->girls ?? 0),
             'alumni' => 0,
         ];
     }
