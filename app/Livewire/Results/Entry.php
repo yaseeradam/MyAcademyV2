@@ -229,6 +229,7 @@ class Entry extends Component
     {
         $this->subjectId = null;
         $this->scores = [];
+        unset($this->subjects);
     }
 
     public function updatedSubjectId(): void

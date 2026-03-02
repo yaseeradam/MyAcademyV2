@@ -6,7 +6,7 @@ use App\Models\Certificate;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Support\Audit;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\CertificatePdf;
 use Illuminate\Support\Facades\File;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -246,12 +246,12 @@ class Manager extends Component
 
             $filename = "certificate_{$student->admission_number}.pdf";
 
-            $pdf = Pdf::loadView($view, [
+            $pdfContent = CertificatePdf::fromView($view, [
                 'certificate' => $certificate,
                 'student' => $student,
-            ])->setPaper('a4', $orientation);
+            ], $orientation);
 
-            $zip->addFromString($filename, $pdf->output());
+            $zip->addFromString($filename, $pdfContent);
         }
 
         $zip->close();

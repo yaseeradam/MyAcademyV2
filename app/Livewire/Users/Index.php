@@ -26,12 +26,12 @@ class Index extends Component
     public string $name = '';
     public string $email = '';
     public string $role = 'teacher';
-    public bool $isActive = true;
+    public string $isActive = '1';
     public string $password = '';
 
     public ?int $editingUserId = null;
     public string $editRole = 'teacher';
-    public bool $editIsActive = true;
+    public string $editIsActive = '1';
     public string $newPassword = '';
     public array $editPermissions = [];
 
@@ -85,10 +85,10 @@ class Index extends Component
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')],
             'role' => ['required', Rule::in(['admin', 'bursar', 'teacher'])],
-            'isActive' => ['boolean'],
+            'isActive' => ['required', 'in:0,1'],
             'password' => ['nullable', 'string', 'min:8'],
         ], [
-            'isActive.boolean' => 'Invalid active status.',
+            'isActive.in' => 'Invalid active status.',
         ]);
 
         $password = $data['password'] ?: Str::password(12);
@@ -108,7 +108,7 @@ class Index extends Component
 
         $this->reset(['name', 'email', 'role', 'isActive', 'password']);
         $this->role = 'teacher';
-        $this->isActive = true;
+        $this->isActive = '1';
 
         $this->dispatch('alert', message: 'User created.', type: 'success');
     }
@@ -121,20 +121,20 @@ class Index extends Component
         $user = User::query()->findOrFail($userId);
         $this->editingUserId = (int) $user->id;
         $this->editRole = (string) $user->role;
-        $this->editIsActive = (bool) $user->is_active;
+        $this->editIsActive = $user->is_active ? '1' : '0';
         $this->newPassword = '';
 
         $definitions = (array) config('permissions.definitions', []);
         $overrides = $user->permissions;
-        if (! is_array($overrides)) {
+        if (!is_array($overrides)) {
             $overrides = [];
         }
         $grant = $overrides['grant'] ?? [];
-        if (! is_array($grant)) {
+        if (!is_array($grant)) {
             $grant = [];
         }
         $revoke = $overrides['revoke'] ?? [];
-        if (! is_array($revoke)) {
+        if (!is_array($revoke)) {
             $revoke = [];
         }
 
@@ -168,7 +168,7 @@ class Index extends Component
         $authUser = auth()->user();
         abort_unless($authUser && $authUser->hasPermission('users.manage'), 403);
 
-        if (! $this->editingUserId) {
+        if (!$this->editingUserId) {
             return;
         }
 
@@ -176,12 +176,12 @@ class Index extends Component
 
         $data = $this->validate([
             'editRole' => ['required', Rule::in(['admin', 'bursar', 'teacher'])],
-            'editIsActive' => ['boolean'],
+            'editIsActive' => ['required', 'in:0,1'],
             'newPassword' => ['nullable', 'string', 'min:8'],
         ]);
 
         $isSelf = Auth::id() && (int) Auth::id() === (int) $user->id;
-        if ($isSelf && ! $data['editIsActive']) {
+        if ($isSelf && $data['editIsActive'] === '0') {
             $this->addError('editIsActive', 'You cannot deactivate your own account.');
             return;
         }

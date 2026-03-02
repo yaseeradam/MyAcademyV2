@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Certificate;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\CertificatePdf;
 use Illuminate\Http\Response;
 
 class CertificateController extends Controller
@@ -43,14 +43,14 @@ class CertificateController extends Controller
         $orientation = (string) config('myacademy.certificate_orientation', 'landscape');
         $orientation = in_array($orientation, ['landscape', 'portrait'], true) ? $orientation : 'landscape';
 
-        $pdf = Pdf::loadView($view, [
+        $pdfContent = CertificatePdf::fromView($view, [
             'certificate' => $certificate,
             'student' => $student,
-        ])->setPaper('a4', $orientation);
+        ], $orientation);
 
         $filename = 'certificate-' . $certificate->serial_number . '.pdf';
 
-        return response($pdf->output(), 200, [
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);

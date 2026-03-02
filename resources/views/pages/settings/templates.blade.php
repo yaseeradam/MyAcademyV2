@@ -2,6 +2,9 @@
 
 @section('content')
     @php
+        $licenseManager = app(\App\Support\LicenseManager::class);
+        $hasPremium = $licenseManager->can('cbt');
+        
         $certificateTemplate = old('certificate_template', config('myacademy.certificate_template', 'modern'));
         $reportCardTemplate = old('report_card_template', config('myacademy.report_card_template', 'standard'));
     @endphp
@@ -59,58 +62,78 @@
                                 'title' => 'Modern',
                                 'desc' => 'Geometric background with seal and signatures.',
                                 'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'modern']),
+                                'free' => true,
                             ],
                             [
                                 'key' => 'classic',
                                 'title' => 'Classic',
                                 'desc' => 'Simple formal layout with clean border.',
                                 'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'classic']),
+                                'free' => false,
                             ],
                             [
                                 'key' => 'elegant',
                                 'title' => 'Elegant',
                                 'desc' => 'Gold & navy formal with decorative corner flourishes.',
                                 'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'elegant']),
+                                'free' => false,
                             ],
                             [
                                 'key' => 'vibrant',
                                 'title' => 'Vibrant',
                                 'desc' => 'Colorful wave gradients with sparkles and medal badge.',
                                 'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'vibrant']),
+                                'free' => false,
                             ],
                             [
                                 'key' => 'minimal',
                                 'title' => 'Minimal',
                                 'desc' => 'Clean contemporary design with generous whitespace.',
                                 'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'minimal']),
+                                'free' => false,
                             ],
                             [
                                 'key' => 'royal',
                                 'title' => 'Royal',
                                 'desc' => 'Rich purple banner with gold ribbon and ornate borders.',
                                 'preview' => route('settings.templates.preview', ['type' => 'certificate', 'template' => 'royal']),
+                                'free' => false,
                             ],
                         ];
                     @endphp
 
                     @foreach ($certificateTemplates as $t)
+                        @php
+                            $isLocked = !$t['free'] && !$hasPremium;
+                        @endphp
                         <label
-                            class="group cursor-pointer rounded-3xl border bg-white/70 p-5 shadow-sm ring-1 ring-white/50 backdrop-blur transition hover:shadow-md {{ $certificateTemplate === $t['key'] ? 'border-amber-300 ring-2 ring-amber-500' : 'border-gray-100' }}">
+                            class="group cursor-pointer rounded-3xl border bg-white/70 p-5 shadow-sm ring-1 ring-white/50 backdrop-blur transition hover:shadow-md {{ $certificateTemplate === $t['key'] ? 'border-amber-300 ring-2 ring-amber-500' : 'border-gray-100' }} {{ $isLocked ? 'opacity-60' : '' }}">
                             <input type="radio" name="certificate_template" value="{{ $t['key'] }}" class="sr-only"
-                                @checked($certificateTemplate === $t['key']) />
+                                @checked($certificateTemplate === $t['key']) @disabled($isLocked) />
                             <div class="flex items-start justify-between gap-4">
                                 <div class="min-w-0">
-                                    <div class="text-sm font-black text-gray-900">{{ $t['title'] }}</div>
+                                    <div class="text-sm font-black text-gray-900 flex items-center gap-2">
+                                        {{ $t['title'] }}
+                                        @if($isLocked)
+                                            <svg class="h-4 w-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                            </svg>
+                                        @endif
+                                    </div>
                                     <div class="mt-1 text-sm font-semibold text-gray-600">{{ $t['desc'] }}</div>
+                                    @if($isLocked)
+                                        <div class="mt-2 text-xs font-bold text-red-600">🔒 Premium License Required</div>
+                                    @endif
                                 </div>
                                 <span
-                                    class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800 group-hover:bg-amber-200">
-                                    {{ strtoupper($t['key']) }}
+                                    class="inline-flex items-center rounded-full {{ $t['free'] ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }} px-3 py-1 text-xs font-black group-hover:{{ $t['free'] ? 'bg-green-200' : 'bg-amber-200' }}">
+                                    {{ $t['free'] ? 'FREE' : 'PRO' }}
                                 </span>
                             </div>
 
                             <div class="mt-4 flex items-center justify-between">
-                                <div class="text-xs font-semibold text-gray-500">Click card to select</div>
+                                <div class="text-xs font-semibold text-gray-500">{{ $isLocked ? 'Locked' : 'Click card to select' }}</div>
                                 <button type="button" class="btn-outline"
                                     @click.stop="open = true; src = @js($t['preview']); title = @js('Certificate · ' . $t['title'])">
                                     Preview
@@ -146,53 +169,72 @@
                                 'title' => 'Standard',
                                 'desc' => 'Warm amber brand with gradient stats, color-coded grades, and double border frame.',
                                 'preview' => route('settings.templates.preview', ['type' => 'report-card', 'template' => 'standard']),
+                                'free' => true,
                             ],
                             [
                                 'key' => 'compact',
                                 'title' => 'Compact',
                                 'desc' => 'Clean, minimal layout focused on scores and summary.',
                                 'preview' => route('settings.templates.preview', ['type' => 'report-card', 'template' => 'compact']),
+                                'free' => false,
                             ],
                             [
                                 'key' => 'elegant',
                                 'title' => 'Elegant',
                                 'desc' => 'Formal navy and gold theme with ornate borders and refined typography.',
                                 'preview' => route('settings.templates.preview', ['type' => 'report-card', 'template' => 'elegant']),
+                                'free' => false,
                             ],
                             [
                                 'key' => 'modern',
                                 'title' => 'Modern',
                                 'desc' => 'Bold dark mode design with cyan accents and card-based layout.',
                                 'preview' => route('settings.templates.preview', ['type' => 'report-card', 'template' => 'modern']),
+                                'free' => false,
                             ],
                             [
                                 'key' => 'classic',
                                 'title' => 'Classic',
                                 'desc' => 'Traditional black and white formal layout with maximum readability.',
                                 'preview' => route('settings.templates.preview', ['type' => 'report-card', 'template' => 'classic']),
+                                'free' => false,
                             ],
                         ];
                     @endphp
 
 
                     @foreach ($reportTemplates as $t)
+                        @php
+                            $isLocked = !$t['free'] && !$hasPremium;
+                        @endphp
                         <label
-                            class="group cursor-pointer rounded-3xl border bg-white/70 p-5 shadow-sm ring-1 ring-white/50 backdrop-blur transition hover:shadow-md {{ $reportCardTemplate === $t['key'] ? 'border-emerald-300 ring-2 ring-emerald-600' : 'border-gray-100' }}">
+                            class="group cursor-pointer rounded-3xl border bg-white/70 p-5 shadow-sm ring-1 ring-white/50 backdrop-blur transition hover:shadow-md {{ $reportCardTemplate === $t['key'] ? 'border-emerald-300 ring-2 ring-emerald-600' : 'border-gray-100' }} {{ $isLocked ? 'opacity-60' : '' }}">
                             <input type="radio" name="report_card_template" value="{{ $t['key'] }}" class="sr-only"
-                                @checked($reportCardTemplate === $t['key']) />
+                                @checked($reportCardTemplate === $t['key']) @disabled($isLocked) />
                             <div class="flex items-start justify-between gap-4">
                                 <div class="min-w-0">
-                                    <div class="text-sm font-black text-gray-900">{{ $t['title'] }}</div>
+                                    <div class="text-sm font-black text-gray-900 flex items-center gap-2">
+                                        {{ $t['title'] }}
+                                        @if($isLocked)
+                                            <svg class="h-4 w-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                            </svg>
+                                        @endif
+                                    </div>
                                     <div class="mt-1 text-sm font-semibold text-gray-600">{{ $t['desc'] }}</div>
+                                    @if($isLocked)
+                                        <div class="mt-2 text-xs font-bold text-red-600">🔒 Premium License Required</div>
+                                    @endif
                                 </div>
                                 <span
-                                    class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800 group-hover:bg-emerald-200">
-                                    {{ strtoupper($t['key']) }}
+                                    class="inline-flex items-center rounded-full {{ $t['free'] ? 'bg-green-100 text-green-800' : 'bg-emerald-100 text-emerald-800' }} px-3 py-1 text-xs font-black group-hover:{{ $t['free'] ? 'bg-green-200' : 'bg-emerald-200' }}">
+                                    {{ $t['free'] ? 'FREE' : 'PRO' }}
                                 </span>
                             </div>
 
                             <div class="mt-4 flex items-center justify-between">
-                                <div class="text-xs font-semibold text-gray-500">Click card to select</div>
+                                <div class="text-xs font-semibold text-gray-500">{{ $isLocked ? 'Locked' : 'Click card to select' }}</div>
                                 <button type="button" class="btn-outline"
                                     @click.stop="open = true; src = @js($t['preview']); title = @js('Report Card · ' . $t['title'])">
                                     Preview

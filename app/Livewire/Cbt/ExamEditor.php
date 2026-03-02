@@ -218,6 +218,7 @@ class ExamEditor extends Component
         }
 
         $this->subjectId = null;
+        unset($this->subjects);
         $this->resetValidation();
     }
 

@@ -9,7 +9,8 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
             <div class="lg:col-span-3">
                 <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Search</label>
-                <input wire:model.live.debounce.300ms="search" type="text" placeholder="Name or email" class="mt-2 input-compact" />
+                <input wire:model.live.debounce.300ms="search" type="text" placeholder="Name or email"
+                    class="mt-2 input-compact" />
             </div>
 
             <div class="lg:col-span-2">
@@ -55,7 +56,8 @@
 
             <div class="lg:col-span-2">
                 <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Email</label>
-                <input wire:model.live="email" type="email" class="mt-2 input-compact" placeholder="user@school.local" />
+                <input wire:model.live="email" type="email" class="mt-2 input-compact"
+                    placeholder="user@school.local" />
             </div>
 
             <div class="lg:col-span-1">
@@ -77,7 +79,8 @@
 
             <div class="lg:col-span-3">
                 <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Password (optional)</label>
-                <input wire:model.live="password" type="text" class="mt-2 input-compact" placeholder="Leave empty to auto-generate" />
+                <input wire:model.live="password" type="text" class="mt-2 input-compact"
+                    placeholder="Leave empty to auto-generate" />
                 <div class="mt-1 text-xs text-gray-500">If blank, a strong password is generated.</div>
             </div>
 
@@ -106,25 +109,28 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($this->users as $user)
-                        <tr class="bg-white hover:bg-gray-50">
+                        <tr class="bg-white hover:bg-gray-50" wire:key="user-row-{{ $user->id }}">
                             <td class="px-5 py-4">
                                 <div class="text-sm font-semibold text-gray-900">{{ $user->name }}</div>
                             </td>
                             <td class="px-5 py-4 text-sm text-gray-700">{{ $user->email }}</td>
                             <td class="px-5 py-4 text-sm text-gray-700">{{ ucfirst($user->role) }}</td>
                             <td class="px-5 py-4">
-                                <x-status-badge variant="{{ $user->is_active ? 'success' : 'warning' }}">{{ $user->is_active ? 'Active' : 'Inactive' }}</x-status-badge>
+                                <x-status-badge
+                                    variant="{{ $user->is_active ? 'success' : 'warning' }}">{{ $user->is_active ? 'Active' : 'Inactive' }}</x-status-badge>
                             </td>
                             <td class="px-5 py-4 text-right">
-                                <button type="button" wire:click="startEdit({{ $user->id }})" class="btn-ghost">Edit</button>
+                                <button type="button" wire:click="startEdit({{ $user->id }})"
+                                    class="btn-ghost">Edit</button>
                             </td>
                         </tr>
                         @if ($editingUserId === $user->id)
-                            <tr class="bg-slate-50">
+                            <tr class="bg-slate-50" wire:key="user-edit-{{ $user->id }}">
                                 <td colspan="5" class="px-5 py-4">
                                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
                                         <div class="lg:col-span-2">
-                                            <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Role</label>
+                                            <label
+                                                class="text-xs font-semibold uppercase tracking-wider text-gray-500">Role</label>
                                             <select wire:model.live="editRole" class="mt-2 select">
                                                 <option value="teacher">Teacher</option>
                                                 <option value="bursar">Bursar</option>
@@ -132,7 +138,8 @@
                                             </select>
                                         </div>
                                         <div class="lg:col-span-2">
-                                            <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Active</label>
+                                            <label
+                                                class="text-xs font-semibold uppercase tracking-wider text-gray-500">Active</label>
                                             <select wire:model.live="editIsActive" class="mt-2 select">
                                                 <option value="1">Yes</option>
                                                 <option value="0">No</option>
@@ -142,45 +149,50 @@
                                             @enderror
                                         </div>
                                         <div class="lg:col-span-2">
-                                            <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">New Password (optional)</label>
-                                            <input wire:model.live="newPassword" type="text" class="mt-2 input-compact" placeholder="Min 8 characters" />
+                                            <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">New
+                                                Password (optional)</label>
+                                            <input wire:model.live="newPassword" type="text" class="mt-2 input-compact"
+                                                placeholder="Min 8 characters" />
                                         </div>
 
                                         <div class="lg:col-span-6">
                                             <div class="mt-2 flex items-center justify-between gap-3">
                                                 <div>
                                                     <div class="text-sm font-semibold text-gray-900">Permissions</div>
-                                                    <div class="mt-1 text-xs text-gray-600">Default permissions come from the selected role. You can override per user.</div>
+                                                    <div class="mt-1 text-xs text-gray-600">Default permissions come from the
+                                                        selected role. You can override per user.</div>
                                                 </div>
                                             </div>
 
                                             <div class="mt-3 overflow-hidden rounded-2xl border border-gray-200 bg-white">
                                                 <div class="grid grid-cols-1 divide-y divide-gray-100">
                                                     @forelse ($permissionDefinitions as $key => $def)
-                                                        @php
-                                                            $label = (string) ($def['label'] ?? $key);
-                                                            $roles = (array) ($def['roles'] ?? []);
-                                                            $state = (string) ($editPermissions[$key] ?? 'default');
-                                                            $defaultAllowed = in_array($editRole, $roles, true);
-                                                            $effectiveAllowed = $state === 'revoke' ? false : ($state === 'grant' ? true : $defaultAllowed);
-                                                        @endphp
-                                                        <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                                                            <div class="min-w-0">
-                                                                <div class="text-sm font-semibold text-gray-900">{{ $label }}</div>
-                                                                <div class="mt-1 text-xs text-gray-500 font-mono">{{ $key }}</div>
-                                                            </div>
+                                                                                        @php
+                                                                                            $label = (string) ($def['label'] ?? $key);
+                                                                                            $roles = (array) ($def['roles'] ?? []);
+                                                                                            $state = (string) ($editPermissions[$key] ?? 'default');
+                                                                                            $defaultAllowed = in_array($editRole, $roles, true);
+                                                                                            $effectiveAllowed = $state === 'revoke' ? false : ($state === 'grant' ? true : $defaultAllowed);
+                                                                                        @endphp
+                                                         <div
+                                                                                            class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between" wire:key="perm-{{ $key }}-{{ $user->id }}">
+                                                                                            <div class="min-w-0">
+                                                                                                <div class="text-sm font-semibold text-gray-900">{{ $label }}</div>
+                                                                                                <div class="mt-1 text-xs text-gray-500 font-mono">{{ $key }}</div>
+                                                                                            </div>
 
-                                                            <div class="flex flex-wrap items-center gap-2">
-                                                                <x-status-badge variant="{{ $effectiveAllowed ? 'success' : 'warning' }}">
-                                                                    {{ $effectiveAllowed ? 'Allowed' : 'Denied' }}
-                                                                </x-status-badge>
-                                                                <select wire:model.live="editPermissions.{{ $key }}" class="select">
-                                                                    <option value="default">Default</option>
-                                                                    <option value="grant">Grant</option>
-                                                                    <option value="revoke">Revoke</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
+                                                                                            <div class="flex flex-wrap items-center gap-2">
+                                                                                                <x-status-badge
+                                                                                                    variant="{{ $effectiveAllowed ? 'success' : 'warning' }}">
+                                                                                                    {{ $effectiveAllowed ? 'Allowed' : 'Denied' }}
+                                                                                                </x-status-badge>
+                                                                                                <select wire:model.live="editPermissions.{{ $key }}" class="select">
+                                                                                                    <option value="default">Default</option>
+                                                                                                    <option value="grant">Grant</option>
+                                                                                                    <option value="revoke">Revoke</option>
+                                                                                                </select>
+                                                                                            </div>
+                                                                                        </div>
                                                     @empty
                                                         <div class="p-4 text-sm text-gray-600">No permissions configured.</div>
                                                     @endforelse

@@ -34,6 +34,36 @@ class Broadsheet extends Component
         $this->session = $this->session ?: $this->defaultSession();
     }
 
+    public function updatedClassId(): void
+    {
+        unset($this->subjects, $this->rows, $this->isPublished);
+    }
+
+    public function updatedTerm(): void
+    {
+        unset($this->rows, $this->isPublished);
+    }
+
+    public function updatedSession(): void
+    {
+        unset($this->rows, $this->isPublished);
+    }
+
+    #[Computed]
+    public function isPublished(): bool
+    {
+        if (!$this->classId || !$this->session) {
+            return false;
+        }
+
+        return \App\Models\ResultPublication::query()
+            ->where('class_id', $this->classId)
+            ->where('term', $this->term)
+            ->where('session', $this->session)
+            ->whereNotNull('published_at')
+            ->exists();
+    }
+
     #[Computed]
     public function classes()
     {
@@ -159,6 +189,11 @@ class Broadsheet extends Component
             abort(400, 'Please select a class.');
         }
 
+        if (!$this->isPublished) {
+            session()->flash('error', 'Results must be published first.');
+            abort(400, 'Results must be published first.');
+        }
+
         set_time_limit(0);
 
         $students = Student::query()
@@ -220,6 +255,62 @@ class Broadsheet extends Component
         ]);
 
         return response()->download($zipPath)->deleteFileAfterSend(true);
+    }
+
+    public function publish(): void
+    {
+        $user = auth()->user();
+        abort_unless($user?->role === 'admin', 403);
+
+        if (!$this->classId || !$this->session) {
+            $this->dispatch('alert', message: 'Select class and session first.', type: 'error');
+            return;
+        }
+
+        \App\Models\ResultPublication::query()->updateOrCreate(
+            [
+                'class_id' => $this->classId,
+                'term' => $this->term,
+                'session' => $this->session,
+            ],
+            [
+                'published_at' => now(),
+                'published_by' => $user->id,
+            ]
+        );
+
+        Audit::log('results.published', null, [
+            'class_id' => $this->classId,
+            'term' => $this->term,
+            'session' => $this->session,
+        ]);
+
+        $this->dispatch('alert', message: 'Results published successfully.', type: 'success');
+    }
+
+    public function unpublish(): void
+    {
+        $user = auth()->user();
+        abort_unless($user?->role === 'admin', 403);
+
+        if (!$this->classId || !$this->session) {
+            $this->dispatch('alert', message: 'Select class and session first.', type: 'error');
+            return;
+        }
+
+        \App\Models\ResultPublication::query()
+            ->where('class_id', $this->classId)
+            ->where('term', $this->term)
+            ->where('session', $this->session)
+            ->delete();
+
+        Audit::log('results.unpublished', null, [
+            'class_id' => $this->classId,
+            'term' => $this->term,
+            'session' => $this->session,
+        ]);
+
+        $this->dispatch('alert', message: 'Results unpublished successfully.', type: 'success');
     }
 
     public function render()

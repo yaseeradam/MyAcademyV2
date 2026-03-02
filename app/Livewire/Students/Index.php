@@ -124,6 +124,7 @@ class Index extends Component
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere(\Illuminate\Support\Facades\DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%")
                     ->orWhere('admission_number', 'like', "%{$search}%")
                     ->orWhere('guardian_name', 'like', "%{$search}%");
             });
@@ -160,10 +161,14 @@ class Index extends Component
         ];
     }
 
-    public function updating($name): void
+    public function updated($property): void
     {
-        if (in_array($name, ['classFilter', 'sectionFilter', 'statusFilter', 'search'], true)) {
+        if (in_array($property, ['classFilter', 'sectionFilter', 'statusFilter', 'search'], true)) {
             $this->resetPage();
+        }
+
+        if ($property === 'classFilter') {
+            $this->sectionFilter = 'all';
         }
     }
 

@@ -9,11 +9,24 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <a href="{{ route('results.entry') }}" class="rounded-xl bg-white/20 px-5 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-white/30 hover:shadow-xl">Score Entry</a>
-                    @if ($classId)
+                    @if ($classId && $this->isPublished)
                         <button wire:click="generateBulk" wire:loading.attr="disabled" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-600 shadow-lg transition-all hover:bg-emerald-50 hover:shadow-xl disabled:opacity-50">
                             <span wire:loading.remove wire:target="generateBulk">Bulk Report Cards</span>
                             <span wire:loading wire:target="generateBulk">Generating...</span>
                         </button>
+                    @endif
+                    @if ($classId && auth()->user()?->role === 'admin')
+                        @if ($this->isPublished)
+                            <button wire:click="unpublish" wire:loading.attr="disabled" class="rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-red-600 hover:shadow-xl disabled:opacity-50">
+                                <span wire:loading.remove wire:target="unpublish">Unpublish</span>
+                                <span wire:loading wire:target="unpublish">Unpublishing...</span>
+                            </button>
+                        @else
+                            <button wire:click="publish" wire:loading.attr="disabled" class="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-600 shadow-lg transition-all hover:bg-emerald-50 hover:shadow-xl disabled:opacity-50">
+                                <span wire:loading.remove wire:target="publish">Publish Results</span>
+                                <span wire:loading wire:target="publish">Publishing...</span>
+                            </button>
+                        @endif
                     @endif
                 </div>
             </div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\LicenseManager;
+use App\Support\CertificatePdf;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
@@ -227,12 +228,29 @@ class SettingsController extends Controller
         return back()->with('status', 'Certificate settings saved.');
     }
 
-    public function updateTemplates(Request $request)
+    public function updateTemplates(Request $request, LicenseManager $license)
     {
         $data = $request->validate([
             'certificate_template' => ['required', 'string', 'in:' . implode(',', self::CERTIFICATE_TEMPLATES)],
             'report_card_template' => ['required', 'string', 'in:' . implode(',', self::REPORT_CARD_TEMPLATES)],
         ]);
+
+        $hasPremium = $license->can('cbt');
+        $freeCert = ['modern'];
+        $freeReport = ['standard'];
+
+        if (!$hasPremium) {
+            if (!in_array($data['certificate_template'], $freeCert)) {
+                throw ValidationException::withMessages([
+                    'certificate_template' => 'This template requires a premium license. Upload a license key to unlock.',
+                ]);
+            }
+            if (!in_array($data['report_card_template'], $freeReport)) {
+                throw ValidationException::withMessages([
+                    'report_card_template' => 'This template requires a premium license. Upload a license key to unlock.',
+                ]);
+            }
+        }
 
         $settingsPath = storage_path('app/myacademy/settings.json');
         File::ensureDirectoryExists(dirname($settingsPath));
@@ -289,12 +307,12 @@ class SettingsController extends Controller
             $orientation = (string) config('myacademy.certificate_orientation', 'landscape');
             $orientation = in_array($orientation, ['landscape', 'portrait'], true) ? $orientation : 'landscape';
 
-            $pdf = Pdf::loadView($view, [
+            $pdfContent = CertificatePdf::fromView($view, [
                 'certificate' => $certificate,
                 'student' => $student,
-            ])->setPaper('a4', $orientation);
+            ], $orientation);
 
-            return response($pdf->output(), 200, [
+            return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="certificate-template-preview.pdf"',
             ]);

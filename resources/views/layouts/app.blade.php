@@ -99,6 +99,18 @@
                             <div class="text-xs font-semibold text-gray-700">Dashboard</div>
                         </a>
 
+                        <a href="{{ route('profile') }}" class="card-interactive p-4 text-center">
+                            <div
+                                class="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-lg bg-pink-50 text-pink-600">
+                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+                            </div>
+                            <div class="text-xs font-semibold text-gray-700">Profile</div>
+                        </a>
+
                         <a href="{{ route('students.index') }}" class="card-interactive p-4 text-center">
                             <div
                                 class="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-lg bg-blue-50 text-blue-600">
@@ -549,7 +561,7 @@
                     <div class="flex items-center gap-3">
                         <livewire:notifications.bell />
                         <a href="{{ route('profile') }}"
-                            class="flex items-center gap-2.5 rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all">
+                            class="hidden md:flex items-center gap-2.5 rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all">
                             @if ($user?->profile_photo_url)
                                 <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}"
                                     class="h-9 w-9 rounded-lg object-cover ring-2 ring-slate-200" />
@@ -568,7 +580,7 @@
                             </div>
                         </a>
 
-                        <form method="POST" action="{{ route('logout') }}" id="logoutForm">
+                        <form method="POST" action="{{ route('logout') }}" id="logoutForm" class="hidden md:block">
                             @csrf
                             <button type="button" onclick="confirmLogout()"
                                 class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all">

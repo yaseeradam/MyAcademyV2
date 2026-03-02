@@ -132,6 +132,7 @@ class Index extends Component
     public function updatedClassId(): void
     {
         $this->sectionId = null;
+        unset($this->sections, $this->students);
 
         if ($this->classId) {
             $this->sectionId = Section::query()
