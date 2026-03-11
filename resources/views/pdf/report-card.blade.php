@@ -667,14 +667,13 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 30%; text-align: left; padding-left: 8px;">Subject</th>
-                    <th style="width: 10%;">CA1<br />({{ config('myacademy.results_ca1_max', 20) }})</th>
-                    <th style="width: 10%;">CA2<br />({{ config('myacademy.results_ca2_max', 20) }})</th>
-                    <th style="width: 10%;">Exam<br />({{ config('myacademy.results_exam_max', 60) }})</th>
-                    <th style="width: 10%;">Total<br />(100)</th>
+                    <th style="width: 35%; text-align: left; padding-left: 8px;">Subject</th>
+                    <th style="width: 11%;">CA1<br />({{ config('myacademy.results_ca1_max', 20) }})</th>
+                    <th style="width: 11%;">CA2<br />({{ config('myacademy.results_ca2_max', 20) }})</th>
+                    <th style="width: 11%;">Exam<br />({{ config('myacademy.results_exam_max', 60) }})</th>
+                    <th style="width: 11%;">Total<br />(100)</th>
                     <th style="width: 10%;">Grade</th>
-                    <th style="width: 10%;">Class<br />Avg</th>
-                    <th style="width: 10%;">Pos.</th>
+                    <th style="width: 11%;">Class<br />Avg</th>
                 </tr>
             </thead>
             <tbody>
@@ -698,7 +697,6 @@
                         <td><strong>{{ $row['total'] ?? '—' }}</strong></td>
                         <td class="{{ $gradeClass }}">{{ $grade ?: '—' }}</td>
                         <td>{{ $row['class_avg'] ?? '—' }}</td>
-                        <td>{{ $row['position'] ?? '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -737,11 +735,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="remarks-section">
-            <div class="remarks-title">Class Teacher's Remarks</div>
-            <div class="remarks-content">{{ $teacherRemarks ?? 'No remarks provided.' }}</div>
         </div>
 
         <div class="remarks-section">

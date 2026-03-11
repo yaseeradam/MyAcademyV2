@@ -76,6 +76,10 @@ class ReportCardService
             ->where('status', 'Active')
             ->count();
 
+        [$highestAverage, $lowestAverage] = $this->highestLowestAverage($student->class_id, $subjectIds, $term, $session);
+
+        $principalRemarks = $this->generatePrincipalRemarks($average, $position, $totalStudents);
+
         return [
             'student' => $student,
             'term' => $term,
@@ -89,6 +93,11 @@ class ReportCardService
             'timesPresent' => $timesPresent,
             'timesAbsent' => $timesAbsent,
             'totalStudents' => $totalStudents,
+            'highestAverage' => $highestAverage,
+            'lowestAverage' => $lowestAverage,
+            'principalRemarks' => $principalRemarks,
+            'teacherRemarks' => null,
+            'nextTermDate' => null,
         ];
     }
 
@@ -195,5 +204,65 @@ class ReportCardService
         }
 
         return [$position, $classAverage];
+    }
+
+    /**
+     * @return array{0:float,1:float} highest and lowest average.
+     */
+    private function highestLowestAverage(
+        int $classId,
+        Collection $subjectIds,
+        int $term,
+        string $session
+    ): array {
+        $scores = Score::query()
+            ->where('class_id', $classId)
+            ->where('term', $term)
+            ->where('session', $session)
+            ->whereIn('subject_id', $subjectIds)
+            ->get(['student_id', 'total']);
+
+        if ($scores->isEmpty()) {
+            return [0.0, 0.0];
+        }
+
+        $totalsByStudent = $scores
+            ->groupBy('student_id')
+            ->map(fn ($rows) => (int) $rows->sum('total'));
+
+        $subjectCount = max(1, (int) $subjectIds->count());
+        $averages = $totalsByStudent->map(fn ($total) => round($total / $subjectCount, 2));
+
+        return [
+            round($averages->max(), 2),
+            round($averages->min(), 2),
+        ];
+    }
+
+    private function generatePrincipalRemarks(float $average, int $position, int $totalStudents): string
+    {
+        if ($average >= 70) {
+            if ($position === 1) {
+                return 'Outstanding performance! Keep up the excellent work and continue to be a role model for others.';
+            }
+            return 'Excellent performance! Your hard work and dedication are commendable. Keep it up!';
+        }
+
+        if ($average >= 60) {
+            if ($position <= 3) {
+                return 'Very good performance! You are doing well. With more effort, you can achieve even greater heights.';
+            }
+            return 'Good work! You have shown great potential. Keep pushing yourself to reach excellence.';
+        }
+
+        if ($average >= 50) {
+            return 'Satisfactory performance. You can do better with more focus and consistent effort. Keep working hard.';
+        }
+
+        if ($average >= 40) {
+            return 'Fair performance. You need to put in more effort and seek help where necessary. Improvement is expected.';
+        }
+
+        return 'Poor performance. Serious attention is required. Please work closely with your teachers and parents to improve.';
     }
 }

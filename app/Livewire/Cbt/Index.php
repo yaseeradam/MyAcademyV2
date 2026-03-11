@@ -100,12 +100,14 @@ class Index extends Component
         $this->subjectId = null;
         $this->teacherId = null;
         $this->resetValidation();
+        unset($this->subjects, $this->teachers);
     }
 
     public function updatedSubjectId(): void
     {
         $this->teacherId = null;
         $this->resetValidation();
+        unset($this->teachers);
     }
 
     #[Computed]

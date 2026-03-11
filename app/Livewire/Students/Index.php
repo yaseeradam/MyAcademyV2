@@ -165,23 +165,12 @@ class Index extends Component
     {
         if (in_array($property, ['classFilter', 'sectionFilter', 'statusFilter', 'search'], true)) {
             $this->resetPage();
+            unset($this->students, $this->stats);
         }
 
         if ($property === 'classFilter') {
             $this->sectionFilter = 'all';
-            unset($this->sections, $this->students, $this->stats);
-        }
-
-        if ($property === 'sectionFilter') {
-            unset($this->students, $this->stats);
-        }
-
-        if ($property === 'statusFilter') {
-            unset($this->students, $this->stats);
-        }
-
-        if ($property === 'search') {
-            unset($this->students, $this->stats);
+            unset($this->sections);
         }
     }
 

@@ -9,8 +9,9 @@
         $reportCardTemplate = old('report_card_template', config('myacademy.report_card_template', 'standard'));
     @endphp
 
-    <div class="space-y-6" x-data="{ open: false, src: null, title: '' }">
-        <x-page-header title="Templates" subtitle="Choose which Certificate and Report Card template to use."
+    <div class="space-y-6"
+        x-data="{ open: false, src: null, title: '', selectedReportTemplate: '{{ $reportCardTemplate }}' }">
+        <x-page-header title="Templates" subtitle="Choose which Report Card template to use."
             accent="settings" />
 
         <div class="flex gap-2">
@@ -52,11 +53,12 @@
                     </div>
                     <div>
                         <div class="text-lg font-black text-gray-900">Report Card Templates</div>
-                        <div class="text-sm font-semibold text-gray-600">Choose your preferred report card design - all templates are free!</div>
+                        <div class="text-sm font-semibold text-gray-600">Choose your preferred report card design - all
+                            templates are free!</div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     @php
                         $reportTemplates = [
                             [
@@ -138,9 +140,18 @@
                             $isLocked = !$t['free'] && !$hasPremium;
                         @endphp
                         <label
-                            class="group cursor-pointer rounded-3xl border bg-white/70 p-5 shadow-sm ring-1 ring-white/50 backdrop-blur transition hover:shadow-md {{ $reportCardTemplate === $t['key'] ? 'border-emerald-300 ring-2 ring-emerald-600' : 'border-gray-100' }} {{ $isLocked ? 'opacity-60' : '' }}">
-                            <input type="radio" name="report_card_template" value="{{ $t['key'] }}" class="sr-only"
+                            :class="selectedReportTemplate === '{{ $t['key'] }}' ? 'border-emerald-300 ring-2 ring-emerald-600 bg-emerald-50/10' : 'border-gray-100'"
+                            class="group cursor-pointer rounded-3xl border bg-white/70 p-5 shadow-sm ring-1 ring-white/50 backdrop-blur transition hover:shadow-md hover:border-emerald-200 {{ $isLocked ? 'opacity-60' : '' }} flex flex-col h-full">
+                            <input type="radio" name="report_card_template" value="{{ $t['key'] }}" class="sr-only" x-model="selectedReportTemplate"
                                 @checked($reportCardTemplate === $t['key']) @disabled($isLocked) />
+
+                            <!-- Thumbnail Preview -->
+                            <div class="relative w-full overflow-hidden rounded-xl border border-gray-200 bg-white pointer-events-none select-none mb-4" style="aspect-ratio: 1 / 1.414;">
+                                <div class="absolute inset-0" style="width: 200%; height: 200%; transform: scale(0.5); transform-origin: top left;">
+                                    <iframe src="{{ $t['preview'] }}?html=1" class="w-full h-full border-0 bg-transparent" scrolling="no" tabindex="-1"></iframe>
+                                </div>
+                            </div>
+
                             <div class="flex items-start justify-between gap-4">
                                 <div class="min-w-0">
                                     <div class="text-sm font-black text-gray-900 flex items-center gap-2">
@@ -153,23 +164,23 @@
                                             </svg>
                                         @endif
                                     </div>
-                                    <div class="mt-1 text-sm font-semibold text-gray-600">{{ $t['desc'] }}</div>
+                                    <div class="mt-1 text-xs font-semibold text-gray-600 line-clamp-2" title="{{ $t['desc'] }}">{{ $t['desc'] }}</div>
                                     @if($isLocked)
-                                        <div class="mt-2 text-xs font-bold text-red-600">🔒 Premium License Required</div>
+                                        <div class="mt-2 text-[10px] font-bold text-red-600 uppercase tracking-wider">🔒 Premium License Required</div>
                                     @endif
                                 </div>
                                 <span
-                                    class="inline-flex items-center rounded-full {{ $t['free'] ? 'bg-green-100 text-green-800' : 'bg-emerald-100 text-emerald-800' }} px-3 py-1 text-xs font-black group-hover:{{ $t['free'] ? 'bg-green-200' : 'bg-emerald-200' }}">
+                                    class="inline-flex items-center rounded-full {{ $t['free'] ? 'bg-green-100 text-green-800' : 'bg-emerald-100 text-emerald-800' }} px-3 py-1 text-[10px] font-black group-hover:{{ $t['free'] ? 'bg-green-200' : 'bg-emerald-200' }}">
                                     {{ $t['free'] ? 'FREE' : 'PRO' }}
                                 </span>
                             </div>
 
-                            <div class="mt-4 flex items-center justify-between">
-                                <div class="text-xs font-semibold text-gray-500">
-                                    {{ $isLocked ? 'Locked' : 'Click card to select' }}</div>
-                                <button type="button" class="btn-outline"
+                            <div class="mt-auto pt-4 flex items-center justify-between">
+                                <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                                    {{ $isLocked ? 'Locked' : 'Click to select' }}</div>
+                                <button type="button" class="rounded-lg bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors"
                                     @click.stop="open = true; src = @js($t['preview']); title = @js('Report Card · ' . $t['title'])">
-                                    Preview
+                                    Full Preview
                                 </button>
                             </div>
                         </label>

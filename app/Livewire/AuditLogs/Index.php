@@ -24,21 +24,25 @@ class Index extends Component
     public function updatedAction(): void
     {
         $this->resetPage();
+        unset($this->logs);
     }
 
     public function updatedUserId(): void
     {
         $this->resetPage();
+        unset($this->logs);
     }
 
     public function updatedFrom(): void
     {
         $this->resetPage();
+        unset($this->logs);
     }
 
     public function updatedTo(): void
     {
         $this->resetPage();
+        unset($this->logs);
     }
 
     #[Computed]

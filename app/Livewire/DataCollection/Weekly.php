@@ -122,6 +122,7 @@ class Weekly extends Component
     public function updatedClassId(): void
     {
         $this->sectionId = null;
+        unset($this->sections);
     }
 
     public function loadFromExisting(): void

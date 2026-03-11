@@ -103,17 +103,30 @@ class Teachers extends Component
 
     public function updatedDate(): void
     {
+        unset($this->teachers);
         $this->syncSheetFromSelection();
     }
 
     public function updatedTerm(): void
     {
+        unset($this->teachers);
         $this->syncSheetFromSelection();
     }
 
     public function updatedSession(): void
     {
+        unset($this->teachers);
         $this->syncSheetFromSelection();
+    }
+
+    public function updatedSearch(): void
+    {
+        unset($this->visibleTeachers);
+    }
+
+    public function updatedOnlyExceptions(): void
+    {
+        unset($this->visibleTeachers);
     }
 
     public function setTool(string $tool): void

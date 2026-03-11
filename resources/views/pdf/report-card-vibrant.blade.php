@@ -149,14 +149,13 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 30%; text-align: left; padding-left: 6px;">Subject</th>
-                    <th style="width: 10%;">CA1</th>
-                    <th style="width: 10%;">CA2</th>
-                    <th style="width: 10%;">Exam</th>
-                    <th style="width: 10%;">Total</th>
+                    <th style="width: 35%; text-align: left; padding-left: 6px;">Subject</th>
+                    <th style="width: 11%;">CA1</th>
+                    <th style="width: 11%;">CA2</th>
+                    <th style="width: 11%;">Exam</th>
+                    <th style="width: 11%;">Total</th>
                     <th style="width: 10%;">Grade</th>
-                    <th style="width: 10%;">Avg</th>
-                    <th style="width: 10%;">Pos</th>
+                    <th style="width: 11%;">Avg</th>
                 </tr>
             </thead>
             <tbody>
@@ -169,7 +168,6 @@
                         <td><strong>{{ $row['total'] ?? '—' }}</strong></td>
                         <td><strong>{{ $row['grade'] ?? '—' }}</strong></td>
                         <td>{{ $row['class_avg'] ?? '—' }}</td>
-                        <td>{{ $row['position'] ?? '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>

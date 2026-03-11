@@ -151,14 +151,13 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 30%; text-align: left; padding-left: 6px;">Subject</th>
-                    <th style="width: 10%;">CA1</th>
-                    <th style="width: 10%;">CA2</th>
-                    <th style="width: 10%;">Exam</th>
-                    <th style="width: 10%;">Total</th>
+                    <th style="width: 35%; text-align: left; padding-left: 6px;">Subject</th>
+                    <th style="width: 11%;">CA1</th>
+                    <th style="width: 11%;">CA2</th>
+                    <th style="width: 11%;">Exam</th>
+                    <th style="width: 11%;">Total</th>
                     <th style="width: 10%;">Grade</th>
-                    <th style="width: 10%;">Avg</th>
-                    <th style="width: 10%;">Pos</th>
+                    <th style="width: 11%;">Avg</th>
                 </tr>
             </thead>
             <tbody>
@@ -171,7 +170,6 @@
                         <td><strong>{{ $row['total'] ?? '—' }}</strong></td>
                         <td><strong>{{ $row['grade'] ?? '—' }}</strong></td>
                         <td>{{ $row['class_avg'] ?? '—' }}</td>
-                        <td>{{ $row['position'] ?? '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -179,11 +177,6 @@
         
         <div class="grade-royal">
             <strong>A:</strong> 70-100 | <strong>B:</strong> 60-69 | <strong>C:</strong> 50-59 | <strong>D:</strong> 40-49 | <strong>F:</strong> 0-39
-        </div>
-        
-        <div class="remarks-royal">
-            <div class="remarks-title">Class Teacher's Remarks</div>
-            <div class="remarks-text">{{ $teacherRemarks ?? 'No remarks provided.' }}</div>
         </div>
         
         <div class="remarks-royal">

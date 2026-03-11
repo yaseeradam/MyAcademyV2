@@ -124,6 +124,7 @@ class SettingsController extends Controller
             'certificate_default_type' => ['nullable', 'string', 'max:50'],
             'certificate_default_title' => ['nullable', 'string', 'max:255'],
             'certificate_default_body' => ['nullable', 'string', 'max:8000'],
+            'certificate_template' => ['required', 'string', 'in:' . implode(',', self::CERTIFICATE_TEMPLATES)],
         ]);
 
         $settingsPath = storage_path('app/myacademy/settings.json');
@@ -142,6 +143,19 @@ class SettingsController extends Controller
         $settings['certificate_accent_color'] = $data['certificate_accent_color'];
         $settings['certificate_show_logo'] = (bool) $data['certificate_show_logo'];
         $settings['certificate_show_watermark'] = (bool) $data['certificate_show_watermark'];
+
+        $hasPremium = $request->user()?->licenseManager()?->can('cbt') ?? app(LicenseManager::class)->can('cbt');
+        $freeCert = ['modern', 'classic', 'elegant'];
+
+        if (!$hasPremium) {
+            if (!in_array($data['certificate_template'], $freeCert)) {
+                throw ValidationException::withMessages([
+                    'certificate_template' => 'This template requires a premium license. Upload a license key to unlock.',
+                ]);
+            }
+        }
+
+        $settings['certificate_template'] = (string) $data['certificate_template'];
 
         if ($request->boolean('certificate_watermark_remove')) {
             $old = $settings['certificate_watermark_image'] ?? null;
@@ -304,10 +318,16 @@ class SettingsController extends Controller
             $orientation = (string) config('myacademy.certificate_orientation', 'landscape');
             $orientation = in_array($orientation, ['landscape', 'portrait'], true) ? $orientation : 'landscape';
 
-            $pdfContent = CertificatePdf::fromView($view, [
+            $data = [
                 'certificate' => $certificate,
                 'student' => $student,
-            ], $orientation);
+            ];
+
+            if (request()->boolean('html')) {
+                return response(view($view, $data));
+            }
+
+            $pdfContent = CertificatePdf::fromView($view, $data, $orientation);
 
             return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
@@ -352,7 +372,7 @@ class SettingsController extends Controller
             $subjectCount = max(1, (int) $rows->count());
             $average = round($grandTotal / $subjectCount, 2);
 
-            $pdf = Pdf::loadView($view, [
+            $data = [
                 'student' => $student,
                 'term' => 1,
                 'session' => '2025/2026',
@@ -370,7 +390,13 @@ class SettingsController extends Controller
                 'teacherRemarks' => 'An excellent student with outstanding academic performance. Keep it up!',
                 'principalRemarks' => 'A commendable result. Continue to strive for excellence.',
                 'nextTermDate' => 'September 8, 2025',
-            ])->setPaper('a4');
+            ];
+
+            if (request()->boolean('html')) {
+                return response(view($view, $data));
+            }
+
+            $pdf = Pdf::loadView($view, $data)->setPaper('a4');
 
             return response($pdf->output(), 200, [
                 'Content-Type' => 'application/pdf',

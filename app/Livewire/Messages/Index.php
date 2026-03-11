@@ -30,6 +30,11 @@ class Index extends Component
     public string $body = '';
     public $attachment = null;
 
+    public function updatedUserSearch(): void
+    {
+        unset($this->recipientOptions);
+    }
+
     public function mount(): void
     {
         $user = auth()->user();
