@@ -38,16 +38,19 @@ class Index extends Component
     public function updatedSearch(): void
     {
         $this->resetPage();
+        unset($this->users);
     }
 
     public function updatedRoleFilter(): void
     {
         $this->resetPage();
+        unset($this->users);
     }
 
     public function updatedStatusFilter(): void
     {
         $this->resetPage();
+        unset($this->users);
     }
 
     #[Computed]
@@ -109,6 +112,8 @@ class Index extends Component
         $this->reset(['name', 'email', 'role', 'isActive', 'password']);
         $this->role = 'teacher';
         $this->isActive = '1';
+
+        unset($this->users);
 
         $this->dispatch('alert', message: 'User created.', type: 'success');
     }
@@ -222,6 +227,8 @@ class Index extends Component
         $this->editingUserId = null;
         $this->newPassword = '';
         $this->editPermissions = [];
+
+        unset($this->users);
 
         $this->dispatch('alert', message: 'User updated.', type: 'success');
     }

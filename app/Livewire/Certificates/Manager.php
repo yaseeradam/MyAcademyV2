@@ -160,6 +160,16 @@ class Manager extends Component
             ->paginate(20);
     }
 
+    public function updatedClassId(): void
+    {
+        unset($this->students, $this->filteredStudents);
+    }
+
+    public function updatedSearch(): void
+    {
+        unset($this->filteredStudents);
+    }
+
     public function create(): void
     {
         $this->validateCreateFields();

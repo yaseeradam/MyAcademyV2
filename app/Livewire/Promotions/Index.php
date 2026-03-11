@@ -82,17 +82,20 @@ class Index extends Component
         $this->fromSectionId = null;
         $this->selected = [];
         $this->selectAll = false;
+        unset($this->fromSections, $this->students);
     }
 
     public function updatedFromSectionId(): void
     {
         $this->selected = [];
         $this->selectAll = false;
+        unset($this->students);
     }
 
     public function updatedToClassId(): void
     {
         $this->toSectionId = null;
+        unset($this->toSections);
     }
 
     public function toggleSelectAll(): void

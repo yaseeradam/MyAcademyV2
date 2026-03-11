@@ -226,9 +226,13 @@
                                 @endphp
                                 <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                                     <div class="flex items-center gap-3 mb-3">
-                                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                                            {{ substr($student->first_name, 0, 1) }}{{ substr($student->last_name, 0, 1) }}
-                                        </div>
+                                        @if($student->passport_photo_url)
+                                            <img src="{{ $student->passport_photo_url }}" alt="{{ $student->full_name }}" class="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                        @else
+                                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                                {{ substr($student->first_name, 0, 1) }}{{ substr($student->last_name, 0, 1) }}
+                                            </div>
+                                        @endif
                                         <div class="flex-1 min-w-0">
                                             <p class="font-bold text-slate-900 text-sm truncate">{{ $student->full_name }}</p>
                                             <p class="text-[11px] text-slate-500">{{ $student->admission_number }}</p>

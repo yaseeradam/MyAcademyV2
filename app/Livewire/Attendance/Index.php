@@ -146,6 +146,7 @@ class Index extends Component
 
     public function updatedSectionId(): void
     {
+        unset($this->students);
         $this->syncSheetFromSelection();
     }
 

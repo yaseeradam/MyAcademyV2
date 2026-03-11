@@ -91,6 +91,81 @@ class Index extends Component
         $this->filterTo = now()->toDateString();
     }
 
+    public function updatedFilterType(): void
+    {
+        unset($this->transactions);
+    }
+
+    public function updatedFilterCategory(): void
+    {
+        unset($this->transactions);
+    }
+
+    public function updatedFilterStudentId(): void
+    {
+        unset($this->transactions);
+    }
+
+    public function updatedFilterSession(): void
+    {
+        unset($this->transactions);
+    }
+
+    public function updatedFilterTerm(): void
+    {
+        unset($this->transactions);
+    }
+
+    public function updatedFilterFrom(): void
+    {
+        unset($this->transactions);
+    }
+
+    public function updatedFilterTo(): void
+    {
+        unset($this->transactions);
+    }
+
+    public function updatedIncludeVoided(): void
+    {
+        unset($this->transactions);
+    }
+
+    public function updatedDebtorsCategory(): void
+    {
+        unset($this->debtors);
+    }
+
+    public function updatedDebtorsSession(): void
+    {
+        unset($this->debtors);
+    }
+
+    public function updatedDebtorsTerm(): void
+    {
+        unset($this->debtors);
+    }
+
+    public function updatedFeeFilterClassId(): void
+    {
+        unset($this->feeStructures);
+    }
+
+    public function updatedFeeFilterCategory(): void
+    {
+        unset($this->feeStructures);
+    }
+
+    public function updatedFeeFilterTerm(): void
+    {
+        unset($this->feeStructures);
+    }
+
+    public function updatedFeeFilterSession(): void
+    {
+        unset($this->feeStructures);
+    }
+
     #[Computed]
     public function students()
     {

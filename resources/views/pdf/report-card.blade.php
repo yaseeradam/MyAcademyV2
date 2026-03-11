@@ -23,26 +23,23 @@
         }
 
         .page-border {
-            border: 3px solid #d97706;
-            padding: 18px;
-            background: white;
+            border: 4px solid #d97706;
+            padding: 20px;
+            background: linear-gradient(to bottom, #fffbeb 0%, #ffffff 100%);
             position: relative;
-        }
-
-        .page-border::before {
-            content: '';
-            position: absolute;
-            inset: 4px;
-            border: 1px solid #fcd34d;
-            pointer-events: none;
+            box-shadow: inset 0 0 0 2px #fbbf24;
         }
 
         /* ─── Header ─── */
         .header {
             text-align: center;
-            border-bottom: 3px solid #d97706;
-            padding-bottom: 14px;
-            margin-bottom: 14px;
+            border-bottom: 4px double #d97706;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1);
         }
 
         .header-flex {
@@ -74,12 +71,14 @@
         }
 
         .school-name {
-            font-size: 22px;
-            font-weight: 800;
-            color: #92400e;
+            font-size: 24px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #92400e, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 3px;
+            letter-spacing: 3px;
+            margin-bottom: 4px;
         }
 
         .school-motto {
@@ -98,26 +97,28 @@
 
         .report-title {
             display: inline-block;
-            font-size: 13px;
-            font-weight: 800;
+            font-size: 14px;
+            font-weight: 900;
             color: white;
-            background: linear-gradient(135deg, #d97706, #b45309);
-            padding: 7px 24px;
-            margin-top: 8px;
+            background: linear-gradient(135deg, #d97706, #b45309, #92400e);
+            padding: 9px 32px;
+            margin-top: 10px;
             text-transform: uppercase;
-            letter-spacing: 3px;
-            border-radius: 20px;
+            letter-spacing: 4px;
+            border-radius: 25px;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
         }
 
         /* ─── Session Bar ─── */
         .session-bar {
-            background: #fffbeb;
-            border: 1px solid #fcd34d;
-            padding: 8px 12px;
-            margin-bottom: 12px;
-            border-radius: 6px;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 2px solid #fbbf24;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            border-radius: 8px;
             display: table;
             width: 100%;
+            box-shadow: 0 2px 6px rgba(251, 191, 36, 0.2);
         }
 
         .session-item {
@@ -144,11 +145,12 @@
 
         /* ─── Student Info ─── */
         .student-section {
-            border: 2px solid #d97706;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-            background: #fffbeb;
+            border: 3px solid #d97706;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 14px;
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            box-shadow: 0 3px 10px rgba(217, 119, 6, 0.15);
         }
 
         .student-grid {
@@ -208,15 +210,17 @@
 
         .summary-card {
             display: table-cell;
-            width: 25%;
+            width: 16.66%;
             padding: 4px;
         }
 
         .summary-inner {
             background: linear-gradient(135deg, #d97706, #b45309);
-            border-radius: 8px;
-            padding: 10px 6px;
+            border-radius: 10px;
+            padding: 12px 8px;
             text-align: center;
+            box-shadow: 0 4px 10px rgba(217, 119, 6, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .summary-inner.green {
@@ -231,40 +235,50 @@
             background: linear-gradient(135deg, #7c3aed, #6d28d9);
         }
 
+        .summary-inner.teal {
+            background: linear-gradient(135deg, #0d9488, #0f766e);
+        }
+
+        .summary-inner.rose {
+            background: linear-gradient(135deg, #e11d48, #be123c);
+        }
+
         .summary-label {
-            font-size: 7px;
+            font-size: 8px;
             color: white;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
-            margin-bottom: 4px;
-            opacity: 0.9;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
         }
 
         .summary-value {
-            font-size: 18px;
-            font-weight: 800;
+            font-size: 20px;
+            font-weight: 900;
             color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         /* ─── Scores Table ─── */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
-            border: 2px solid #d97706;
-            border-radius: 8px;
+            margin-bottom: 14px;
+            border: 3px solid #d97706;
+            border-radius: 10px;
             overflow: hidden;
+            box-shadow: 0 3px 10px rgba(217, 119, 6, 0.15);
         }
 
         th {
-            background: linear-gradient(135deg, #d97706, #b45309);
+            background: linear-gradient(135deg, #d97706, #b45309, #92400e);
             color: white;
-            padding: 8px 5px;
+            padding: 10px 6px;
             text-align: center;
             font-size: 8px;
-            font-weight: 800;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             border: 1px solid #b45309;
         }
 
@@ -312,11 +326,12 @@
 
         /* ─── Grading Key ─── */
         .grading-key {
-            background: #fffbeb;
-            border: 1px solid #fcd34d;
-            border-radius: 6px;
-            padding: 8px;
-            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 2px solid #fbbf24;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 6px rgba(251, 191, 36, 0.2);
         }
 
         .grading-title {
@@ -350,11 +365,12 @@
 
         /* ─── Attendance ─── */
         .attendance-box {
-            border: 1px solid #fcd34d;
-            border-radius: 6px;
-            padding: 8px;
-            margin-bottom: 12px;
-            background: #fffbeb;
+            border: 2px solid #fbbf24;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 14px;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            box-shadow: 0 2px 6px rgba(251, 191, 36, 0.2);
         }
 
         .attendance-title {
@@ -402,11 +418,12 @@
 
         /* ─── Remarks ─── */
         .remarks-section {
-            border: 1px solid #fcd34d;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 10px;
-            background: #fffbeb;
+            border: 2px solid #fbbf24;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            box-shadow: 0 2px 6px rgba(251, 191, 36, 0.15);
         }
 
         .remarks-title {
@@ -428,16 +445,18 @@
 
         /* ─── Next Term ─── */
         .next-term {
-            background: linear-gradient(135deg, #d97706, #b45309);
-            padding: 8px;
+            background: linear-gradient(135deg, #d97706, #b45309, #92400e);
+            padding: 10px;
             text-align: center;
-            font-size: 10px;
-            font-weight: 800;
+            font-size: 11px;
+            font-weight: 900;
             color: white;
-            margin-bottom: 10px;
-            border-radius: 6px;
+            margin-bottom: 12px;
+            border-radius: 8px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 10px rgba(217, 119, 6, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         /* ─── Signatures ─── */
@@ -455,11 +474,11 @@
         }
 
         .signature-line {
-            border-top: 2px solid #78350f;
-            margin-top: 35px;
-            padding-top: 5px;
-            font-size: 9px;
-            font-weight: 800;
+            border-top: 3px double #78350f;
+            margin-top: 40px;
+            padding-top: 6px;
+            font-size: 10px;
+            font-weight: 900;
             color: #78350f;
         }
 
@@ -472,12 +491,13 @@
 
         /* ─── Footer ─── */
         .footer {
-            margin-top: 15px;
-            padding-top: 8px;
-            border-top: 2px solid #d97706;
+            margin-top: 18px;
+            padding-top: 10px;
+            border-top: 3px double #d97706;
             text-align: center;
-            font-size: 7px;
-            color: #9ca3af;
+            font-size: 8px;
+            color: #78350f;
+            font-weight: 600;
         }
 
         /* ─── Watermark ─── */
@@ -628,6 +648,18 @@
                 <div class="summary-inner purple">
                     <div class="summary-label">Class Avg</div>
                     <div class="summary-value">{{ number_format($classAverage, 1) }}%</div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-inner teal">
+                    <div class="summary-label">Highest</div>
+                    <div class="summary-value">{{ number_format($highestAverage ?? 0, 1) }}%</div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-inner rose">
+                    <div class="summary-label">Lowest</div>
+                    <div class="summary-value">{{ number_format($lowestAverage ?? 0, 1) }}%</div>
                 </div>
             </div>
         </div>

@@ -14,8 +14,8 @@ use Illuminate\Support\Fluent;
 
 class SettingsController extends Controller
 {
-    private const CERTIFICATE_TEMPLATES = ['modern', 'classic', 'elegant', 'vibrant', 'minimal', 'royal'];
-    private const REPORT_CARD_TEMPLATES = ['standard', 'compact', 'elegant', 'modern', 'classic'];
+    private const CERTIFICATE_TEMPLATES = ['modern', 'classic', 'elegant', 'vibrant', 'minimal', 'royal', 'obsidian', 'sahara', 'oceanic', 'crimson', 'ivory'];
+    private const REPORT_CARD_TEMPLATES = ['standard', 'compact', 'elegant', 'modern', 'classic', 'vibrant', 'professional', 'royal', 'fresh', 'sunset'];
 
     public function updateSchool(Request $request)
     {
@@ -231,20 +231,13 @@ class SettingsController extends Controller
     public function updateTemplates(Request $request, LicenseManager $license)
     {
         $data = $request->validate([
-            'certificate_template' => ['required', 'string', 'in:' . implode(',', self::CERTIFICATE_TEMPLATES)],
             'report_card_template' => ['required', 'string', 'in:' . implode(',', self::REPORT_CARD_TEMPLATES)],
         ]);
 
         $hasPremium = $license->can('cbt');
-        $freeCert = ['modern'];
         $freeReport = ['standard'];
 
         if (!$hasPremium) {
-            if (!in_array($data['certificate_template'], $freeCert)) {
-                throw ValidationException::withMessages([
-                    'certificate_template' => 'This template requires a premium license. Upload a license key to unlock.',
-                ]);
-            }
             if (!in_array($data['report_card_template'], $freeReport)) {
                 throw ValidationException::withMessages([
                     'report_card_template' => 'This template requires a premium license. Upload a license key to unlock.',
@@ -263,7 +256,6 @@ class SettingsController extends Controller
             }
         }
 
-        $settings['certificate_template'] = (string) $data['certificate_template'];
         $settings['report_card_template'] = (string) $data['report_card_template'];
 
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -286,6 +278,11 @@ class SettingsController extends Controller
                 'vibrant' => 'pdf.certificate-vibrant',
                 'minimal' => 'pdf.certificate-minimal',
                 'royal' => 'pdf.certificate-royal',
+                'obsidian' => 'pdf.certificate-obsidian',
+                'sahara' => 'pdf.certificate-sahara',
+                'oceanic' => 'pdf.certificate-oceanic',
+                'crimson' => 'pdf.certificate-crimson',
+                'ivory' => 'pdf.certificate-ivory',
                 default => 'pdf.certificate',
             };
 
@@ -326,6 +323,11 @@ class SettingsController extends Controller
                 'elegant' => 'pdf.report-card-elegant',
                 'modern' => 'pdf.report-card-modern',
                 'classic' => 'pdf.report-card-classic',
+                'vibrant' => 'pdf.report-card-vibrant',
+                'professional' => 'pdf.report-card-professional',
+                'royal' => 'pdf.report-card-royal',
+                'fresh' => 'pdf.report-card-fresh',
+                'sunset' => 'pdf.report-card-sunset',
                 default => 'pdf.report-card',
             };
 
@@ -359,6 +361,8 @@ class SettingsController extends Controller
                 'average' => $average,
                 'position' => 1,
                 'classAverage' => $average,
+                'highestAverage' => 95,
+                'lowestAverage' => 65,
                 'totalStudents' => 35,
                 'timesOpened' => 65,
                 'timesPresent' => 60,

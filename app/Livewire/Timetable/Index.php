@@ -101,11 +101,13 @@ class Index extends Component
     public function updatedClassId(): void
     {
         $this->sectionId = null;
+        unset($this->sections);
     }
 
     public function updatedEntryClassId(): void
     {
         $this->entrySectionId = null;
+        unset($this->entrySections);
     }
 
     public function clearForm(): void
